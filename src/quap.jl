@@ -1,10 +1,5 @@
-# Everything is experimental! If you want to use it, you need to import it yourself.
-# If you find problems, please open an issue.
-
-using Optim
-using Turing
+import StatisticalRethinking: quap
 using LinearAlgebra
-using StatsBase
 
 #      Run like
 # using Turing

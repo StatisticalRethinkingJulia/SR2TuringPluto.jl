@@ -1,6 +1,10 @@
 name = "StatisticalRethinkingTuring"
 authors = ["Karajan, Goedman"]
-[compat]
-julia = "1.6.0"
+
 [deps]
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+
+[compat]
+julia = "1.5"
