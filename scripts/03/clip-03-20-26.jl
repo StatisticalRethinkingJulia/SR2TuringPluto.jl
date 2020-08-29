@@ -1,12 +1,11 @@
-using DrWatson
-@quickactivate "StatReth"
+# Clip-03-02-19.jl
 
-# %%
-using StatsBase
-using Distributions
-using Plots
+using DrWatson
+@quickactivate "StstisticalRethinkingTuring"
+using StatisticalRethinking
 
 # %% 3.20 - 3.23
+
 pdf.(Binomial(2, 0.7), 0:2)
 
 rand(Binomial(2, 0.7), 1)
@@ -19,14 +18,18 @@ counts(dummy_w) ./ N |> display   # either
 countmap(dummy_w)                 # or, depending on what you want
 
 # %% 3.24, 3.25
+
 dummy_w = rand(Binomial(9, 0.7), N)
 histogram(dummy_w)
 
 w = rand(Binomial(9, 0.6), N)
 
 # %% 3.26
+
 samples = let
+
     # %% 3.2 - 3.5
+    
     n = 1000
     p_grid = range(0, 1, length = n)
     prob_p = ones(n)
@@ -53,3 +56,6 @@ w2 = vcat(w2...)
 
 histogram(w1, normalize = :probability, alpha = 0.6)
 histogram!(w2, normalize = :probability, alpha = 0.6)
+
+# End of clip-03-02-19.jl
+

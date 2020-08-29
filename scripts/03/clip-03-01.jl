@@ -4,6 +4,7 @@ using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 
 # %% 3.1
+
 Pr_Positive_Vampire = 0.95
 Pr_Positive_Mortal = 0.01
 Pr_Vampire = 0.001

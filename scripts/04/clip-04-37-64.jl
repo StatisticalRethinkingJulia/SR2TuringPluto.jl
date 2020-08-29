@@ -1,18 +1,13 @@
+# Clip-04-26-64.jl
+
 using DrWatson
-@quickactivate "StatReth"
-
-# %%
-using DataFrames
-using CSV
-using Distributions
+@quickactivate "StatisticalRethinkingTuring"
+using StatisticalRethinking
 using Turing
-using StatsPlots
-
 include(srcdir("quap.jl"))
-include(srcdir("tools.jl"))
 
 # %% 4.26
-d = DataFrame(CSV.File(datadir("exp_raw/Howell_1.csv")))
+d = CSV.read(srdatadir() * "/Howell1.csv", DataFrame)
 d2 = d[d.age .>= 18, :]
 
 # %% 4.37
@@ -53,7 +48,7 @@ end
 plot!(legend = false)
 
 # %% 4.42
-d = DataFrame(CSV.File(datadir("exp_raw/Howell_1.csv")))
+d = CSV.read(srdatadir() * "/Howell1.csv", DataFrame)
 d2 = d[d.age .>= 18, :]
 x̄ = mean(d2.weight)
 
@@ -184,3 +179,5 @@ sim = meanlowerupper(sim)
 scatter(d2.weight, d2.height, ms = 3, legend = false)
 plot!(weight_seq, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
 plot!(weight_seq, sim.lower, fillrange = sim.upper, alpha = 0.3, linealpha = 0.0, c = 2)
+
+# End of clip-04-26-64.jl

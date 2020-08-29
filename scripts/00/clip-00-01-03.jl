@@ -2,7 +2,6 @@
 
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
-using StatisticalRethinking
 
 # ### snippet 0.1
 
