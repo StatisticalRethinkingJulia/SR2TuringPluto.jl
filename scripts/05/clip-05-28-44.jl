@@ -1,14 +1,10 @@
+# Clip-05-28-44.jl
+
 using DrWatson
 @quickactivate "StatReth"
-
-# %%
-using DataFrames
-using CSV
 using Turing
-using Plots
 
 include(srcdir("quap.jl"))
-include(srcdir("tools.jl"))
 
 # %% 5.28, 5.29
 d = DataFrame!(CSV.File(datadir("exp_raw/milk.csv"), missingstring = "NA"))
@@ -150,3 +146,6 @@ d_sim2 = DataFrame((; K, N, M))
 
 # %% 5.44
 # TODO working with DAGs
+
+# End of clip-05-28-44.jl
+

@@ -1,14 +1,10 @@
+# Clip-05-45-79.jl
+
 using DrWatson
 @quickactivate "StatReth"
-
-# %%
-using DataFrames
-using CSV
 using Turing
-using Plots
 
 include(srcdir("quap.jl"))
-include(srcdir("tools.jl"))
 
 # %% 5.45
 d = CSV.read(datadir("exp_raw/Howell_1.csv"), DataFrame)
@@ -75,3 +71,5 @@ end
 
 q5_10 = quap(clade_house(d.clade_id, d.house, d.K))
 DataFrame(rand(q5_10.distr, 1000)', q5_10.params) |> precis
+
+# End of clip-05-45-54.jl

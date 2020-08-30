@@ -1,20 +1,13 @@
-cd(@__DIR__)
+# Clip-04-64-79.jl
+
 using DrWatson
 @quickactivate "StatReth"
-
-# %%
-using DataFrames
-using CSV
-using Distributions
+using StatisticalRethinking
 using Turing
-using Plots
-# using Statistics
-
 include(srcdir("quap.jl"))
-include(srcdir("tools.jl"))
 
 # %% 4.64
-d = DataFrame(CSV.File(datadir("exp_raw/Howell_1.csv")))
+d = CSV.read(joinpath(srdatadir(), "Howell1.csv"), DataFrame)
 
 # %% 4.65, 6.66
 d.weight_s = (d.weight .- mean(d.weight)) / std(d.weight)
@@ -75,9 +68,10 @@ plot!(weight_seq_rescaled, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- m
 plot!(weight_seq_rescaled, sim.lower, fillrange = sim.upper, alpha = 0.3, la = 0.0, c = 2)
 
 # %% 4.72
-d = DataFrame!(CSV.File(datadir("exp_raw/cherry_blossoms.csv"), missingstring = "NA"))
+d = CSV.read(joinpath(srdatadir(), "cherry_blossoms.csv"), DataFrame;
+    missingstring = "NA")
 
-# precis(d)
+#precis(d)
 
 scatter(d.year, d.doy)
 
@@ -88,7 +82,9 @@ num_knots = 15
 knot_list = quantile(d2.year, range(0, 1, length = num_knots))
 
 # %% 4.74, 4.75
-using BSplines: BSplineBasis, basismatrix
+
+# BSplines ia included in StatisticalRethinkg.jl
+# using BSplines: BSplineBasis, basismatrix
 
 basis = BSplineBasis(4, knot_list)
 B = basismatrix(basis, d2.year)
@@ -141,3 +137,6 @@ plot!(d2.year, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
 end
 
 q4_7alt = quap(spline(d2.doy))
+
+# End of clip-04-64-79.jl
+

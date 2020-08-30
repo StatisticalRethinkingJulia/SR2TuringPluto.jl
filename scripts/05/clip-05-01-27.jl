@@ -1,15 +1,10 @@
+# Clip-05-01-27.jl
+
 using DrWatson
 @quickactivate "StatReth"
-
-# %%
-using DataFrames
-using CSV
 using Turing
-using StatsBase
-using StatsPlots
 
 include(srcdir("quap.jl"))
-include(srcdir("tools.jl"))
 
 # %% 5.1, 5.2
 d = DataFrame(CSV.File(datadir("exp_raw/WaffleDivorce.csv")))
@@ -234,3 +229,5 @@ A_seq = range(-2, 2, length = 30)
 post = DataFrame(rand(q5_3_A.distr, 1000)', q5_3_A.params)
 M_sim = rand.(Normal.(post.aM' .+ A_seq .* post.bAM', post.σ_M'))
 D_sim = rand.(Normal.(post.a' .+ A_seq .* post.bA', post.σ'))
+
+# End of clip-05-01-27.jl
