@@ -12,4 +12,4 @@ Pr_Positive = Pr_Positive_Vampire * Pr_Vampire + Pr_Positive_Mortal * (1 - Pr_Va
 Pr_Vampire_Positive = Pr_Positive_Vampire * Pr_Vampire / Pr_Positive
 Pr_Vampire_Positive |> display
 
-# End of lip-03-01.jl
+# End of clip-03-01.jl

@@ -71,12 +71,11 @@ plot!(weight_seq_rescaled, sim.lower, fillrange = sim.upper, alpha = 0.3, la = 0
 d = CSV.read(joinpath(srdatadir(), "cherry_blossoms.csv"), DataFrame;
     missingstring = "NA")
 
-#precis(d)
-
 scatter(d.year, d.doy)
 
 # %% 4.73
 d2 = dropmissing(d, :doy)
+precis(DataFrame(:doy=>d2.doy))
 
 num_knots = 15
 knot_list = quantile(d2.year, range(0, 1, length = num_knots))

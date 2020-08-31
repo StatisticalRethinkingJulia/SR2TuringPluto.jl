@@ -1,38 +1,14 @@
-# Clip-02-01-06.jl
+# Clip-02-03-06.jl
 
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using StatisticalRethinking
 using Turing
+
 include(srcdir("quap.jl"))
 
-# %% 2.1
-ways = [0, 3, 8, 9, 0]
-ways = ways / sum(ways)
+# snippet 2.3
 
-# %% 2.2
-
-#=
-With Distributions.jl working with distributions is a little different
-that with R. Instead of having `rbinom`, `dbinom` and `pbinom` we just
-got the `Binomial` distribution which to work with.
-=#
-
-@show d = Binomial(9, 0.5)             # Binomial distribution
-d.n |> display
-@show rand(d)                          # singe random draw
-@show rand(d, 10)                      # 10 random draws
-@show pdf(d, 6)                        # probability density of getting a 6
-@show cdf(d, 6)                        # cumulative probability of getting 6
-
-#=
-Take a look at Distributions.jl docs to see what else you can do
-with [distributions](https://juliastats.org/Distributions.jl/latest/index.html).
-=#
-
-@show pdf(Binomial(9, 0.5), 6)         # probability density of getting a 6
-
-# %% 2.3
 p_grid = range(0, 1, length = 20)
 prior = ones(20)
 likelihood = pdf.(Binomial.(9, p_grid), 6)
@@ -86,4 +62,4 @@ plot!(p_grid, posterior ./ 2.5, m = 3)
 
 histogram!(rand(d, 10000)', normalize = :probability)
 
-# End clip-02-01-06.jl
+# End clip-02-03-06.jl

@@ -12,7 +12,7 @@ StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purpose
 
 1. `models`, contains most used Stan models,
 2. `notebooks`, used to store Pluto notebooks and
-3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinking/StatitsticalRethinkingStan.jl reposotory)
+3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinking/StatitsticalRethinkingStan.jl repository)
 
 The `data` directory is only used for lcally generated data. All data files are stored and maintained in StatisticalRethinking.jl. 
 
