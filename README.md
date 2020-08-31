@@ -10,11 +10,11 @@ This project uses Turing as the underlying mcmc implementation.
 
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, contains most used Turing models,
+1. `models`, contains the Turing models,
 2. `notebooks`, used to store Pluto notebooks and
-3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingStan.jl repository)
+3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingTuring.jl repository)
 
-The `data` directory is only used for locally generated data, exercises, etc.
+The `data` directory is only intended for locally generated data, exercises, etc.
 
 All example data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `srdatadir()`. 
 
@@ -23,8 +23,9 @@ This leads to a typical set of opening lines in each script:
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using StatisticalRethinking
-using Turing                # If Turing is used
-include(srcdir("quap.jl"))  # For Turing quap()
+using Turing
+
+include(srcdir("quap.jl"))  # Turing version of quap()
 
 # To access e.g. the Howell1.csv data file:
 d = CSV.read(srdatadir() * "/Howell1.csv", DataFrame)
@@ -40,7 +41,7 @@ To (locally) reproduce and use this project, do the following:
    julia> include(joinpath(scriptsdir(), "00", "clip-00-01-03.jl")
    ```
 
-This assumes your Julia setup includes `Pkg` and `DrWatson`, activates project `StatisticalrethinkingTuring` and everything should work out of the box.
+This assumes your Julia setup includes `Pkg` and `DrWatson`. Step 3 activates project `StatisticalrethinkingTuring`, if needed includes some source files, and everything should work out of the box.
 
 For the notebooks you'll need to install Pluto.jl and PlutoUI.jl.
 
@@ -55,7 +56,7 @@ All R snippets (fragments) have been organized in clips. Clips are named as `cli
 
 Note: `d` is reserved for a combination Soss/DynamicHMC.
 
-Scripts containing the clips are stored by chapter. In some chapter directories special introductory scripts have been included or scripts that generate figures in the book. These figures are stored by chapter in the `plots` directory.
+Scripts containing the clips are stored by chapter. In some chapters special introductory scripts have been included (e.g. in `intro-julia`) or scripts that generate figures in the book (always in `figures`). The figures are stored by chapter in the `plots` directory.
 
 A similar structure is used for models and Pluto notebooks.
 
