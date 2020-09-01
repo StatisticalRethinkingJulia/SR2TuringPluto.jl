@@ -16,7 +16,7 @@ posterior = likelihood .* prior
 posterior ./= sum(posterior)
 
 #=
-This is the next difference between Julia and R. You don't have automatic
+This is another difference between Julia and R. You don't have automatic
 broadcasting (making functions work the same whether you run it on a single
 number or on an array of numbers). However, fixing this is very easy,
 you only have to annotate your function call with a dot:

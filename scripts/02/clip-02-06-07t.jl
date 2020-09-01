@@ -34,7 +34,6 @@ d = MvNormal([r.coef.p], collect(reshape(r.vcov, 1, 1)))
 s = rand(d, 10000)'
 
 #histogram!(collect(s), normalize = :probability)
-@show r.vcov[1] |> sqrt
 
 plot!(p_grid, posterior, m = 3)
 
