@@ -47,7 +47,7 @@ For the notebooks you'll need to install Pluto.jl and PlutoUI.jl.
 
 ## Setup
 
-All R snippets (fragments) have been organized in clips. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
+All R snippets (fragments) have been organized in clips. Each clip is a self standing script. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
 `cc`      : Chapter number
 `fs`      : First snippet in clip
@@ -56,9 +56,13 @@ All R snippets (fragments) have been organized in clips. Clips are named as `cli
 
 Note: `d` is reserved for a combination Soss/DynamicHMC.
 
-Scripts containing the clips are stored by chapter. In some chapters special introductory scripts have been included (e.g. in `intro-julia`) or scripts that generate figures in the book (always in `figures`). The figures are stored by chapter in the `plots` directory.
+Scripts containing the clips are stored by chapter.
 
-A similar structure is used for models and Pluto notebooks.
+For some chapters, special introductory notebooks have been included (e.g. in `intro-R-users` in notebooks/00).
+
+Scripts that generate important figures in the book are in the `figures` subdirectory in each chapter. The figures themselves are stored, again by chapter, in the `plots` directory.
+
+Models and Pluto notebook directories are also organized by chapter.
 
 ## Status
 
