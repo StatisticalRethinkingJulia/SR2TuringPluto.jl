@@ -1,11 +1,11 @@
 ### A Pluto.jl notebook ###
-# v0.11.11
+# v0.11.12
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 998407c2-ed46-11ea-1c81-e33bc9e340f7
-using DrWatson
+using Pkg, DrWatson
 
 # ╔═╡ c3112cc0-ed46-11ea-1ecd-b3d8b8d51ac1
 using StatisticalRethinking
@@ -62,6 +62,9 @@ pdf(d, 6)                        # probability density of getting a 6
 # ╔═╡ c3403d4e-ed46-11ea-3dce-7906235096c6
 cdf(d, 6)                        # cumulative probability of getting 6
 
+# ╔═╡ 17eee314-ed87-11ea-0343-fb0148a66a04
+pkg"st"
+
 # ╔═╡ c354cad4-ed46-11ea-1244-9d97d407103f
 md"## End of distributions.jl"
 
@@ -83,4 +86,5 @@ md"## End of distributions.jl"
 # ╠═c3298d88-ed46-11ea-1a28-578706bf1724
 # ╠═c335d4ee-ed46-11ea-3c3b-637d1a3d5bc8
 # ╠═c3403d4e-ed46-11ea-3dce-7906235096c6
+# ╠═17eee314-ed87-11ea-0343-fb0148a66a04
 # ╟─c354cad4-ed46-11ea-1244-9d97d407103f

@@ -3,8 +3,8 @@
 cd(@__DIR__)
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
-using StatisticalRethinking
 using Turing
+using StatisticalRethinking
 
 #=
 This clip is only intended to generate Fig 2.5 (fig-00.png).

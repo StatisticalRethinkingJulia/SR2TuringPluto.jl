@@ -32,10 +32,11 @@ r = quap(m)
 d = MvNormal([r.coef.p], collect(reshape(r.vcov, 1, 1)))
 
 s = rand(d, 10000)'
+density(s, lab="quap")
 
 #histogram!(collect(s), normalize = :probability)
 
-plot!(p_grid, posterior, m = 3)
+plot!(p_grid, posterior, m = 3, lab="grid")
 
 #histogram!(rand(d, 10000)', normalize = :probability)
 
