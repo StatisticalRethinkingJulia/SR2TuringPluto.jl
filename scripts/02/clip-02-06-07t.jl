@@ -2,10 +2,8 @@
 
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
-using StatisticalRethinking
 using Turing
-
-include(srcdir("quap.jl"))
+using StatisticalRethinking
 
 # snippet 2.3
 
