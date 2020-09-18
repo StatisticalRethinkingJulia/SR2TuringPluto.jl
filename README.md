@@ -4,7 +4,7 @@ As stated many times by the author in his [online lectures](https://www.youtube.
 
 StatisticalRethinkingTuring is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
-This Julia project uses Stan (the `cmdstan` executable) as the underlying mcmc implementation.
+This Julia project uses Turing as the underlying mcmc implementation.
 
 ## Usage
 
@@ -60,10 +60,10 @@ Each notebook will activate the project `StatisticalrethinkingStan`.
 
 All R snippets (fragments) have been organized in clips. Each clip is a notebook. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
-`cc`      : Chapter number
-`fs`      : First snippet in clip
-`ls`      : Last snippet in cli
-`[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
+. `cc`      : Chapter number
+. `fs`      : First snippet in clip
+. `ls`      : Last snippet in cli
+. `[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
 
 Note: `d` is reserved for a combination Soss/DynamicHMC and `sl` is reserved for Stan models using the `logpdf` formulation.
 
