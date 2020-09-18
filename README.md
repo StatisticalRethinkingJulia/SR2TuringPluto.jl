@@ -60,10 +60,10 @@ Each notebook will activate the project `StatisticalrethinkingStan`.
 
 All R snippets (fragments) have been organized in clips. Each clip is a notebook. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
-. `cc`      : Chapter number
-. `fs`      : First snippet in clip
-. `ls`      : Last snippet in cli
-. `[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
+* `cc`      : Chapter number
+* `fs`      : First snippet in clip
+* `ls`      : Last snippet in cli
+* `[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
 
 Note: `d` is reserved for a combination Soss/DynamicHMC and `sl` is reserved for Stan models using the `logpdf` formulation.
 
