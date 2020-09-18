@@ -1,99 +1,82 @@
 ### A Pluto.jl notebook ###
-# v0.11.10
+# v0.11.14
 
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ ea02e53e-e0cc-11ea-2265-3165c74e19b3
+# ╔═╡ cd2366c0-e0c5-11ea-287a-abc0804397c8
 using Pkg, DrWatson
 
-# ╔═╡ 02ea1c3e-e0cd-11ea-04d1-f34150f81c89
+# ╔═╡ 9fb491f0-df47-11ea-3cf9-6fa3cee85c33
 begin
-	@quickactivate "StatisticalRethinkingStan"
+	@quickactivate "StatisticalRethinkingTuring"
+	using Turing
 	using StatisticalRethinking
-	using StanSample
 end
 
-# ╔═╡ d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-md"## # Fig 2.5s"
+# ╔═╡ cb3b80f4-df47-11ea-18e1-dd4b1f2b5cde
+md"## Fig 2.5t"
 
-# ╔═╡ 11533bb6-e0cd-11ea-331e-278de5d6b26f
+# ╔═╡ f65a77d8-df47-11ea-271a-41999fd773fb
 md"""
-### This clip is only intended to generate Fig 2.5. 
+##### This clip is only intended to generate part of Fig 2.5."""
 
-It is not intended to show how to use Stan (yet)!"""
+# ╔═╡ 147b737a-df48-11ea-3679-77200acb11f0
+md"##### Create a Turing modelt:"
 
-# ╔═╡ 3067f2d0-e0cd-11ea-17d4-ab40276a0379
-m2_0 = "
-// Inferring a rate
-data {
-  int n;
-  int k;
-}
-parameters {
-  real<lower=0,upper=1> theta;
-}
-model {
-  // Prior distribution for θ
-  theta ~ uniform(0, 1);
-
-  // Observed Counts
-  k ~ binomial(n, theta);
-}
-";
-
-# ╔═╡ 40b6f53c-e0cd-11ea-298d-457305accab3
-md"### 1. Create a SampleModel object:"
-
-# ╔═╡ 5582ffb8-e0cd-11ea-358b-a1e5bac536af
-m2_0s = SampleModel("m2.0s", m2_0);
-
-# ╔═╡ 7d380960-e0cd-11ea-1401-736a8ff3f998
-md"##### n will go from 1:9"
-
-# ╔═╡ 89ee4714-e0cd-11ea-2378-dffe0e058ea1
-begin
-	k = [1,0,1,1,1,0,1,0,1]       # Sequence observed
-	x = range(0, stop=9, length=10)
+# ╔═╡ 0b3fbb40-df48-11ea-08f2-479bc2292d46
+@model globe_toss(W, L) = begin
+    p ~ Uniform(0, 1)
+    W ~ Binomial(W + L, p)
 end
 
-# ╔═╡ c8d96392-e0cc-11ea-2650-a950d62c37a5
+# ╔═╡ c080ab9a-eede-11ea-1a02-7747110ce510
+m = globe_toss(6, 3);
+
+# ╔═╡ c0ac2b1c-eede-11ea-0af7-c90c3dc45666
+r = quap(m)
+
+# ╔═╡ c0b70690-eede-11ea-1086-95193b22f266
+d = Normal(r.coef.p, √collect(reshape(r.vcov, 1, 1))[1])
+
+# ╔═╡ c0c5c68a-eede-11ea-3754-471209a14604
+s = rand(d, 10000);
+
+# ╔═╡ c0d26d52-eede-11ea-394a-153cc7000dae
+h1 = histogram(s, normalize = :pdf, lab="sample density")
+
+# ╔═╡ 2f325012-f91f-11ea-16d0-034a3f1f9f4b
 begin
-	p = Vector{Plots.Plot{Plots.GRBackend}}(undef, 9)
-	dens = Vector{DataFrame}(undef, 10)
-	for n in 1:9
-
-		p[n] = plot(xlims=(0.0, 1.0), ylims=(0.0, 3.0), leg=false)
-		m2_0_data = Dict("n" => n, "k" => sum(k[1:n]));
-		rc = stan_sample(m2_0s, data=m2_0_data);
-		dfs = read_samples(m2_0s; output_format=:dataframe)
-		if n == 1
-			hline!([1.0], line=(:dash))
-		else
-			density!(dens[n][:, :theta], line=(:dash))
-		end
-		density!(dfs[:, :theta])
-		dens[n+1] = dfs
-
-	end
+	k = 3
+	n = 6
+	chn = sample(globe_toss(n, k), NUTS(0.65), 11000)
 end
 
-# ╔═╡ dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-plot(p..., layout=(3, 3))
+# ╔═╡ d64cb1f6-f921-11ea-3d8c-cd654a1bd6f6
+plot(chn; seriestype=:traceplot)
 
-# ╔═╡ ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
-md"## End of Fig2.5s.jl"
+# ╔═╡ f6bbd200-f921-11ea-3c1d-2b7617b99656
+begin
+	plot(chn; seriestype=:density)
+	histogram!(s, normalize = :pdf, lab="sample density")
+end
+
+# ╔═╡ 13851f4a-dfc8-11ea-0933-cb4f026bcf42
+md"## End of Fig2.5t.jl"
 
 # ╔═╡ Cell order:
-# ╟─d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-# ╠═ea02e53e-e0cc-11ea-2265-3165c74e19b3
-# ╠═02ea1c3e-e0cd-11ea-04d1-f34150f81c89
-# ╟─11533bb6-e0cd-11ea-331e-278de5d6b26f
-# ╠═3067f2d0-e0cd-11ea-17d4-ab40276a0379
-# ╟─40b6f53c-e0cd-11ea-298d-457305accab3
-# ╠═5582ffb8-e0cd-11ea-358b-a1e5bac536af
-# ╟─7d380960-e0cd-11ea-1401-736a8ff3f998
-# ╠═89ee4714-e0cd-11ea-2378-dffe0e058ea1
-# ╠═c8d96392-e0cc-11ea-2650-a950d62c37a5
-# ╠═dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-# ╟─ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
+# ╠═cb3b80f4-df47-11ea-18e1-dd4b1f2b5cde
+# ╠═cd2366c0-e0c5-11ea-287a-abc0804397c8
+# ╠═9fb491f0-df47-11ea-3cf9-6fa3cee85c33
+# ╟─f65a77d8-df47-11ea-271a-41999fd773fb
+# ╟─147b737a-df48-11ea-3679-77200acb11f0
+# ╠═0b3fbb40-df48-11ea-08f2-479bc2292d46
+# ╠═c080ab9a-eede-11ea-1a02-7747110ce510
+# ╠═c0ac2b1c-eede-11ea-0af7-c90c3dc45666
+# ╠═c0b70690-eede-11ea-1086-95193b22f266
+# ╠═c0c5c68a-eede-11ea-3754-471209a14604
+# ╠═c0d26d52-eede-11ea-394a-153cc7000dae
+# ╠═2f325012-f91f-11ea-16d0-034a3f1f9f4b
+# ╠═d64cb1f6-f921-11ea-3d8c-cd654a1bd6f6
+# ╠═f6bbd200-f921-11ea-3c1d-2b7617b99656
+# ╟─13851f4a-dfc8-11ea-0933-cb4f026bcf42

@@ -1,74 +1,84 @@
 ## Purpose of StatisticalRethingTuring.jl
 
-This `project` contains Julia versions of selected `code snippets` and `mcmc models` comparable to those in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
+As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
 
-As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking.
+StatisticalRethinkingTuring is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
-This Julia project uses Turing as the underlying mcmc implementation.
+This Julia project uses Stan (the `cmdstan` executable) as the underlying mcmc implementation.
 
 ## Usage
 
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, which contains the Turing models,
-2. `notebooks`, is used to store Pluto notebooks and
-3. `exercises`, can be used to store the exercises (by default not stored)
+1. `models`, which contains Stan language model scripts needed repeatedly,
+2. `notebooks`, used to store the Pluto notebooks and
+3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingTuring.jl repository)
 
-The `data` directory is only intended for locally generated data, exercises, etc. All example data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `srdatadir()`. 
+The `data` directory, in DrWatson accessible through `datadir()`, is only used for locally generated data, exercises, etc. All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`. 
 
-This leads to a typical set of opening lines in each script:
+This leads to a typical set of opening lines in each notebook:
 ```
-using DrWatson
-@quickactivate "StatisticalRethinkingTuring"
-using StatisticalRethinking
-using Turing
+using Pkg, DrWatson
 
-include(srcdir("quap.jl"))  # Turing version of quap()
+# Note: Below sequence is important. First activate the project
+# followed by `using` or `import` statements. Pretty much all
+# scripts use StatisticalRethinking. If mcmc sampling is
+# needed, it must be loaded before StatisticalRethinking:
+
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
 
 # To access e.g. the Howell1.csv data file:
-d = CSV.read(srdatadir() * "/Howell1.csv", DataFrame)
+d = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
 d2 = d[d.age .>= 18, :]
 ```
 
 To (locally) reproduce and use this project, do the following:
 
-0. Download this code base.
-1. Move to the downloaded directory.
-2. Open a Julia console and, to run the first script, do:
-   ```
-   julia> include(joinpath(scriptsdir(), "00", "clip-00-01-03.jl")
-   ```
+1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github.
+2. Move to the downloaded directory.
+3. Start a Pluto notebook server.
+4. Open a notebook in a browser.
 
-This assumes your Julia setup includes `Pkg` and `DrWatson`. Step 3 activates project `StatisticalrethinkingTuring`, if needed includes some source files, and everything should work out of the box.
+This assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto`, `PlutoUI` and `Turing`.
 
-For the notebooks you'll need to install Pluto.jl and PlutoUI.jl.
+Step 3 usually can be done by:
+```
+$ julia
+
+julia> using Pluto
+julia> Pluto.run()
+```
+
+By default the Pluto server uses port 1234. In your browser go to
+`http://localhost:1234`.
+
+Each notebook will activate the project `StatisticalrethinkingStan`.
 
 ## Setup
 
-All R snippets (fragments) have been organized in clips. Each clip is a self standing script. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
+All R snippets (fragments) have been organized in clips. Each clip is a notebook. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
 `cc`      : Chapter number
 `fs`      : First snippet in clip
-`ls`      : Last snippet in clip
+`ls`      : Last snippet in cli
 `[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
 
-Note: `d` is reserved for a combination Soss/DynamicHMC.
+Note: `d` is reserved for a combination Soss/DynamicHMC and `sl` is reserved for Stan models using the `logpdf` formulation.
 
-Scripts containing the clips are stored by chapter.
+The notebooks containing the clips are stored by chapter.
 
-For some chapters, special introductory notebooks have been included (e.g. in `intro-R-users` in notebooks/00).
+Special introductory notebooks have been included in `notebooks/intros`, e.g.
+`intro-R-users/broadcasting.jl` and `intro-R-users/distributions.jl`.
 
-Scripts that generate important figures in the book are in the `figures` subdirectory in each chapter. The figures themselves are stored, again by chapter, in the `plots` directory.
-
-Models and Pluto notebook directories are also organized by chapter.
+In addition to clips, in the early notebook chapters (0-3) it is shown how to create the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
 
 ## Status
 
 StatisticalRethinkingTuring.jl is compatible with the 2nd edition of the book.
 
-Expanded coverage of chapters 7 and beyond of the book will likely happen while working on StatisticalRethinkingTuring.jl.
-
- StructuralCausalModels.jl is included as en experimental dependency in the otherwise stripped down StatisticalRethinking.jl v3.0.0 package.
+StructuralCausalModels.jl is included as en experimental dependency in the StatisticalRethinking.jl v3 package.
 
 Any feedback is appreciated. Please open an issue.
 
@@ -76,7 +86,7 @@ Any feedback is appreciated. Please open an issue.
 
 This repository and format is derived from work by Karajan, previous versions of StatisticalRethinking.jl and many other contributors.
 
-The huge progress made by the Turing.jl team over the last 2 years, the availability of Julia `projects` in addition to Julia `packages` and the novel approach to notebooks in Pluto.jl were a few of the ideas that triggered exploring a new setup for the StatisticalRethinkingJulia.
+The availability of DynamicHMC, the huge progress made by the Turing.jl team over the last 2 years, the availability of Julia `projects` in addition to Julia `packages` and the novel approach to notebooks in Pluto.jl were a few of the ideas that triggered exploring a new setup for the StatisticalRethinkingJulia.
 
 ## Versions
 

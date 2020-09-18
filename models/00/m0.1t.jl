@@ -1,7 +1,9 @@
-using TuringModels
-#using StatsPlots
+# m0.1t.jl
 
-ProjDir = @__DIR__
+using DrWatson
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
 
 # Define a simple Normal model with unknown mean and variance.
 
@@ -14,13 +16,15 @@ end
 
 #  Run sampler, collect results
 
-chn = sample(gdemo(1.5, 2), NUTS(0.65), 1000)
+chns = mapreduce(c -> sample(gdemo(1.5, 2), NUTS(0.65), 2000),
+  chainscat, 1:4)
 
-# Summarise results (currently requires the master branch from MCMCChains)
+# Summarise results
 
-chn |> display
+chns |> display
 
 # Plot and save results if in ./dev
 
-#p = plot(chn)
-#savefig("$(ProjDir)/basic-example-plot.png")
+plot(chns)
+
+# End m0.1t.jl

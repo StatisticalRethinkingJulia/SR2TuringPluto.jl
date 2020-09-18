@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.12
+# v0.11.14
 
 using Markdown
 using InteractiveUtils
@@ -50,17 +50,14 @@ md"##### Singe random draw."
 # ╔═╡ c22522ca-ed47-11ea-1fb8-a7e582a8969e
 rand(d)
 
-# ╔═╡ 5ff49ae0-ed4c-11ea-0994-ebf5f6c17922
-md"##### 9 draws."
-
 # ╔═╡ c3298d88-ed46-11ea-1a28-578706bf1724
-rand(d, 9)                          # 
+rand(d, 9)                       # Draw 9 samples
 
 # ╔═╡ c335d4ee-ed46-11ea-3c3b-637d1a3d5bc8
-pdf(d, 6)                        # probability density of getting a 6
+pdf(d, 6)                        # Probability density of getting a 6
 
 # ╔═╡ c3403d4e-ed46-11ea-3dce-7906235096c6
-cdf(d, 6)                        # cumulative probability of getting 6
+cdf(d, 6)                        # Cumulative probability of getting 6
 
 # ╔═╡ 17eee314-ed87-11ea-0343-fb0148a66a04
 pkg"st"
@@ -82,7 +79,6 @@ md"## End of distributions.jl"
 # ╠═c3272656-ed46-11ea-3971-a3cc353218cb
 # ╟─c872e37e-ed47-11ea-141c-f7a43395df4d
 # ╠═c22522ca-ed47-11ea-1fb8-a7e582a8969e
-# ╟─5ff49ae0-ed4c-11ea-0994-ebf5f6c17922
 # ╠═c3298d88-ed46-11ea-1a28-578706bf1724
 # ╠═c335d4ee-ed46-11ea-3c3b-637d1a3d5bc8
 # ╠═c3403d4e-ed46-11ea-3dce-7906235096c6

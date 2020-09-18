@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.12
+# v0.11.14
 
 using Markdown
 using InteractiveUtils
@@ -23,7 +23,7 @@ begin
 end
 
 # ╔═╡ 397f31b2-eba9-11ea-3fd5-1704e3a50a96
-md"## Clip-00-01-03.jl"
+md"## Clip-00-01-03t.jl"
 
 # ╔═╡ 1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
 md"### snippet 0.1"
@@ -60,13 +60,13 @@ md"### snippet 0.3"
 [log(0.01^200) 200 * log(0.01)]
 
 # ╔═╡ c4403280-dc20-11ea-0550-5f2f606a9fea
-md"## End of clip-00-01-03.jl"
+md"## End of clip-00-01-03t.jl"
 
 # ╔═╡ Cell order:
 # ╟─397f31b2-eba9-11ea-3fd5-1704e3a50a96
 # ╠═e8a5afbe-dc1e-11ea-023e-31002d1c7688
 # ╠═f476d956-dc1e-11ea-002f-79f79dfc79e2
-# ╠═1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
+# ╟─1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
 # ╠═624b8daa-dc1f-11ea-114f-19896cd76aa5
 # ╟─8fa79b3e-dc1f-11ea-1437-d7bfe6cdea51
 # ╠═c4321a66-de4f-11ea-3449-774edd51eb10

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.10
+# v0.11.14
 
 using Markdown
 using InteractiveUtils
@@ -14,7 +14,7 @@ begin
 end
 
 # ╔═╡ 8b40ccde-eb97-11ea-0553-f5def6476477
-md"## Clip-00-04-05.jl"
+md"## Clip-00-04-05t.jl"
 
 # ╔═╡ 3d8845e0-eb98-11ea-128a-93226e62b034
 md"### snippet 0.5"
@@ -27,7 +27,7 @@ md"### snippet 0.4"
 
 # ╔═╡ 1059f184-eb98-11ea-1108-a50008b9be0c
 begin
-	df = CSV.read("$(srdatadir())/Howell1.csv", DataFrame; delim=';')
+	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim=';')
 	howell1 = filter(row -> row[:age] >= 18, df);
 	first(howell1, 5)
 end
@@ -52,7 +52,7 @@ scatter( howell1.height, residuals(m), xlab="Height",
   ylab="Model residual values", lab="Model residuals", leg=:bottomright)
 
 # ╔═╡ e17084e2-eb98-11ea-34ef-b1ebfab71041
-md"## End of clip-00-04-05.jl"
+md"## End of clip-00-04-05t.jl"
 
 # ╔═╡ Cell order:
 # ╟─8b40ccde-eb97-11ea-0553-f5def6476477
