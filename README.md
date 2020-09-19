@@ -10,7 +10,7 @@ This Julia project uses Turing as the underlying mcmc implementation.
 
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, which contains Stan language model scripts needed repeatedly,
+1. `models`, which contains Turing models if needed repeatedly,
 2. `notebooks`, used to store the Pluto notebooks and
 3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingTuring.jl repository)
 
