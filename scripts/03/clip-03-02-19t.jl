@@ -1,10 +1,10 @@
-# Clip-03--2-19.jl
+# Clip-03--2-19t.jl
 
 using DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using StatisticalRethinking
 
-# %% 3.2
+# snippet 3.2
 
 n = 1000
 p_grid = range(0, 1, length = n)
@@ -15,7 +15,7 @@ posterior ./= sum(posterior)
 
 plot(p_grid, posterior)
 
-# %% 3.3 - 3.5
+# snippets 3.3 - 3.5
 
 weights = pweights(posterior)
 samples = sample(p_grid, weights, 10_000)

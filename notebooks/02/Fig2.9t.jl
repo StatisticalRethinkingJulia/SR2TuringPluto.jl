@@ -124,7 +124,7 @@ begin
 	  lab="Conjugate solution", leg=:topleft)
 	density!(f[1], samples, lab="Sample density")
 
-	# quadratic approximation using Optim
+	# Quadratic approximation using Optim
 
 	f[2] = plot( x, pdf.(Beta( w+1 , n-w+1 ) , x ), xlims=(-0.5, 1.0),
 	  lab="Conjugate solution", leg=:topleft)

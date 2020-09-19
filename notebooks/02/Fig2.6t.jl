@@ -34,7 +34,7 @@ begin
 	append!(prior, [pdf.(Uniform(0, 1), p_grid)])
 	append!(prior, [[p < 0.5 ? 0 : 1 for p in p_grid]])
 	append!(prior, [[exp( -5*abs( p - 0.5 ) ) for p in p_grid]])
-end
+end;
 
 # ╔═╡ 4f13916a-f925-11ea-1d83-592895f10cb4
 likelihood = pdf.(Binomial.(9, p_grid), 6)
