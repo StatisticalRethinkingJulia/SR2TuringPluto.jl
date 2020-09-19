@@ -10,7 +10,7 @@ This Julia project uses Turing as the underlying mcmc implementation.
 
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, which contains Turing models if needed repeatedly,
+1. `models`, which contains Turing model scripts if needed repeatedly,
 2. `notebooks`, used to store the Pluto notebooks and
 3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingTuring.jl repository)
 
@@ -63,9 +63,9 @@ All R snippets (fragments) have been organized in clips. Each clip is a notebook
 * `cc`      : Chapter number
 * `fs`      : First snippet in clip
 * `ls`      : Last snippet in cli
-* `[s|t|d]` : Mcmc flavor used (s : Stan, t : Turing)
+* `[s|sl|t|d|m]` : Mcmc flavor used (s : Stan, t : Turing)
 
-Note: `d` is reserved for a combination Soss/DynamicHMC and `sl` is reserved for Stan models using the `logpdf` formulation.
+Note: `d` is reserved for a combination Soss/DynamicHMC, `sl` is reserved for Stan models using the `logpdf` formulation and `m` is reserved for Mamba.
 
 The notebooks containing the clips are stored by chapter.
 
