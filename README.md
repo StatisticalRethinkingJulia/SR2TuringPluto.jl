@@ -12,9 +12,10 @@ StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purpose
 
 1. `models`, which contains Turing model scripts if needed repeatedly,
 2. `notebooks`, used to store the Pluto notebooks and
-3. `exercises`, can be used to store the exercises (not stored in the StatisticalRethinkingTuring.jl repository)
 
-The `data` directory, in DrWatson accessible through `datadir()`, is only used for locally generated data, exercises, etc. All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`. 
+The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. 
+
+All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`. 
 
 This leads to a typical set of opening lines in each notebook:
 ```
@@ -58,7 +59,9 @@ Each notebook will activate the project `StatisticalRethinkingTuring`.
 
 ## Setup
 
-All R snippets (fragments) have been organized in clips. Each clip is a notebook. Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
+All R snippets (fragments) have been organized in clips. Each clip is a notebook. 
+
+Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
 * `cc`      : Chapter number
 * `fs`      : First snippet in clip
