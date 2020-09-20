@@ -21,9 +21,6 @@ using MLJ, MLJModels
 # ╔═╡ 4eb6e25c-f9b7-11ea-3e43-05d4d6f124f5
 md"## m0.1t.jl"
 
-# ╔═╡ 02d18d68-f9cd-11ea-338a-f79065bd7bbc
-md"### Currently does not work for me on Julia 1.5.1 and MacOS!"
-
 # ╔═╡ 8a4c985e-f9b7-11ea-22cb-717b854951d6
 md"##### Define a simple Normal model with unknown mean and variance."
 
@@ -79,7 +76,6 @@ md"## End m0.1t.jl"
 
 # ╔═╡ Cell order:
 # ╟─4eb6e25c-f9b7-11ea-3e43-05d4d6f124f5
-# ╟─02d18d68-f9cd-11ea-338a-f79065bd7bbc
 # ╠═8a4bdc28-f9b7-11ea-068e-eb70e542a539
 # ╠═8a4c20a2-f9b7-11ea-2d67-a1e2531dcbd6
 # ╟─8a4c985e-f9b7-11ea-22cb-717b854951d6
