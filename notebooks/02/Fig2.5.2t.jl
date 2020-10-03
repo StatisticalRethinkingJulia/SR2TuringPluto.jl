@@ -15,11 +15,10 @@ begin
 end
 
 # ╔═╡ cb3b80f4-df47-11ea-18e1-dd4b1f2b5cde
-md"## Fig 2.5t"
+md"## Fig 2.5.2t"
 
 # ╔═╡ f65a77d8-df47-11ea-271a-41999fd773fb
-md"""
-##### This clip is only intended to generate part of Fig 2.5."""
+md"##### This clip is only intended to illustrate a part of Fig 2.5."
 
 # ╔═╡ 147b737a-df48-11ea-3679-77200acb11f0
 md"##### Create a Turing modelt:"
@@ -57,15 +56,15 @@ plot(chn; seriestype=:traceplot)
 
 # ╔═╡ f6bbd200-f921-11ea-3c1d-2b7617b99656
 begin
-	plot(chn; seriestype=:density)
-	histogram!(s, normalize = :pdf, lab="sample density")
+	histogram(s, normalize = :pdf, lab="sample density")
+	plot!(chn; seriestype=:density, lab="Chn density")
 end
 
 # ╔═╡ 13851f4a-dfc8-11ea-0933-cb4f026bcf42
-md"## End of Fig2.5t.jl"
+md"## End of Fig2.5.2t.jl"
 
 # ╔═╡ Cell order:
-# ╠═cb3b80f4-df47-11ea-18e1-dd4b1f2b5cde
+# ╟─cb3b80f4-df47-11ea-18e1-dd4b1f2b5cde
 # ╠═cd2366c0-e0c5-11ea-287a-abc0804397c8
 # ╠═9fb491f0-df47-11ea-3cf9-6fa3cee85c33
 # ╟─f65a77d8-df47-11ea-271a-41999fd773fb

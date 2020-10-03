@@ -19,7 +19,10 @@ end
 using MLJ, MLJModels
 
 # ╔═╡ 4eb6e25c-f9b7-11ea-3e43-05d4d6f124f5
-md"## m0.1t.jl"
+md"## m0.2t.jl"
+
+# ╔═╡ 9de23082-04c7-11eb-3b7c-393a11a68cf4
+md"##### This notebook takes a look at the [rstar()](https://arxiv.org/pdf/2003.07900.pdf) diagnostic. Currently I can't get MLJ & MLJModels to work (serialization issue?)."
 
 # ╔═╡ 8a4c985e-f9b7-11ea-22cb-717b854951d6
 md"##### Define a simple Normal model with unknown mean and variance."
@@ -47,6 +50,9 @@ plot(chns; seriestype=:traceplot)
 # ╔═╡ 45425d72-f9b8-11ea-1faa-41e93626b8b5
 plot(chns; seriestype=:density)
 
+# ╔═╡ 6afed64c-04c8-11eb-1a4f-75b21ce91da9
+md"##### Below will likely fail!"
+
 # ╔═╡ d049cfcc-f9b8-11ea-1ed4-3fc6fb56241c
 chn ... # sampling results of multiple chains
 
@@ -72,10 +78,11 @@ md"##### Visualize distribution."
 histogram(Rs)
 
 # ╔═╡ 8a6e37c6-f9b7-11ea-2abd-5db63b061a7d
-md"## End m0.1t.jl"
+md"## End m0.2t.jl"
 
 # ╔═╡ Cell order:
 # ╟─4eb6e25c-f9b7-11ea-3e43-05d4d6f124f5
+# ╟─9de23082-04c7-11eb-3b7c-393a11a68cf4
 # ╠═8a4bdc28-f9b7-11ea-068e-eb70e542a539
 # ╠═8a4c20a2-f9b7-11ea-2d67-a1e2531dcbd6
 # ╟─8a4c985e-f9b7-11ea-22cb-717b854951d6
@@ -85,6 +92,7 @@ md"## End m0.1t.jl"
 # ╟─8a5ea05e-f9b7-11ea-2cbe-e15b867548b3
 # ╠═8a6d9e26-f9b7-11ea-1d0f-f95263880beb
 # ╠═45425d72-f9b8-11ea-1faa-41e93626b8b5
+# ╟─6afed64c-04c8-11eb-1a4f-75b21ce91da9
 # ╠═a296146e-f9b8-11ea-255b-0d1b0515811c
 # ╠═d049cfcc-f9b8-11ea-1ed4-3fc6fb56241c
 # ╠═d04a0ae6-f9b8-11ea-3053-21a1d21bb400

@@ -17,11 +17,11 @@ end
 #  Run sampler, collect results
 
 chns = mapreduce(c -> sample(gdemo(1.5, 2), NUTS(0.65), 2000),
-  chainscat, 1:4)
+  chainscat, 1:4);
 
 # Summarise results
 
-chns |> display
+#chns |> display
 
 # Plot and save results if in ./dev
 
