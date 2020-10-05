@@ -22,7 +22,7 @@ md"### snippet 3.23"
 # ╔═╡ 98f67062-f50c-11ea-23f3-539ae4f7e67b
 begin
 	N = 10000
-	p = Vector{Plots.Plot{Plots.GRBackend}}(undef, 9)
+	p = 
 	for j in 1:9
 
 	  prob = j * 0.1
