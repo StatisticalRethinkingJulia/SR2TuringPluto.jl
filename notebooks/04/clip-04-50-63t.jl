@@ -34,8 +34,17 @@ end;
     heights ~ MvNormal(μ, σ)
 end
 
-# ╔═╡ b9e83350-0725-11eb-2dc7-df1e34d038b2
-quap4_3t = quap(m4_3(df.weight, df.height))
+# ╔═╡ dab57768-0778-11eb-3d4b-43d2eff46c65
+begin
+	m4_3t = m4_3(df.weight, df.height)
+	Text(precis(m4_3t; io=String))
+end
+
+# ╔═╡ 183d7c0c-0779-11eb-087b-59e6cb72a2a2
+begin
+	quap4_3t = quap(m4_3t)
+	Text(precis(quap4_3t; io=String))
+end
 
 # ╔═╡ 8f6a472e-0710-11eb-143d-6dfc45f27694
 md"### snippets 4.50 - 4.52"
@@ -131,7 +140,8 @@ md"## End of clip-04-50-63t.jl"
 # ╠═9060d3be-0710-11eb-1686-196534333f23
 # ╠═8fd7b794-0710-11eb-2b61-fd8f3fa5951f
 # ╠═b639f15a-0725-11eb-3b15-c35097e6acd5
-# ╠═b9e83350-0725-11eb-2dc7-df1e34d038b2
+# ╠═dab57768-0778-11eb-3d4b-43d2eff46c65
+# ╠═183d7c0c-0779-11eb-087b-59e6cb72a2a2
 # ╟─8f6a472e-0710-11eb-143d-6dfc45f27694
 # ╠═d463b7e4-070f-11eb-3b02-6f0bf21b511b
 # ╠═bb0877a2-0724-11eb-0ab5-3b1e14ee69ec

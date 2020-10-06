@@ -1,18 +1,35 @@
+### A Pluto.jl notebook ###
+# v0.11.14
 
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ 0831131a-077d-11eb-2412-fbd0e7cc3436
 using DrWatson
-@quickactivate "StatReth"
-using Turing
 
-include(srcdir("quap.jl"))
+# ╔═╡ 08314e98-077d-11eb-1d86-f9c9dd52e2c3
+begin
+	@quickactivate "StatisticalRethinkingTuring"
+	using Turing
+	using StatisticalRethinking
+end
 
-d = DataFrame(CSV.File(datadir("exp_raw/WaffleDivorce.csv")))
-d.D = zscore(d.Divorce)
-d.M = zscore(d.Marriage)
-d.A = zscore(d.MedianAgeMarriage)
+# ╔═╡ 041b4048-077d-11eb-20b8-6f8b8ee72626
+md"## Clip-05-01-27t.jl"
 
-std(d.MedianAgeMarriage)
+# ╔═╡ 08320f9a-077d-11eb-2181-9bacc9603e02
+begin
+	df = CSV.read(sr_datadir("WaffleDivorce.csv"), DataFrame)
+	df.D = zscore(df.Divorce)
+	df.M = zscore(df.Marriage)
+	df.A = zscore(df.MedianAgeMarriage)
+end
 
-@model function divorce_A(A, D)
+# ╔═╡ 084594e8-077d-11eb-082b-6f19dc8a8e0f
+std(df.MedianAgeMarriage)
+
+# ╔═╡ 084663b4-077d-11eb-3586-73882ea2ceec
+@model function m5_1_A(A, D)
     a ~ Normal(0, 0.2)
     bA ~ Normal(0, 0.5)
     σ ~ Exponential(1)
@@ -20,25 +37,35 @@ std(d.MedianAgeMarriage)
     D ~ MvNormal(μ, σ)
 end
 
-m5_1 = divorce_A(d.A, d.D)
-prior = sample(m5_1, Prior(), 50) |> DataFrame
-
-x = -2:0.1:2
-plot()
-for r in eachrow(prior)
-    p = lin(r.a, x, r.bA)
-    plot!(x, p, color = :black, alpha = 0.4)
+# ╔═╡ 0857f156-077d-11eb-0829-799d64e773d2
+begin
+	m5_1_At = m5_1_A(df.A, df.D)
+	prior5_1_At = sample(m5_1_At, Prior(), 50) |> DataFrame
+	prior5_1_At = prior5_1_At[:, 3:end]
+	Text(precis(prior5_1_At; io=String))
 end
-plot!(legend = false)
 
-q5_1 = quap(m5_1)
-post = DataFrame(rand(q5_1.distr, 1000)', q5_1.params)
+# ╔═╡ 35f34180-07d0-11eb-2c53-d1a2454235d5
+begin
+	x = -2:0.1:2
+	plot()
+	for r in eachrow(prior5_1_At)
+		p = lin(r.a, x, r.bA)
+		plot!(x, p, color = :black, alpha = 0.4)
+	end
+	plot!(legend = false)
 
-A_seq = range(-3, 3.2, length = 30)
-mu = lin(post.a', A_seq, post.bA') |> meanlowerupper
+	quap5_1_At = quap(m5_1_At)
+	dfa5_1_At = DataFrame(rand(quap5_1_At.distr, 1000)', quap5_1_At.params)
 
-scatter(d.A, d.D, alpha = 0.4, legend = false)
-plot!(A_seq, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
+	A_seq = range(-3, 3.2, length = 30)
+	mu5_1_At = lin(dfa5_1_At.a', A_seq, dfa5_1_At.bA') |> meanlowerupper
+
+	scatter(df.A, df.D, alpha = 0.4, legend = false)
+	plot!(A_seq, mu5_1_At.mean, ribbon = (mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
+end
+
+# ╔═╡ f2973922-077b-11eb-3833-9f97491e0ae2
 
 @model function divorce_M(M, D)
     a ~ Normal(0, 0.2)
@@ -203,3 +230,15 @@ post = DataFrame(rand(q5_3_A.distr, 1000)', q5_3_A.params)
 M_sim = rand.(Normal.(post.aM' .+ A_seq .* post.bAM', post.σ_M'))
 D_sim = rand.(Normal.(post.a' .+ A_seq .* post.bA', post.σ'))
 
+
+
+# ╔═╡ Cell order:
+# ╠═041b4048-077d-11eb-20b8-6f8b8ee72626
+# ╠═0831131a-077d-11eb-2412-fbd0e7cc3436
+# ╠═08314e98-077d-11eb-1d86-f9c9dd52e2c3
+# ╠═08320f9a-077d-11eb-2181-9bacc9603e02
+# ╠═084594e8-077d-11eb-082b-6f19dc8a8e0f
+# ╠═084663b4-077d-11eb-3586-73882ea2ceec
+# ╠═0857f156-077d-11eb-0829-799d64e773d2
+# ╠═35f34180-07d0-11eb-2c53-d1a2454235d5
+# ╠═f2973922-077b-11eb-3833-9f97491e0ae2

@@ -1,21 +1,35 @@
-# Clip-05-01-27.jl
+### A Pluto.jl notebook ###
+# v0.11.14
 
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ 0831131a-077d-11eb-2412-fbd0e7cc3436
 using DrWatson
-@quickactivate "StatReth"
-using Turing
 
-include(srcdir("quap.jl"))
+# ╔═╡ 08314e98-077d-11eb-1d86-f9c9dd52e2c3
+begin
+	@quickactivate "StatisticalRethinkingTuring"
+	using Turing
+	using StatisticalRethinking
+end
 
-# %% 5.1, 5.2
-d = DataFrame(CSV.File(datadir("exp_raw/WaffleDivorce.csv")))
-d.D = zscore(d.Divorce)
-d.M = zscore(d.Marriage)
-d.A = zscore(d.MedianAgeMarriage)
+# ╔═╡ 041b4048-077d-11eb-20b8-6f8b8ee72626
+md"## Clip-05-01-27t.jl"
 
-std(d.MedianAgeMarriage)
+# ╔═╡ 08320f9a-077d-11eb-2181-9bacc9603e02
+begin
+	df = CSV.read(sr_datadir("WaffleDivorce.csv"), DataFrame)
+	df.D = zscore(df.Divorce)
+	df.M = zscore(df.Marriage)
+	df.A = zscore(df.MedianAgeMarriage)
+end
 
-# %% 5.3
-@model function divorce_A(A, D)
+# ╔═╡ 084594e8-077d-11eb-082b-6f19dc8a8e0f
+std(df.MedianAgeMarriage)
+
+# ╔═╡ 084663b4-077d-11eb-3586-73882ea2ceec
+@model function m5_1_A(A, D)
     a ~ Normal(0, 0.2)
     bA ~ Normal(0, 0.5)
     σ ~ Exponential(1)
@@ -23,29 +37,36 @@ std(d.MedianAgeMarriage)
     D ~ MvNormal(μ, σ)
 end
 
-m5_1 = divorce_A(d.A, d.D)
-prior = sample(m5_1, Prior(), 50) |> DataFrame
-
-# %% 5.4
-x = -2:0.1:2
-plot()
-for r in eachrow(prior)
-    p = lin(r.a, x, r.bA)
-    plot!(x, p, color = :black, alpha = 0.4)
+# ╔═╡ 0857f156-077d-11eb-0829-799d64e773d2
+begin
+	m5_1_At = m5_1_A(df.A, df.D)
+	prior5_1_At = sample(m5_1_At, Prior(), 50) |> DataFrame
+	prior5_1_At = prior5_1_At[:, 3:end]
+	Text(precis(prior5_1_At; io=String))
 end
-plot!(legend = false)
 
-# %% 5.5
-q5_1 = quap(m5_1)
-post = DataFrame(rand(q5_1.distr, 1000)', q5_1.params)
+# ╔═╡ 35f34180-07d0-11eb-2c53-d1a2454235d5
+begin
+	x = -2:0.1:2
+	plot()
+	for r in eachrow(prior5_1_At)
+		p = lin(r.a, x, r.bA)
+		plot!(x, p, color = :black, alpha = 0.4)
+	end
+	plot!(legend = false)
 
-A_seq = range(-3, 3.2, length = 30)
-mu = lin(post.a', A_seq, post.bA') |> meanlowerupper
+	quap5_1_At = quap(m5_1_At)
+	dfa5_1_At = DataFrame(rand(quap5_1_At.distr, 1000)', quap5_1_At.params)
 
-scatter(d.A, d.D, alpha = 0.4, legend = false)
-plot!(A_seq, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
+	A_seq = range(-3, 3.2, length = 30)
+	mu5_1_At = lin(dfa5_1_At.a', A_seq, dfa5_1_At.bA') |> meanlowerupper
 
-# %% 5.6
+	scatter(df.A, df.D, alpha = 0.4, legend = false)
+	plot!(A_seq, mu5_1_At.mean, ribbon = (mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
+end
+
+# ╔═╡ f2973922-077b-11eb-3833-9f97491e0ae2
+
 @model function divorce_M(M, D)
     a ~ Normal(0, 0.2)
     bM ~ Normal(0, 0.5)
@@ -63,10 +84,8 @@ mu = lin(post.a', M_seq, post.bM') |> meanlowerupper
 scatter(d.M, d.D, alpha = 0.4, legend = false)
 plot!(M_seq, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
 
-# %% 5.7 - 5.9
 missing  # TODO
 
-# %% 5.10
 @model function divorce_A_M(A, M, D)
     a ~ Normal(0, 0.2)
     bM ~ Normal(0, 0.5)
@@ -79,9 +98,6 @@ end
 m5_3 = divorce_A_M(d.A, d.M, d.D)
 q5_3 = quap(m5_3)
 
-# %% 5.11
-# Well, this ain't pretty. But before I have something reasonable, I at least wanted to
-# something, even if it's messily thrown together. TODO
 
 x = [
     q5_1.coef.bA,       # bA
@@ -114,13 +130,11 @@ ylab = [
 scatter(x, ylab, xerr = xerr, legend = false)
 vline!([0])
 
-# %% 5.12
 N = 50
 age = randn(N)
 mar = rand.(Normal.(-age))
 div = rand.(Normal.(age))
 
-# %% 5.13, 5.14
 @model function divorce_AM(A, M)
     a ~ Normal(0, 0.2)
     bAM ~ Normal(0, 0.5)
@@ -139,7 +153,6 @@ resid = d.M .- mu.mean
 scatter(d.A, d.M, legend = false)
 plot!(d.A, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
 
-# %% 5.15, 5.16
 post = DataFrame(rand(q5_3.distr, 1000)', q5_3.params)
 μ = lin(post.a', d.A, post.bA', d.M, post.bM') |> meanlowerupper
 
@@ -147,7 +160,6 @@ scatter(d.D, μ.mean, yerror = (μ.mean .- μ.lower, μ.upper .- μ.mean), legen
 plot!(identity, range(extrema(d.D)..., length = 10))
 plot!(xlabel = "Observed divorce", ylabel = "Predicted divorce")
 
-# %% 5.17
 xy = [d.D μ.mean]
 for loc in ("ID", "UT", "ME", "RI")
     coord = xy[d.Loc .== loc, :]
@@ -155,7 +167,6 @@ for loc in ("ID", "UT", "ME", "RI")
 end
 plot!()
 
-# %% 5.18
 N = 100
 x_real = randn(N)
 x_spur = rand.(Normal.(x_real))
@@ -166,7 +177,6 @@ d = DataFrame((; y, x_real, x_spur))  # the semicolon turns it into a NamedTuple
 @df d corrplot([:y :x_real :x_spur])  # either
 corrplot(Matrix(d), label = names(d)) # or
 
-# %% 5.19
 d = DataFrame(CSV.File(datadir("exp_raw/WaffleDivorce.csv")))
 d.D = zscore(d.Divorce)
 d.M = zscore(d.Marriage)
@@ -191,7 +201,6 @@ end
 
 q5_3_A = quap(divorce_19(d.A, d.M, d.D))
 
-# %% 5.20 - 5.22
 A_seq = range(-2, 2, length = 30)
 post = DataFrame(rand(q5_3_A.distr, 1000)', q5_3_A.params)
 
@@ -203,17 +212,10 @@ D = rand.(Normal.(μD, post.σ')) |> meanlowerupper
 plot(A_seq, D.mean, ribbon = (D.mean .- D.lower, D.upper .- D.mean))
 plot!(legend = false, xlabel = "manipulated A", ylabel = "counterfactual D")
 
-# %% 5.23
-# I use zscore_transform from the tools.jl file so I don't have to hardcode the mean and
-# stddev of d.MedianAgeMarriage.
 M = rand.(Normal.(lin(post.aM', (20.0, 30.0) |> z_age, post.bAM'), post.σ_M'))
 μD = lin(post.a', (20.0, 30.0) |> z_age, post.bA', M, post.bM') |> meanlowerupper
 μD.mean[2] - μD.mean[1]
-# Eh, yes, 4.5 stddev are kinda big but so is a change in the median age of marriage from
-# 20 to 30 years, clocking in at 8 stddevs. I mean, think about it, a median age of
-# marriage of 20 years?!
 
-# %% 5.24
 M_seq = range(-2, 2, length = 30)
 A_seq = zeros(length(M_seq))
 M = rand.(Normal.(lin(post.aM', A_seq, post.bAM'), post.σ_M'))
@@ -223,11 +225,20 @@ D = rand.(Normal.(μD, post.σ')) |> meanlowerupper
 plot(M_seq, D.mean, ribbon = (D.mean .- D.lower, D.upper .- D.mean))
 plot!(legend = false, xlabel = "manipulated M", ylabel = "counterfactual D")
 
-# %% 5.25 - 5.27
-# This is a little superfluous since we aren't hiding any details but here we go.
 A_seq = range(-2, 2, length = 30)
 post = DataFrame(rand(q5_3_A.distr, 1000)', q5_3_A.params)
 M_sim = rand.(Normal.(post.aM' .+ A_seq .* post.bAM', post.σ_M'))
 D_sim = rand.(Normal.(post.a' .+ A_seq .* post.bA', post.σ'))
 
-# End of clip-05-01-27.jl
+
+
+# ╔═╡ Cell order:
+# ╠═041b4048-077d-11eb-20b8-6f8b8ee72626
+# ╠═0831131a-077d-11eb-2412-fbd0e7cc3436
+# ╠═08314e98-077d-11eb-1d86-f9c9dd52e2c3
+# ╠═08320f9a-077d-11eb-2181-9bacc9603e02
+# ╠═084594e8-077d-11eb-082b-6f19dc8a8e0f
+# ╠═084663b4-077d-11eb-3586-73882ea2ceec
+# ╠═0857f156-077d-11eb-0829-799d64e773d2
+# ╠═35f34180-07d0-11eb-2c53-d1a2454235d5
+# ╠═f2973922-077b-11eb-3833-9f97491e0ae2

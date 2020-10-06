@@ -27,7 +27,8 @@ end;
     heights ~ MvNormal(μ, σ)
 end
 
-quap4_3t = quap(m4_3(df.weight, df.height))
+m4_3t = m4_3(df.weight, df.height)
+quap4_3t = quap(m4_3t)
 
 md"### snippets 4.50 - 4.52"
 
