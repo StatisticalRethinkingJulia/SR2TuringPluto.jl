@@ -1,25 +1,31 @@
-using TuringModels
+# m4_2t.jl
+
+using Pkg, DrWatson
+
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
 
 # ### snippet 4.43
 
 delim = ';'
-df = CSV.read(joinpath(@__DIR__, "..", "..", "data", "Howell1.csv"), DataFrame; delim)
+df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim)
 
 # Use only adults and center the weight observations
 
-df2 = filter(row -> row.age >= 18, df)
-mean_weight = mean(df2.weight)
-df2.weight_c = df2.weight .- mean_weight
-first(df2, 5)
+df = filter(row -> row.age >= 18, df)
+mean_weight = mean(df.weight)
+df.weight_c = df.weight .- mean_weight
+precis(df)
 
 # Extract variables for Turing model
 
-x = df2.weight_c
-y = df2.height
+x = df.weight_c
+y = df.height
 
 # Define the regression model
 
-@model line(x, y) = begin
+@model m4_2(x, y) = begin
     #priors
     alpha ~ Normal(178.0, 100.0)
     beta ~ Normal(0.0, 10.0)
@@ -32,7 +38,8 @@ end
 
 # Draw the samples
 
-chns = sample(line(x, y), NUTS(0.65), 1000)
+m4_2t = m4_2(x, y)
+chns = sample(m4_2t, NUTS(0.65), 1000)
 
 # Compare with a previous result
 

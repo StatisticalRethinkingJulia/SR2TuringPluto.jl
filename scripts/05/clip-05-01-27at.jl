@@ -1,23 +1,17 @@
-### A Pluto.jl notebook ###
-# v0.11.14
 
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 0831131a-077d-11eb-2412-fbd0e7cc3436
 using DrWatson
 
-# ╔═╡ 08314e98-077d-11eb-1d86-f9c9dd52e2c3
 begin
 	@quickactivate "StatisticalRethinkingTuring"
 	using Turing
 	using StatisticalRethinking
 end
 
-# ╔═╡ 041b4048-077d-11eb-20b8-6f8b8ee72626
 md"## Clip-05-01-27t.jl"
 
-# ╔═╡ 08320f9a-077d-11eb-2181-9bacc9603e02
 begin
 	df = CSV.read(sr_datadir("WaffleDivorce.csv"), DataFrame)
 	df.D = zscore(df.Divorce)
@@ -25,10 +19,8 @@ begin
 	df.A = zscore(df.MedianAgeMarriage)
 end
 
-# ╔═╡ 084594e8-077d-11eb-082b-6f19dc8a8e0f
 std(df.MedianAgeMarriage)
 
-# ╔═╡ 084663b4-077d-11eb-3586-73882ea2ceec
 @model function m5_1_A(A, D)
     a ~ Normal(0, 0.2)
     bA ~ Normal(0, 0.5)
@@ -37,7 +29,6 @@ std(df.MedianAgeMarriage)
     D ~ MvNormal(μ, σ)
 end
 
-# ╔═╡ 0857f156-077d-11eb-0829-799d64e773d2
 begin
 	m5_1_At = m5_1_A(df.A, df.D)
 	prior5_1_At = sample(m5_1_At, Prior(), 50) |> DataFrame
@@ -45,7 +36,6 @@ begin
 	Text(precis(prior5_1_At; io=String))
 end
 
-# ╔═╡ 35f34180-07d0-11eb-2c53-d1a2454235d5
 begin
 	x = -2:0.1:2
 	plot()
@@ -62,12 +52,12 @@ begin
 	mu5_1_At = lin(dfa5_1_At.a', A_seq, dfa5_1_At.bA') |> meanlowerupper
 
 	scatter(df.A, df.D, alpha = 0.4, legend = false)
-	plot!(A_seq, mu5_1_At.mean, ribbon = (mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
+	plot!(A_seq, mu5_1_At.mean, ribbon =
+		(mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
+	vline!([0])
 end
 
-# ╔═╡ f2973922-077b-11eb-3833-9f97491e0ae2
-
-@model function divorce_M(M, D)
+@model function m5_1_M(M, D)
     a ~ Normal(0, 0.2)
     bM ~ Normal(0, 0.5)
     σ ~ Exponential(1)
@@ -75,18 +65,19 @@ end
     D ~ MvNormal(μ, σ)
 end
 
-q5_2 = quap(divorce_M(d.M, d.D))
-post = DataFrame(rand(q5_2.distr, 1000)', q5_2.params)
+quap5_1_Mt = quap(m5_1_M(df.M, df.D))
 
-M_seq = range(-3, 3.2, length = 30)
-mu = lin(post.a', M_seq, post.bM') |> meanlowerupper
+begin
+	dfa5_1_Mt = DataFrame(rand(quap5_1_Mt.distr, 1000)', quap5_1_Mt.params)
+	M_seq = range(-3, 3.2, length = 30)
+	mu5_1_Mt = lin(dfa5_1_Mt.a', M_seq, dfa5_1_Mt.bM') |> meanlowerupper
+	scatter(df.M, df.D, alpha = 0.4, legend = false)
+	plot!(M_seq, mu5_1_Mt.mean, ribbon = 
+		(mu5_1_Mt.mean .- mu5_1_Mt.lower, mu5_1_Mt.upper .- mu5_1_Mt.mean))
+	vline!([0])
+end
 
-scatter(d.M, d.D, alpha = 0.4, legend = false)
-plot!(M_seq, mu.mean, ribbon = (mu.mean .- mu.lower, mu.upper .- mu.mean))
-
-missing  # TODO
-
-@model function divorce_A_M(A, M, D)
+@model function m5_1_A_M(A, M, D)
     a ~ Normal(0, 0.2)
     bM ~ Normal(0, 0.5)
     bA ~ Normal(0, 0.5)
@@ -95,40 +86,44 @@ missing  # TODO
     D ~ MvNormal(μ, σ)
 end
 
-m5_3 = divorce_A_M(d.A, d.M, d.D)
-q5_3 = quap(m5_3)
+begin
+	m5_3_A_Mt = m5_1_A_M(df.A, df.M, df.D)
+	quap5_1_A_Mt = quap(m5_3_A_Mt)
+end
 
-
-x = [
-    q5_1.coef.bA,       # bA
+xm = [
+    quap5_1_At.coef.bA,       # bA
     NaN,
-    q5_3.coef.bA,
-    NaN,                # Spaceholder
-    NaN,                # bM
-    q5_2.coef.bM,
-    q5_3.coef.bM,
-]
+    quap5_1_A_Mt.coef.bA,
+    NaN,                	  # Spaceholder
+    NaN,                	  # bM
+    quap5_1_Mt.coef.bM,
+    quap5_1_A_Mt.coef.bM,
+];
+
 xerr = sqrt.([
-    q5_1.vcov[2, 2],    # bA
+    quap5_1_At.vcov[2, 2],    # bA
     NaN,
-    q5_3.vcov[3, 3],
-    NaN,                # Spaceholder
-    NaN,                # bM
-    q5_2.vcov[2, 2],
-    q5_3.vcov[2, 2],
-])
+    quap5_1_A_Mt.vcov[3, 3],
+    NaN,                      # Spaceholder
+    NaN,                      # bM
+    quap5_1_Mt.vcov[2, 2],
+    quap5_1_A_Mt.vcov[2, 2],
+]);
+
 ylab = [
-    "bA m5.1",
-    "bA m5.2",
-    "bA m5.3",
+    "bA m5.1_At",
+    "bA m5.1_Mt",
+    "bA m5.1_A_Mt",
     "",
-    "bM m5.1",
-    "bM m5.2",
-    "bM m5.3",
-]
+    "bM m5.1_At",
+    "bM m5.1_Mt",
+    "bM m5.1_A_Mt"
+];
 
 scatter(x, ylab, xerr = xerr, legend = false)
-vline!([0])
+
+
 
 N = 50
 age = randn(N)
@@ -232,13 +227,3 @@ D_sim = rand.(Normal.(post.a' .+ A_seq .* post.bA', post.σ'))
 
 
 
-# ╔═╡ Cell order:
-# ╠═041b4048-077d-11eb-20b8-6f8b8ee72626
-# ╠═0831131a-077d-11eb-2412-fbd0e7cc3436
-# ╠═08314e98-077d-11eb-1d86-f9c9dd52e2c3
-# ╠═08320f9a-077d-11eb-2181-9bacc9603e02
-# ╠═084594e8-077d-11eb-082b-6f19dc8a8e0f
-# ╠═084663b4-077d-11eb-3586-73882ea2ceec
-# ╠═0857f156-077d-11eb-0829-799d64e773d2
-# ╠═35f34180-07d0-11eb-2c53-d1a2454235d5
-# ╠═f2973922-077b-11eb-3833-9f97491e0ae2

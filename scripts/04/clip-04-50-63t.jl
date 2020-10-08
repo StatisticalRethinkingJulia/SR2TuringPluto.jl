@@ -27,8 +27,15 @@ end;
     heights ~ MvNormal(μ, σ)
 end
 
-m4_3t = m4_3(df.weight, df.height)
-quap4_3t = quap(m4_3t)
+begin
+	m4_3t = m4_3(df.weight, df.height)
+	Text(precis(m4_3t; io=String))
+end
+
+begin
+	quap4_3t = quap(m4_3t)
+	Text(precis(quap4_3t; io=String))
+end
 
 md"### snippets 4.50 - 4.52"
 
