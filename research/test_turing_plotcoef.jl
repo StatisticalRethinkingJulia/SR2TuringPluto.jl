@@ -5,18 +5,18 @@ using InteractiveUtils
 using DrWatson
 
 begin
-	@quickactivate "StatisticalRethinkingTuring"
-	using Turing
-	using StatisticalRethinking
+  @quickactivate "StatisticalRethinkingTuring"
+  using Turing
+  using StatisticalRethinking
 end
 
 md"## Clip-05-01-27t.jl"
 
 begin
-	df = CSV.read(sr_datadir("WaffleDivorce.csv"), DataFrame)
-	df.D = zscore(df.Divorce)
-	df.M = zscore(df.Marriage)
-	df.A = zscore(df.MedianAgeMarriage)
+  df = CSV.read(sr_datadir("WaffleDivorce.csv"), DataFrame)
+  df.D = zscore(df.Divorce)
+  df.M = zscore(df.Marriage)
+  df.A = zscore(df.MedianAgeMarriage)
 end
 
 std(df.MedianAgeMarriage)
@@ -31,14 +31,14 @@ end
 
 begin
     m5_1_At = m5_1_A(df.A, df.D)
-	quap5_1_At = quap(m5_1_At)
-	post5_1_At = DataFrame(rand(quap5_1_At.distr, 1000)', quap5_1_At.params)
+  quap5_1_At = quap(m5_1_At)
+  post5_1_At = DataFrame(rand(quap5_1_At.distr, 1000)', quap5_1_At.params)
 
-	A_seq = range(-3, 3.2, length = 30)
-	mu5_1_At = lin(post5_1_At.a', A_seq, post5_1_At.bA') |> meanlowerupper
+  A_seq = range(-3, 3.2, length = 30)
+  mu5_1_At = lin(post5_1_At.a', A_seq, post5_1_At.bA') |> meanlowerupper
 
-	scatter(df.A, df.D, alpha = 0.4, legend = false)
-	plot!(A_seq, mu5_1_At.mean, ribbon =
+  scatter(df.A, df.D, alpha = 0.4, legend = false)
+  plot!(A_seq, mu5_1_At.mean, ribbon =
         (mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
 end
 

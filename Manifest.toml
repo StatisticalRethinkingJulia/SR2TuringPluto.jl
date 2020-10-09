@@ -171,9 +171,9 @@ version = "0.3.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "SHA", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "8cd7b7d1c7f6fcbe7e8743a58adf57788ec7f787"
+git-tree-sha1 = "cf03b37436c6bc162e7c8943001568b4cad4bee3"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "3.18.0"
+version = "3.19.0"
 
 [[CompilerSupportLibraries_jll]]
 deps = ["Libdl", "Pkg"]
@@ -288,9 +288,9 @@ version = "1.16.1"
 
 [[DynamicPPL]]
 deps = ["AbstractMCMC", "Bijectors", "ChainRulesCore", "Distributions", "MacroTools", "NaturalSort", "Random"]
-git-tree-sha1 = "f17e63be7da4c5d252d7078d8842cf920b895635"
+git-tree-sha1 = "8cc80b4540c0a0d4cc5743bf88eca6c9e96a92af"
 uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
-version = "0.9.3"
+version = "0.9.4"
 
 [[EarCut_jll]]
 deps = ["Libdl", "Pkg"]
@@ -484,9 +484,9 @@ version = "0.21.1"
 
 [[KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
-git-tree-sha1 = "c4cd736343d767c0e78e37c7d95548782b8f9424"
+git-tree-sha1 = "2fdea3992af1bd7a90535d2937555d7b69d5e5ee"
 uuid = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
-version = "0.6.0"
+version = "0.6.1"
 
 [[LAME_jll]]
 deps = ["Libdl", "Pkg"]
@@ -752,9 +752,9 @@ version = "1.0.7"
 
 [[Plots]]
 deps = ["Base64", "Contour", "Dates", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "GeometryTypes", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs"]
-git-tree-sha1 = "dea71b6f8214a97dc16c3a9e4e7bd0b71ddcd132"
+git-tree-sha1 = "9376c978098b85a001870ad0270569b6e445f154"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.6.9"
+version = "1.6.10"
 
 [[PooledArrays]]
 deps = ["DataAPI"]

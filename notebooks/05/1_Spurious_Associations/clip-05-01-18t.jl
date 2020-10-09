@@ -1,11 +1,11 @@
 ### A Pluto.jl notebook ###
-# v0.12.2
+# v0.12.3
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 0831131a-077d-11eb-2412-fbd0e7cc3436
-using DrWatson
+using Pkg, DrWatson
 
 # ╔═╡ 08314e98-077d-11eb-1d86-f9c9dd52e2c3
 begin
@@ -77,7 +77,10 @@ end
 end
 
 # ╔═╡ 0d7bab3c-07d7-11eb-3406-f3eea1352ba4
-quap5_2_Mt = quap(m5_2_M(df.M, df.D))
+begin
+	m5_2_Mt = m5_2_M(df.M, df.D)
+	quap5_2_Mt = quap(m5_2_Mt)
+end
 
 # ╔═╡ 0d7c05c8-07d7-11eb-2253-437844d8bb9b
 begin
@@ -116,9 +119,21 @@ begin
 	vline!([0])
 end
 
+# ╔═╡ 86a824ae-0991-11eb-3ee5-8ffb37cce3ec
+begin
+	quap5_1_3, fig = plotcoef(
+		[m5_1_At, m5_2_Mt, m5_3_A_Mt], 
+		[:a, :bM, :bA, :σ];
+		func=quap
+	)
+	plot(fig)
+end
+
+# ╔═╡ 15658b5c-0993-11eb-21a9-0fc78a4a6fdf
+quap5_1_3
+
 # ╔═╡ 11f58eb0-08da-11eb-0f7f-239cec1bfdd5
 begin
-	#N = 50
 	age = randn(50)
 	mar = rand.(Normal.(-age))
 	div = rand.(Normal.(age))
@@ -181,7 +196,7 @@ end
 md"## End of clip-05-01-18t.jl"
 
 # ╔═╡ Cell order:
-# ╠═041b4048-077d-11eb-20b8-6f8b8ee72626
+# ╟─041b4048-077d-11eb-20b8-6f8b8ee72626
 # ╠═0831131a-077d-11eb-2412-fbd0e7cc3436
 # ╠═08314e98-077d-11eb-1d86-f9c9dd52e2c3
 # ╠═08320f9a-077d-11eb-2181-9bacc9603e02
@@ -195,6 +210,8 @@ md"## End of clip-05-01-18t.jl"
 # ╠═0db57a6a-07d7-11eb-2536-914facad3260
 # ╠═0dc1c694-07d7-11eb-1b23-fff550d68b74
 # ╠═fa977d88-08d8-11eb-1ba3-3dbba5377f58
+# ╠═86a824ae-0991-11eb-3ee5-8ffb37cce3ec
+# ╠═15658b5c-0993-11eb-21a9-0fc78a4a6fdf
 # ╠═11f58eb0-08da-11eb-0f7f-239cec1bfdd5
 # ╠═156073d8-08da-11eb-18d2-ef100b4f33b0
 # ╠═1560bce4-08da-11eb-10b7-cf52ec6e7f33

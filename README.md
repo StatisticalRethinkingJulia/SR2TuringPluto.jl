@@ -37,14 +37,16 @@ d2 = d[d.age .>= 18, :]
 
 To (locally) reproduce and use this project, do the following:
 
-1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github.
-2. Move to the downloaded directory.
-3. Start a Pluto notebook server.
-4. Open a notebook in a browser.
+1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github and move to the downloaded directory, e.g.:
 
-This assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto`, `PlutoUI` and `Turing`.
+```
+git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
+cd StatisticalRethinkingTuring.jl
+```
 
-Step 3 usually can be done by:
+The next step assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
+
+2. Start a Pluto notebook server and open a notebook in a browser.
 ```
 $ julia
 
@@ -76,6 +78,21 @@ Special introductory notebooks have been included in `notebooks/intros`, e.g.
 `intro-R-users/broadcasting.jl` and `intro-R-users/distributions.jl`.
 
 In addition to clips, in the early notebook chapters (0-3) it is shown how to create the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
+
+Results of simulations are stored as follows:
+
+0. m5_1              : DynamicPPL language program
+1. m5_1t             : The Turing model based on m5_1 with data
+2. quap5_1t          : The Turing quap model
+3. prior5_1t         : Prior samples (DataFrame)
+4. post5_1t          : Posterior Turing samples (DataFrame)
+5. postq5_1t         : Posterior samples using quap approximation (DataFrame)
+6. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
+7. chnsq15_1t        : MCMCChains object (10000 quap samples)
+
+As before, the `t` at the end indicates Turing.
+
+All models in the `models` subdirectory return 1, 2 and 6.
 
 ## Status
 
