@@ -38,8 +38,8 @@ cd(indir) do
       if !isdir(joinpath(outdir, nbsubdir))
         mkdir(joinpath(outdir, nbsubdir))
       end
-      # Find all notebooks in nbsubdir, skip subdir "intros"
-      if !(nbsubdir == "intros")
+      # Find all notebooks in nbsubdir, skip subdirs "05" and  "intros"
+      if !(nbsubdir in ["05", "intros"])
         nbs = readdir(nbsubdir)
         println("$(nbsubdir): $(nbs)\n")
         # Copy the notebooks to the scripts dir
@@ -47,7 +47,7 @@ cd(indir) do
           nb == ".DS_Store" && continue
           copy_file(nb, joinpath(indir, nbsubdir), joinpath(outdir, nbsubdir))
         end
-      else # Handle subdirs in "intros"
+      else # Handle subdirs in "05" and "intros"
         nb_intro_dirs = readdir(nbsubdir)
         println("$(nbsubdir): $(nb_intro_dirs)\n")
         # Copy the notebooks to the scripts dir

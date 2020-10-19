@@ -1,10 +1,12 @@
-## Purpose of StatisticalRethingTuring.jl
+## Purpose of StatisticalRethinkingTuring.jl
 
 As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
 
 StatisticalRethinkingTuring is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
 This Julia project uses Turing as the underlying mcmc implementation.
+
+Note: Right now this project depends on StatisticalRethinking v3 which is not yet merged in Julia's package repository. To use that version of StatisticalRethinking you can `] add StatisticalRethinkinking@v3.0.0`
 
 ## Usage
 
