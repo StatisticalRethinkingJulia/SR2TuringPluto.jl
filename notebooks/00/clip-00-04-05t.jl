@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.4
 
 using Markdown
 using InteractiveUtils
@@ -28,15 +28,17 @@ md"### snippet 0.4"
 # ╔═╡ 1059f184-eb98-11ea-1108-a50008b9be0c
 begin
 	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim=';')
-	howell1 = filter(row -> row[:age] >= 18, df);
-	first(howell1, 5)
-end
+	df = filter(row -> row[:age] >= 18, df);
+end;
+
+# ╔═╡ eb567d8c-122d-11eb-0f13-f7ea2dc1f805
+Text(precis(df; io=String))
 
 # ╔═╡ 37924058-eb98-11ea-3a78-390939122024
 md"##### Fit a linear regression of distance on speed."
 
 # ╔═╡ 61681d9c-eb98-11ea-1411-df9bdf7296ae
-m = lm(@formula(height ~ weight), howell1)
+m = lm(@formula(height ~ weight), df)
 
 # ╔═╡ 686ef54a-eb98-11ea-1b68-d33aa9873780
 md"##### Estimated coefficients from the model."
@@ -48,7 +50,7 @@ coef(m)
 md"##### Plot residuals against height."
 
 # ╔═╡ d7308a84-eb98-11ea-2299-95175b5cf27d
-scatter( howell1.height, residuals(m), xlab="Height",
+scatter( df.height, residuals(m), xlab="Height",
   ylab="Model residual values", lab="Model residuals", leg=:bottomright)
 
 # ╔═╡ e17084e2-eb98-11ea-34ef-b1ebfab71041
@@ -62,6 +64,7 @@ md"## End of clip-00-04-05t.jl"
 # ╠═cb4a13ee-eb97-11ea-373e-474e38399b44
 # ╟─fe16f312-eb97-11ea-1272-fb0eb517fbe2
 # ╠═1059f184-eb98-11ea-1108-a50008b9be0c
+# ╠═eb567d8c-122d-11eb-0f13-f7ea2dc1f805
 # ╟─37924058-eb98-11ea-3a78-390939122024
 # ╠═61681d9c-eb98-11ea-1411-df9bdf7296ae
 # ╟─686ef54a-eb98-11ea-1b68-d33aa9873780

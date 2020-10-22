@@ -5,7 +5,6 @@ authors = ["Karajan, Goedman"]
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
-Turing2MonteCarloMeasurements = "d5f69e58-3735-4fb1-9f31-04d391be4687"
 
 [compat]
 julia = "1.5"

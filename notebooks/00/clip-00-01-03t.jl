@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.4
 
 using Markdown
 using InteractiveUtils
@@ -53,6 +53,9 @@ begin
 	x = exp(x)
 end
 
+# ╔═╡ 975e15f4-122c-11eb-2a4d-ed836c7bade0
+md"##### Notice that in Pluto notebooks varables can only be defined once. This is needed in Pluto to make the `reactivity` work (e.g. when updating above slider setting). Bracketing above sequence of assignments with a `begin` and `end` is allowed."
+
 # ╔═╡ b1d6b4ac-dc20-11ea-3237-a515964f9176
 md"### snippet 0.3"
 
@@ -72,6 +75,7 @@ md"## End of clip-00-01-03t.jl"
 # ╠═c4321a66-de4f-11ea-3449-774edd51eb10
 # ╟─35330a6a-dc20-11ea-2929-9b904165e207
 # ╠═df73cd1c-dc1f-11ea-0e14-c7e381f49c4a
+# ╟─975e15f4-122c-11eb-2a4d-ed836c7bade0
 # ╟─b1d6b4ac-dc20-11ea-3237-a515964f9176
 # ╠═88e3bb64-dc1e-11ea-1136-bd822afb72e4
 # ╟─c4403280-dc20-11ea-0550-5f2f606a9fea
