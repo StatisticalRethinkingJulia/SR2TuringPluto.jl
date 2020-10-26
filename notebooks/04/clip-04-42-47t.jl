@@ -38,10 +38,10 @@ md"### snippet 4.42"
 end
 
 # ╔═╡ d2ba4cfa-070a-11eb-394f-57a4000ca479
-m4_3t = m4_3(df.weight, df.height)
+m4_3t = m4_3(df.weight, df.height);
 
 # ╔═╡ d2bae2e4-070a-11eb-30fc-638d5366be34
-quap4_3t = quap(m4_3t, NelderMead())
+q4_3t = quap(m4_3t, NelderMead())
 
 # ╔═╡ d2cb37f4-070a-11eb-2aee-af17621d1840
 md"### snippet 4.43"
@@ -59,13 +59,13 @@ end
 m4_3tl = m4_3l(df.weight, df.height)
 
 # ╔═╡ d2e9d2c4-070a-11eb-2130-6397de3611e4
-quap4_3tl = quap(m4_3tl, NelderMead())
+q4_3tl = quap(m4_3tl, NelderMead())
 
 # ╔═╡ d2f3e980-070a-11eb-0ac4-a9f0c01b3453
 md"### snippets 4.44, 4.45"
 
 # ╔═╡ d30746de-070a-11eb-2f08-d76d77bf0853
-round.(quap4_3t.vcov, digits = 3)
+round.(q4_3t.vcov, digits = 3)
 
 # ╔═╡ d308808c-070a-11eb-080c-27e7c48d4fbe
 md"### snippet 4.46"
@@ -73,7 +73,7 @@ md"### snippet 4.46"
 # ╔═╡ d3222082-070a-11eb-2804-b9341057fa9a
 begin
 	scatter(df.weight, df.height, leg=false)
-	post = DataFrame(rand(quap4_3t.distr, 10_000)', quap4_3t.params)
+	post = DataFrame(rand(q4_3t.distr, 10_000)', q4_3t.params)
 	a_map = mean(post.a)
 	b_map = mean(post.b)
 	plot!(x, a_map .+ b_map .* (x .- x̄))
