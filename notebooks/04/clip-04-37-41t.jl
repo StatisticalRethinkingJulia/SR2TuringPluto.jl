@@ -27,15 +27,14 @@ begin
 	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
 	df = df[df.age .>= 18, :]
 	x̄ = mean(df.weight)
-	x = range(minimum(df.weight), maximum(df.weight), length = 100)     # either
-	#x = range(extrema(df.weight)..., length = 100)                      # or
+	x = range(minimum(df.weight), maximum(df.weight), length = 100)
 end;
 
 # ╔═╡ bacbe5a6-0708-11eb-15d0-bb7b033210af
 md"### snippet 4.37"
 
 # ╔═╡ badb3b82-0708-11eb-0d65-23f3b0ca7256
-scatter(df.weight, df.height)
+scatter(df.weight, df.height; lab="Observations", leg=:bottomright)
 
 # ╔═╡ bade45fe-0708-11eb-1ab9-2f0b4f7e7331
 md"### snippet 4.38"

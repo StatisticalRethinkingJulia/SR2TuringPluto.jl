@@ -1,3 +1,4 @@
+
 using Pkg, DrWatson, Random, Test
 
 Random.seed!(123)
@@ -5,6 +6,11 @@ Random.seed!(123)
 @quickactivate "StatisticalRethinkingTuring"
 using Turing 
 using StatisticalRethinking
+
+#=
+using Turing, DataFrames
+=#
+
 Turing.turnprogress(false);
 
 @model function linear_reg(x, y)
@@ -25,28 +31,26 @@ xs_test = [10 + i * Δ for i in 1:4]; ys_test = f.(xs_test);
 
 # Infer
 m_train = linear_reg(xs_train, ys_train);
-precis(m_train) |> display
+#precis(m_train) |> display  # From StatisticalRethinking.precis
 
 chain_lin_reg = sample(m_train, NUTS(100, 0.65), 200);
 chain_lin_reg |> display
 
-m_test = linear_reg(
-    xs_test, 
-    Vector{Union{Missing, Float64}}(undef, length(ys_test)), 
-    σ
-);
+#m_test = linear_reg(xs_test, fill(missing, length(ys_test)));
+m_test = linear_reg(xs_test, similar(xs_test, Missing));
+#m_test = linear_reg(xs_test, missing);
 
 # Use the new predict function!
 predictions = predict(m_test, chain_lin_reg)
 predictions |> display
 
 # Get the mean predicted values.
-ys_pred = vec(mean(Array(group(predictions, :y)); dims = 1))
-ys_pred2 = mean(chain_lin_reg[:α]) .+ mean(chain_lin_reg[:β]) .* xs_test
+ys_mean_pred = vec(mean(Array(group(predictions, :y)); dims = 1))
+ys_std_pred = vec(std(Array(group(predictions, :y)); dims = 1))
 
 
 # Get the prediction error:
-ys_test - ys_pred |> display
-ys_test - ys_pred2 |> display
+ys_test - ys_mean_pred |> display
+ys_test - ys_mean_pred2 |> display
 
 #@test sum(abs2, ys_test - ys_pred) ≤ σ

@@ -13,7 +13,8 @@ Note: Right now this project depends on StatisticalRethinking v3 which is not ye
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
 1. `models`, which contains Turing model scripts if needed repeatedly,
-2. `notebooks`, used to store the Pluto notebooks and
+2. `notebooks`, used to store the Pluto notebooks,
+3. `scripts`, Julia scrips generated from the notebooks.
 
 The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. 
 

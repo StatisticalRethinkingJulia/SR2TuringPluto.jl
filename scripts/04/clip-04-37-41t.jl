@@ -19,8 +19,7 @@ begin
 	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
 	df = df[df.age .>= 18, :]
 	x̄ = mean(df.weight)
-	x = range(minimum(df.weight), maximum(df.weight), length = 100)     # either
-	#x = range(extrema(df.weight)..., length = 100)                      # or
+	x = range(minimum(df.weight), maximum(df.weight), length = 100)
 end;
 
 md"### snippet 4.37"
