@@ -88,12 +88,14 @@ Results of simulations are stored as follows:
 1. m5_1t             : The Turing model based on m5_1 with data
 2. q5_1t             : The Turing quap model
 
-3. prior5_1t         : Prior samples (DataFrame)
-4. post5_1t          : Posterior Turing samples (DataFrame)
-5. quap5_1t          : Posterior samples using quap approximation (DataFrame)
+3. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
+4. pred5_1t          : MCMCChains model prediction chain
 
-6. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
-7. chns15_1qt        : MCMCChains object (10000 Turing `quap()` samples)
+5. prior5_1t_df      : Prior samples (DataFrame)
+6. post5_1t_df       : Posterior Turing samples (DataFrame)
+7. quap5_1t_df       : Posterior samples using quap approximation (DataFrame)
+8. pred5_1t_df       : Posterior predictions (DataFrame)
+9. pred5_1t_sum_df   : Posterior prediction summary
 
 As before, the `t` at the end indicates Turing.
 

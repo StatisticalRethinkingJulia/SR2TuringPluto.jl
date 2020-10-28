@@ -24,7 +24,7 @@ end;
 
 md"### snippet 4.37"
 
-scatter(df.weight, df.height)
+scatter(df.weight, df.height; lab="Observations", leg=:bottomright)
 
 md"### snippet 4.38"
 

@@ -19,13 +19,14 @@ md"### snippet 0.4"
 
 begin
 	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim=';')
-	howell1 = filter(row -> row[:age] >= 18, df);
-	first(howell1, 5)
-end
+	df = filter(row -> row[:age] >= 18, df);
+end;
+
+Text(precis(df; io=String))
 
 md"##### Fit a linear regression of distance on speed."
 
-m = lm(@formula(height ~ weight), howell1)
+m = lm(@formula(height ~ weight), df)
 
 md"##### Estimated coefficients from the model."
 
@@ -33,7 +34,7 @@ coef(m)
 
 md"##### Plot residuals against height."
 
-scatter( howell1.height, residuals(m), xlab="Height",
+scatter( df.height, residuals(m), xlab="Height",
   ylab="Model residual values", lab="Model residuals", leg=:bottomright)
 
 md"## End of clip-00-04-05t.jl"

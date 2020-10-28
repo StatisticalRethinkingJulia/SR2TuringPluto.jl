@@ -1,5 +1,4 @@
 
-
 using Markdown
 using InteractiveUtils
 
@@ -30,9 +29,9 @@ md"### snippet 4.42"
     heights ~ MvNormal(μ, σ)
 end
 
-m4_3t = m4_3(df.weight, df.height)
+m4_3t = m4_3(df.weight, df.height);
 
-quap4_3t = quap(m4_3t, NelderMead())
+q4_3t = quap(m4_3t, NelderMead())
 
 md"### snippet 4.43"
 
@@ -46,17 +45,17 @@ end
 
 m4_3tl = m4_3l(df.weight, df.height)
 
-quap4_3tl = quap(m4_3tl, NelderMead())
+q4_3tl = quap(m4_3tl, NelderMead())
 
 md"### snippets 4.44, 4.45"
 
-round.(quap4_3t.vcov, digits = 3)
+round.(q4_3t.vcov, digits = 3)
 
 md"### snippet 4.46"
 
 begin
 	scatter(df.weight, df.height, leg=false)
-	post = DataFrame(rand(quap4_3t.distr, 10_000)', quap4_3t.params)
+	post = DataFrame(rand(q4_3t.distr, 10_000)', q4_3t.params)
 	a_map = mean(post.a)
 	b_map = mean(post.b)
 	plot!(x, a_map .+ b_map .* (x .- x̄))
