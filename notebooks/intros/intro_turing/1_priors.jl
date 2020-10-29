@@ -46,7 +46,7 @@ end
 
 # ╔═╡ 1f9c6586-1916-11eb-055d-9dd844c9b0a7
 begin
-	priors4_3t_df = DataFrame(Array(priors4_3t, :parameters), names(priors4_3t, :parameters))
+	priors4_3t_df = DataFrame(priors4_3t)
 	Text(precis(priors4_3t_df; io=String))
 end
 

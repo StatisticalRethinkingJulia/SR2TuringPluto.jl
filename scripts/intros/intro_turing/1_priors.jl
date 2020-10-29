@@ -37,7 +37,7 @@ begin
 end
 
 begin
-	priors4_3t_df = DataFrame(Array(priors4_3t, :parameters), names(priors4_3t, :parameters))
+	priors4_3t_df = DataFrame(priors4_3t)
 	Text(precis(priors4_3t_df; io=String))
 end
 

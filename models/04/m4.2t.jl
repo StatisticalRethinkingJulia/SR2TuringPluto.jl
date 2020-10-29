@@ -5,6 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
+Turing.turnprogress(false)
 
 # ### snippet 4.43
 
@@ -25,7 +26,7 @@ y = df.height
 
 # Define the regression model
 
-@model m4_2(x, y) = begin
+@model ppl4_2(x, y) = begin
     #priors
     alpha ~ Normal(178.0, 100.0)
     beta ~ Normal(0.0, 10.0)
@@ -38,8 +39,9 @@ end
 
 # Draw the samples
 
-m4_2t = m4_2(x, y)
-chns = sample(m4_2t, NUTS(0.65), 1000)
+m4_2t = ppl4_2(df.weight_c, df.height)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns4_2t = mapreduce(c -> sample(m4_2t, sampler, nsamples), chainscat, 1:nchains)
 
 # Compare with a previous result
 
@@ -61,9 +63,5 @@ alpha 154.0610000 154.4150000 154.5980000 154.7812500 155.1260000
  beta   0.8255494   0.8790695   0.9057435   0.9336445   0.9882981
 sigma   4.7524368   4.9683400   5.0994450   5.2353100   5.5090128
 ";
-
-# Look at the proper draws (in corrected chn2)
-
-chns |> display
 
 # End of `04/m4.2t.jl`
