@@ -1,17 +1,18 @@
-using TuringModels
+# ### m13.4t.jl
 
-# This script requires latest LKJ bijectors support.
-# `] add Bijectors#master` to get latest Bijectors.
+using Pkg, DrWatson
 
-data_path = joinpath(@__DIR__, "..", "..", "data", "UCBadmit.csv")
-delim = ";"
-d = CSV.read(data_path, DataFrame; delim)
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-dept_map = Dict(key => idx for (idx, key) in enumerate(unique(d.dept)))
-d.male = ifelse.(d.gender .== "male", 1, 0)
-d.dept_id = [dept_map[de] for de in d.dept]
+df = CSV.read(sr_datadir("UCBadmit.csv"), DataFrame);
+dept_map = Dict(key => idx for (idx, key) in enumerate(unique(df.dept)))
+df.male = ifelse.(df.gender .== "male", 1, 0)
+df.dept_id = [dept_map[de] for de in df.dept]
 
-@model m13_4(applications, dept_id, male, admit) = begin
+@model function ppl13_4(applications, dept_id, male, admit)
     sigma_dept ~ truncated(Cauchy(0, 2), 0, Inf)
     a ~ Normal(0, 10)    
     a_dept ~ filldist(Normal(a, sigma_dept), 6)
@@ -21,11 +22,9 @@ d.dept_id = [dept_map[de] for de in d.dept]
     admit .~ BinomialLogit.(applications, logit_p)
 end
 
-chns = sample(
-    m13_4(d.applications, d.dept_id, d.male, d.admit),
-    Turing.NUTS(0.95),
-    5000
-)
+m13_4t = ppl13_4(df.applications, df.dept_id, df.male, df.admit)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns13_4t = mapreduce(c -> sample(m13_4t, sampler, nsamples), chainscat, 1:nchains)
 
 m_13_4_rethinking = """
 Inference for Stan model: 0c5c36512c20c41995d1bd25be525138.
@@ -53,7 +52,5 @@ Inference for Stan model: 0c5c36512c20c41995d1bd25be525138.
     sigma_dept  5643    1
     lp__        5322    1    
 """
-
-chns |> display
 
 # End of m13.4.jl

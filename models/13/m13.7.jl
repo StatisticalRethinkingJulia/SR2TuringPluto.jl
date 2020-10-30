@@ -1,23 +1,18 @@
-using TuringModels
-using RData
-using LinearAlgebra
+# ### m13.7t.jl
 
-# This script requires latest LKJ bijectors support.
-# `] add Bijectors#master` to get latest Bijectors.
+using Pkg, DrWatson
 
-data_root = joinpath(@__DIR__, "..", "..", "data")
-delim = ";"
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-Kline2_path = joinpath(data_root, "Kline2.csv")
-delim = ";"
-d = CSV.read(Kline2_path, DataFrame; delim)
+df = CSV.read(sr_datadir("Kline2.csv"), DataFrame);
+Dmat = CSV.read(sr_datadir("islandDistMatrix.csv"), DataFrame)
 
-Dmat_path = joinpath(data_root, "islandsDistMatrix.rda")
-Dmat = load(Dmat_path)["islandsDistMatrix"]
+df.society = 1:10
 
-d.society = 1:10
-
-@model m13_7(Dmat, society, logpop, total_tools) = begin
+@model ppl13_7(Dmat, society, logpop, total_tools) = begin
     rhosq ~ truncated(Cauchy(0, 1), 0, Inf)
     etasq ~ truncated(Cauchy(0, 1), 0, Inf)
     bp ~ Normal(0, 1)
@@ -34,19 +29,12 @@ d.society = 1:10
     total_tools .~ Poisson.(exp.(log_lambda))
 end
 
-chns = sample(
-    m13_7(Dmat, d.society, d.logpop, d.total_tools),
-    Turing.NUTS(0.95),
-    5000
-)
+m13_7t = ppl13_7(Dmat, df.society, df.logpop, df.total_tools)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+#nchains = 1 # Fails with nchains=4
+chns13_7t = mapreduce(c -> sample(m13_7t, sampler, nsamples), chainscat, 1:nchains)
 
-chns |> display
-
-m_13_7_rethinking = """
-Inference for Stan model: 6422d8042e9cdd08dae2420ad26842f1.
-    4 chains, each with iter=10000; warmup=2000; thin=1; 
-    post-warmup draws per chain=8000, total post-warmup draws=32000.
-    
+m_13_7s_results = """
             mean se_mean    sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
     g[1]   -0.27    0.01  0.44  -1.26  -0.50  -0.24  -0.01   0.53  3278    1
     g[2]   -0.13    0.01  0.43  -1.07  -0.34  -0.10   0.12   0.67  3144    1
@@ -65,4 +53,23 @@ Inference for Stan model: 6422d8042e9cdd08dae2420ad26842f1.
     lp__  925.98    0.03  2.96 919.16 924.20 926.34 928.14 930.67  7296    1    
 """
 
-# End of m13.7.jl
+m_13_7_rethinking = """
+       mean   sd  5.5% 94.5% n_eff Rhat4
+k[1]  -0.16 0.34 -0.71  0.33   615  1.01
+k[2]  -0.02 0.33 -0.55  0.47   550  1.01
+k[3]  -0.07 0.32 -0.58  0.40   566  1.01
+k[4]   0.35 0.29 -0.05  0.81   557  1.01
+k[5]   0.08 0.29 -0.36  0.51   509  1.01
+k[6]  -0.38 0.30 -0.88  0.03   585  1.00
+k[7]   0.14 0.28 -0.29  0.56   567  1.00
+k[8]  -0.21 0.29 -0.66  0.20   526  1.01
+k[9]   0.26 0.27 -0.15  0.65   534  1.01
+k[10] -0.17 0.36 -0.73  0.36   768  1.00
+g      0.61 0.60  0.07  1.70  1321  1.00
+b      0.28 0.09  0.14  0.42  1011  1.00
+a      1.38 1.05  0.25  3.30  1800  1.00
+etasq  0.21 0.22  0.03  0.61   982  1.00
+rhosq  1.28 1.56  0.08  4.32  2020  1.00
+"""
+
+# End of m13.7t.jl

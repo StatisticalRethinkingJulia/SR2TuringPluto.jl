@@ -1,16 +1,18 @@
+# ### m13.1t.jl
 
-using TuringModels
+using Pkg, DrWatson
 
-# This script requires latest LKJ bijectors support.
-# `] add Bijectors#master` to get latest Bijectors.
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-# Original data is generated with fixed R seed. To simplify the replication of the result,
-# the generated data is saved in data folder, named "d_13_1.csv"
+# Original data is generated with fixed R seed. To simplify the replication
+# of the result, the generated data is saved in data folder, named "d_13_1.csv"
 
-data_path = joinpath(@__DIR__, "..", "..", "data", "d_13_1.csv")
-d = CSV.read(data_path)
+df = CSV.read(datadir("d_13_1.csv"), DataFrame);
 
-@model m13_1(cafe, afternoon, wait) = begin
+@model function ppl13_1(cafe, afternoon, wait)
 
     Rho ~ LKJ(2, 1.)
     sigma ~ truncated(Cauchy(0, 2), 0, Inf)
@@ -32,13 +34,12 @@ end
 
 # Sample
 
-chns = sample(
-    m13_1(d.cafe, d.afternoon, d.wait),
-    Turing.NUTS(0.95),
-    1000
-)
+m13_1t = ppl13_1(df.cafe, df.afternoon, df.wait)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+nchains = 1 # Fails with nchains=4
+chns13_1t = mapreduce(c -> sample(m13_1t, sampler, nsamples), chainscat, 1:nchains)
 
-m_13_1_rethinking = """
+m_13_1s_results = """
 Inference for Stan model: a73b0bd01032773825c6abf5575fd6e4.
     2 chains, each with iter=5000; warmup=2000; thin=1; 
     post-warmup draws per chain=3000, total post-warmup draws=6000.
@@ -95,9 +96,5 @@ Inference for Stan model: a73b0bd01032773825c6abf5575fd6e4.
     Rho[2,2]       1.00    0.00  0.00  1.00  1.00  1.00  1.00   1.00  5777 1.00
     lp__          62.41    3.30 17.59 41.97 52.03 58.04 66.26 118.46    28 1.12
 """
-
-# Draw summary
-
-chns |> display
 
 # End of m13.1.jl

@@ -1,18 +1,18 @@
-using TuringModels
-using LinearAlgebra
+# ### m13.6nct.jl
 
-# This script requires latest LKJ bijectors support.
-# `] add Bijectors#master` to get latest Bijectors.
+using Pkg, DrWatson
 
-data_path = joinpath(@__DIR__, "..", "..", "data", "chimpanzees.csv")
-delim = ";"
-d = CSV.read(data_path, DataFrame; delim)
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-d.block_id = d.block
+df = CSV.read(sr_datadir("chimpanzees.csv"), DataFrame);
+df.block_id = df.block
 
 # m13.6nc1 is equivalent to m13.6nc in following Turing model
 
-@model m13_6_nc(actor, block_id, condition, prosoc_left, pulled_left) = begin
+@model ppl13_6nc(actor, block_id, condition, prosoc_left, pulled_left)
     # fixed priors
     Rho_block ~ LKJ(3, 4.)
     Rho_actor ~ LKJ(3, 4.)
@@ -54,15 +54,13 @@ d.block_id = d.block
     pulled_left .~ BinomialLogit.(1, logit_p)
 end
 
-chns = sample(
-    m13_6_nc(d.actor, d.block_id, d.condition, d.prosoc_left, d.pulled_left),
-    Turing.NUTS(0.95),
-    1000
-)
+m13_6nct = ppl13_6nc(d.actor, d.block_id, d.condition,
+    d.prosoc_left, d.pulled_left)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+nchains = 1 # Fails with nchains=4
+chns13_6nct = mapreduce(c -> sample(m13_6nct, sampler, nsamples), chainscat, 1:nchains)
 
-chns |> display
-
-m_13_6_nc_rethinking = """
+m_13_6_ncs_results = """
 Inference for Stan model: 78757717ec3ffa528c3819708907eb7f.
     3 chains, each with iter=5000; warmup=1000; thin=1; 
     post-warmup draws per chain=4000, total post-warmup draws=12000.
@@ -319,4 +317,4 @@ Inference for Stan model: 78757717ec3ffa528c3819708907eb7f.
     lp__               3172    1    
 """
 
-# End of m13.6nc.jl
+# End of m13.6nct.jl
