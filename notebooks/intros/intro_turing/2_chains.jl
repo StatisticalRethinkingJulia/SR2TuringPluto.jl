@@ -54,6 +54,9 @@ plot(chns4_3t; seriestype=:traceplot)
 # ╔═╡ 9110be74-187b-11eb-34e8-c1d4da25b29e
 plot(chns4_3t; seriestype=:density)
 
+# ╔═╡ b1690f50-19fa-11eb-15c7-87b89cf8ffa5
+md"##### For additional diagnostics, see the [MCMCChains README document](https://github.com/TuringLang/MCMCChains.jl/blob/master/README.md)"
+
 # ╔═╡ 0365d298-187f-11eb-1dc1-b7f61a13c7b3
 md"## End of Intro clip 2_chains.jl"
 
@@ -66,4 +69,5 @@ md"## End of Intro clip 2_chains.jl"
 # ╠═517544f8-1879-11eb-3559-81508191d427
 # ╠═2c0b2e42-187b-11eb-0c00-43aeac8b5045
 # ╠═9110be74-187b-11eb-34e8-c1d4da25b29e
+# ╟─b1690f50-19fa-11eb-15c7-87b89cf8ffa5
 # ╟─0365d298-187f-11eb-1dc1-b7f61a13c7b3

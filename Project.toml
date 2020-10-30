@@ -2,6 +2,7 @@ name = "StatisticalRethinkingTuring"
 authors = ["Karajan, Goedman"]
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"

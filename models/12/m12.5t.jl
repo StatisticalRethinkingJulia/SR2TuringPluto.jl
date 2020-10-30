@@ -1,12 +1,15 @@
-using TuringModels
+# ### m12.5t.jl
 
-delim = ';'
-d = CSV.read(joinpath(@__DIR__, "..", "..", "data", "chimpanzees.csv"), DataFrame; delim);
-size(d) # Should be 504x8
+using Pkg, DrWatson
 
-# Turing model: pulled_left, actor, condition, prosoc_left
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-@model m12_5(pulled_left, actor, block, condition, prosoc_left) = begin
+df = CSV.read(sr_datadir("chimpanzees.csv"), DataFrame);
+
+@model ppl12_5(pulled_left, actor, block, condition, prosoc_left) = begin
     # Total num of y
     N = length(pulled_left)
 
@@ -36,13 +39,15 @@ end
 
 # Sample
 
-chns = sample(m12_5(
-    Vector{Int64}(d[:, :pulled_left]),
-    Vector{Int64}(d[:, :actor]),
-    Vector{Int64}(d[:, :block]),
-    Vector{Int64}(d[:, :condition]),
-    Vector{Int64}(d[:, :prosoc_left])),
-    Turing.NUTS(0.65), 1000);
+m12_5t = ppl12_5(
+    Vector{Int64}(df.pulled_left),
+    Vector{Int64}(df.actor),
+    Vector{Int64}(df.block),
+    Vector{Int64}(df.condition),
+    Vector{Int64}(df.prosoc_left)
+);
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns12_5t = mapreduce(c -> sample(m12_5t, sampler, nsamples), chainscat, 1:nchains)
 
 # Results rethinking
 
@@ -67,9 +72,5 @@ bpc         -0.15   0.30      -0.61       0.36  8492    1
 sigma_actor  2.27   0.91       1.03       3.35  5677    1
 sigma_block  0.23   0.18       0.01       0.44  2269    1
 ";
-
-# Draw summary
-
-chns |> display
 
 # End of m12.5t.jl

@@ -1,12 +1,15 @@
-using TuringModels
+# ### m12.4t.jl
 
-delim = ';'
-d = CSV.read(joinpath(@__DIR__, "..", "..", "data", "chimpanzees.csv"), DataFrame; delim);
-size(d) # Should be 504x8
+using Pkg, DrWatson
 
-# Turing model: pulled_left, actor, condition, prosoc_left
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
-@model m12_4(pulled_left, actor, condition, prosoc_left) = begin
+df = CSV.read(sr_datadir("chimpanzees.csv"), DataFrame);
+
+@model ppl12_4(pulled_left, actor, condition, prosoc_left) = begin
     # Total num of y
     N = length(pulled_left)
 
@@ -33,16 +36,18 @@ end
 
 # Sample
 
-chns = sample(m12_4(
-    Vector{Int64}(d[:, :pulled_left]),
-    Vector{Int64}(d[:, :actor]),
-    Vector{Int64}(d[:, :condition]),
-    Vector{Int64}(d[:, :prosoc_left])),
-    Turing.NUTS(0.65), 1000);
+m12_4t = ppl12_4(
+    Vector{Int64}(df.pulled_left),
+    Vector{Int64}(df.actor),
+    Vector{Int64}(df.condition),
+    Vector{Int64}(df.prosoc_left)
+);
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns12_4t = mapreduce(c -> sample(m12_4t, sampler, nsamples), chainscat, 1:nchains)
 
 # Results from rethinking
 
-m124rethinking = "
+m12_4_results = "
              Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
  a_actor[1]  -1.13   0.95      -2.62       0.27  2739    1
  a_actor[2]   4.17   1.66       1.80       6.39  3958    1
@@ -56,9 +61,5 @@ m124rethinking = "
  bpC         -0.13   0.30      -0.62       0.34  8403    1
  sigma_actor  2.26   0.94       1.07       3.46  4155    1
 ";
-
-# Draw summary
-
-chns |> display
 
 # End of `12/m12.4t.jl`

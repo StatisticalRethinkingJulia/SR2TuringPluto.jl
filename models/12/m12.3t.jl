@@ -1,4 +1,11 @@
-using TuringModels, StatsFuns
+# ### m12.3t.jl
+
+using Pkg, DrWatson
+
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
 μ = 1.4
 σ = 1.5
@@ -11,14 +18,15 @@ dsim = DataFrame(pond = 1:nponds, ni = ni, true_a = a_pond);
 
 prob = logistic.(Vector{Real}(dsim[:true_a]));
 
-dsim[!, :si] = [rand(Binomial(ni[i], prob[i])) for i = 1:nponds];
+dsim.si = [rand(Binomial(ni[i], prob[i])) for i = 1:nponds];
 
 # Used only in the continuation of this example
-dsim[!, :p_nopool] = dsim[:, :si] ./ dsim[:, :ni];
+
+dsim.p_nopool = dsim.si ./ dsim.ni;
 
 # Turing model
 
-@model m12_3(pond, si, ni) = begin
+@model ppl12_3(pond, si, ni) = begin
 
     # Separate priors on μ and σ for each pond
     σ ~ truncated(Cauchy(0, 1), 0, Inf)
@@ -38,12 +46,12 @@ end
 
 # Sample
 
-chns = sample(m12_3(Vector{Int64}(dsim[:, :pond]), Vector{Int64}(dsim[:, :si]),
-    Vector{Int64}(dsim[:, :ni])), Turing.NUTS(0.65), 1000);
+m12_3t = ppl12_3(dsim.pond, dsim.si, dsim.ni)
+chns12_3t = sample(m12_3t, Turing.NUTS(0.65), 1000);
   
 # Results from rethinking
 
-m123rethinking = "
+m12_3s_results = "
                   mean   sd  5.5% 94.5% n_eff Rhat
 a                 1.30 0.23  0.94  1.67  8064    1
 sigma         1.55 0.21  1.24  1.92  3839    1
@@ -108,9 +116,5 @@ a_pond[58]  1.11 0.38  0.51  1.74 21740    1
 a_pond[59]  2.33 0.56  1.50  3.25 13116    1
 a_pond[60]  1.27 0.40  0.66  1.91 15611    1
 ";
-
-# Draw summary
-  
-chns |> display
 
 # End of `12/m12.3t.jl`

@@ -1,11 +1,17 @@
-using TuringModels, StatsFuns
+# ### m10.3t.jl
+
+using Pkg, DrWatson
+
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
 delim=';'
-d = CSV.read(joinpath(@__DIR__, "..", "..", "data", "chimpanzees.csv"), DataFrame; delim);
-size(d) # Should be 504x8
+df = CSV.read(sr_datadir("chimpanzees.csv"), DataFrame; delim);
 
 # pulled_left, actors, condition, prosoc_left
-@model m10_4(y, actors, x₁, x₂) = begin
+@model ppl10_4(y, actors, x₁, x₂) = begin
     # Number of unique actors in the data set
     N_actor = length(unique(actors))
 
@@ -18,8 +24,9 @@ size(d) # Should be 504x8
     y .~ BinomialLogit.(1, logits)
 end;
 
-chns = sample(m10_4(d[:,:pulled_left], d[:,:actor],d[:,:condition],
-  d[:,:prosoc_left]), Turing.NUTS(0.65), 1000);
+m10_4t = ppl10_4(df.pulled_left, df.actor, df.condition, df.prosoc_left)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns10_4t = mapreduce(c -> sample(m10_4t, sampler, nsamples), chainscat, 1:nchains)
 
 # Rethinking/CmdStan results
 
@@ -41,9 +48,5 @@ a.7  1.81090866 0.39318577 0.0062168129 0.0071483527 1000
 bp  0.83979926 0.26284676 0.0041559722 0.0059795826 1000
 bpC -0.12913322 0.29935741 0.0047332562 0.0049519863 1000
 ";
-
-# Describe the draws
-
-chns |> display
 
 # End of 10/m10.04t.jl

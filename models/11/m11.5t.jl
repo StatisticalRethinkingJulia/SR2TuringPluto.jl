@@ -1,13 +1,18 @@
-using TuringModels
+# ### m11.5t.jl
 
-delim = ';'
-d = CSV.read(joinpath(@__DIR__, "..", "..", "data", "UCBadmit.csv"), DataFrame; delim);
+using Pkg, DrWatson
 
-size(d) |> display # Should be 12x5
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
+
+delim=';'
+df = CSV.read(sr_datadir("UCBadmit.csv"), DataFrame; delim);
 
 # Turing model
 
-@model m11_5(admit, applications) = begin
+@model ppl11_5(admit, applications) = begin
     N=length(applications)
     θ ~ truncated(Exponential(1), 0, Inf)
     α ~ Normal(0,2)
@@ -28,18 +33,16 @@ end
 
 # Sample
 
-chns = sample(m11_5(d[:, :admit],d[:, :applications]), Turing.NUTS(0.65), 1000);
+m11_5t = ppl11_5(df.admit, df.applications)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns11_5t = mapreduce(c -> sample(m11_5t, sampler, nsamples), chainscat, 1:nchains)
 
 # Result rethinking
 
-m115rethinking = "
+m11_5s = "
          mean   sd  5.5% 94.5% n_eff Rhat
-theta  2.74 0.96  1.43  4.37  3583    1
+θ        2.74 0.96  1.43  4.37  3583    1
 a       -0.37 0.31 -0.87  0.12  3210    1
 ";
-
-# Show summary
-
-chns |> display
 
 # End of `11/m811.5t.jl`

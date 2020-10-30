@@ -1,18 +1,22 @@
-using TuringModels
+# ### m12.1t.jl
 
-delim = ';'
-d = CSV.read(joinpath(@__DIR__, "..", "..", "data", "reedfrogs.csv"),
-    DataFrame; delim);
+using Pkg, DrWatson
 
-size(d) # Should be 48x5
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
+
+delim=';'
+df = CSV.read(sr_datadir("reedfrogs.csv"), DataFrame; delim);
 
 # Set number of tanks
 
-d.tank = 1:size(d,1);
+df.tank = 1:size(df, 1);
 
 # Define the Turing model
 
-@model m12_1(density, tank, surv) = begin
+@model ppl12_1(density, tank, surv) = begin
 
     # Number of unique tanks in the data set
     N_tank = length(tank)
@@ -24,12 +28,14 @@ end
 
 # Sample
 
-chns = sample(m12_1(Vector{Int64}(d.density), Vector{Int64}(d.tank),
-    Vector{Int64}(d.surv)), Turing.NUTS(0.65), 1000);
+m12_1t = ppl12_1(Vector{Int64}(df.density), Vector{Int64}(df.tank),
+    Vector{Int64}(df.surv))
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns12_1t = mapreduce(c -> sample(m12_1t, sampler, nsamples), chainscat, 1:nchains)
 
 # CmdStan results
 
-m2_1_rethinking = "
+m12_1s = "
              mean   sd  5.5% 94.5% n_eff Rhat
 a_tank[1]   2.49 1.16  0.85  4.53  1079    1
 a_tank[2]   5.69 2.75  2.22 10.89  1055    1
@@ -80,9 +86,5 @@ a_tank[46] -0.67 0.34 -1.25 -0.15  1619    1
 a_tank[47]  2.14 0.55  1.31  3.04  1916    1
 a_tank[48] -0.06 0.35 -0.61  0.50  1932    1
 ";
-
-# Describe chainsd
-
-chns |> display
 
 # End of `12/m12.1t.jl`

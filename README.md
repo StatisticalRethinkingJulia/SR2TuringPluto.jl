@@ -12,7 +12,7 @@ Note: Right now this project depends on StatisticalRethinking v3 which is not ye
 
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, which contains Turing model scripts if needed repeatedly,
+1. `models`, which contains a subset of the Turing models,
 2. `notebooks`, used to store the Pluto notebooks,
 3. `scripts`, Julia scrips generated from the notebooks.
 
@@ -77,19 +77,14 @@ Note: `d` is reserved for a combination Soss/DynamicHMC, `sl` is reserved for St
 
 The notebooks containing the clips are stored by chapter.
 
-Special introductory notebooks have been included in `notebooks/intros`, e.g.
-`intro-R-users/broadcasting.jl` and `intro-R-users/distributions.jl`.
-
-In addition to clips, in the early notebook chapters (0-3) it is shown how to create the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
-
-Results of simulations are stored as follows:
+Models and results of simulations are stored as follows:
 
 0. ppl5_1            : DynamicPPL language program
 1. m5_1t             : The Turing model based on m5_1 with data
 2. q5_1t             : The Turing quap model
 
 3. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
-4. pred5_1t          : MCMCChains model prediction chain
+4. pred5_1t          : Turing predict result chain
 
 5. prior5_1t_df      : Prior samples (DataFrame)
 6. post5_1t_df       : Posterior Turing samples (DataFrame)
@@ -97,13 +92,16 @@ Results of simulations are stored as follows:
 8. pred5_1t_df       : Posterior predictions (DataFrame)
 9. pred5_1t_sum_df   : Posterior prediction summary
 
-As before, the `t` at the end indicates Turing.
+As before, the `t` at the end of the model number indicates Turing.
 
-All models in the `models` subdirectory return 1, 2 and 6.
+All models in the `models` subdirectory return 0, 1, 2 and 3.
 
 ## Intros
 
+Special introductory notebooks have been included in `notebooks/intros`, e.g.
+in subdirectries `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
 
+In addition to clips, in the early notebook chapters (0-3) it is shown how to create the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
 
 ## Status
 
@@ -120,6 +118,8 @@ This repository and format is derived from work by Karajan, previous versions of
 The availability of DynamicHMC, the huge progress made by the Turing.jl team over the last 2 years, the availability of Julia `projects` in addition to Julia `packages` and the novel approach to notebooks in Pluto.jl were a few of the ideas that triggered exploring a new setup for the StatisticalRethinkingJulia.
 
 ## Versions
+
+### Version 2.0.0 (late 2020, compatible with 2nd edition of the book)
 
 ### Version 0.1.0 (in preparation, expected Oct 2020)
 

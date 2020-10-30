@@ -1,11 +1,18 @@
-using TuringModels, StatsFuns
+# ### m10.xxt.jl
+
+using Pkg, DrWatson
+
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
 # outcome and predictor almost perfectly associated
 
 x = repeat([-1], 9); append!(x, repeat([1],11))
 y = repeat([0], 10); append!(y, repeat([1],10))
 
-@model m_good_stan(x,y) = begin
+@model ppl10_xx(x,y) = begin
     α ~ Normal(0,10)
     β ~ Normal(0,10)
 
@@ -14,7 +21,9 @@ y = repeat([0], 10); append!(y, repeat([1],10))
     y .~ BinomialLogit.(1, logits)
 end
 
-chns = sample(m_good_stan(x,y), Turing.NUTS(0.65), 1000)
+m10_xxt = ppl10_xx(x,y)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns10_xxt = mapreduce(c -> sample(m10_xxt, sampler, nsamples), chainscat, 1:nchains)
 
 # Stan results
 
@@ -23,9 +32,5 @@ m_10_x,_results = "
  a -5.09 4.08 -12.62 -0.25   100 1.00
  b  7.86 4.09   2.96 15.75   104 1.01
 ";
-
-# Look at the proper draws (in corrected chn2)
-
-chns |> display
 
 # End of 10/m10.xxt.jl

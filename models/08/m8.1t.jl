@@ -1,23 +1,15 @@
-# ### m8.1stan
+# ### m8.1t
 
-# m8.1stan is the first model in the Statistical Rethinking book (pp. 249) using Stan.
+using Pkg, DrWatson
 
-# Here we will use Turing's NUTS support, which is currently (2018) the originalNUTS by [Hoffman & Gelman]( http://www.stat.columbia.edu/~gelman/research/published/nuts.pdf) and not the one that's in Stan 2.18.2, i.e., Appendix A.5 in: https://arxiv.org/abs/1701.02434
-
-# The TuringModels pkg imports modules such as CSV and DataFrames
-
-using TuringModels, DataFrames
-
-# use reverse mode automatic differentiation
-#Turing.setadbackend(:tracker);
+@quickactivate "StatisticalRethinkingTuring"
+using Turing
+using StatisticalRethinking
+Turing.turnprogress(false)
 
 # Read in the `rugged` data as a DataFrame
 
-df = CSV.read(joinpath(@__DIR__, "..", "..", "data", "rugged.csv"), DataFrame);
-
-# Show size of the DataFrame (should be 234x51)
-    
-size(df)
+df = CSV.read(sr_datadir("rugged.csv"), DataFrame)
 
 # Apply log() to each element in rgdppc_2000 column and add it as a new column
 
@@ -36,7 +28,7 @@ dd = df[map(notisnan, df[:, :rgdppc_2000]), :];
 
 # Define the Turing model
 
-@model m8_1stan(y, x₁, x₂) = begin
+@model ppl8_1(y, x₁, x₂) = begin
     σ ~ truncated(Cauchy(0, 2), 0, Inf)
     βR ~ Normal(0, 10)
     βA ~ Normal(0, 10)
@@ -53,8 +45,9 @@ end;
 
 # Use Turing mcmc
 
-chns = sample(m8_1stan(dd[:, :log_gdp], dd[:, :rugged], dd[:, :cont_africa]),
-  NUTS(0.65), 1000)
+m8_1t = ppl8_1(dd.log_gdp, dd.rugged, dd.cont_africa)
+nchains = 4; sampler = NUTS(0.65); nsamples=2000
+chns8_1t = mapreduce(c -> sample(m8_1t, sampler, nsamples), chainscat, 1:nchains)
     
 # Here's the ulam() output from rethinking 
 
@@ -80,9 +73,5 @@ Quantiles:
   bAR  0.13496995  0.30095575  0.3916590  0.47887625  0.650244475
 sigma  0.85376115  0.91363250  0.9484920  0.98405750  1.058573750
 ";
-
-# Describe the posterior samples
-
-chns |> display
 
 # End of `08/m8.1t.jl`
