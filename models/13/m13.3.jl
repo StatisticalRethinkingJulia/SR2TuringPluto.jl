@@ -33,6 +33,7 @@ end
 
 m13_3t = ppl13_3(df.applications, df.dept_id, df.male, df.admit)
 nchains = 4; sampler = NUTS(0.65); nsamples=2000
+nchains = 1
 chns13_3t = mapreduce(c -> sample(m13_3t, sampler, nsamples), chainscat, 1:nchains)
 
 m_13_3_rethinking = """
