@@ -213,9 +213,9 @@ version = "0.1.2"
 
 [[Contour]]
 deps = ["StaticArrays"]
-git-tree-sha1 = "d05a3a25b762720d40246d5bedf518c9c2614ef5"
+git-tree-sha1 = "0d128f9c2d9560349dc46f60c42036e244271d72"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
-version = "0.5.5"
+version = "0.5.6"
 
 [[CpuId]]
 deps = ["Markdown", "Test"]
@@ -745,9 +745,9 @@ version = "1.0.3"
 
 [[MbedTLS_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "c7166979cd9193dbaf32392b83f166ebf6154033"
+git-tree-sha1 = "47e19f64fc939b86dea2b9b5e38c29c787f0d581"
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
-version = "2.24.0+0"
+version = "2.24.0+1"
 
 [[Measures]]
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
@@ -1176,9 +1176,9 @@ version = "1.1.0"
 
 [[StructuralCausalModels]]
 deps = ["CSV", "Combinatorics", "DataFrames", "DataStructures", "Distributions", "DocStringExtensions", "LinearAlgebra", "NamedArrays", "Reexport", "Statistics"]
-git-tree-sha1 = "7bfa59d42203043f1fd87b747eb68656b2346c8e"
+git-tree-sha1 = "8bcb29131e5e9e2831b6f27f17cb75fc0488791f"
 uuid = "a41e6734-49ce-4065-8b83-aff084c01dfd"
-version = "0.1.5"
+version = "0.1.6"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
