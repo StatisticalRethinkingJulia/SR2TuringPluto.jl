@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.10
 
 using Markdown
 using InteractiveUtils
@@ -48,7 +48,8 @@ md"##### Create an MCMCChains.Chains object. This Chains object has 10000 sample
 # ╔═╡ 7f0651fe-f2e1-11ea-00f7-79322fafaaf9
 begin
 	a3d[:, 1, 1] = p
-	chns = MCMCChains.Chains(a3d, [:p])
+	chns = MCMCChains.Chains(a3d, ["p",])
+	Text(sprint(show, "text/plain", summarize(chns)))
 end
 
 # ╔═╡ 7f0bac38-f2e1-11ea-0817-093aba68676d

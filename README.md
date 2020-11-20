@@ -4,21 +4,56 @@ As stated many times by the author in his [online lectures](https://www.youtube.
 
 StatisticalRethinkingTuring is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
-This Julia project uses Turing as the underlying mcmc implementation.
+This Julia project uses Turing as the underlying mcmc implementation.  A companion project ( [StatisticalRethinkingStan.jl](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingStan.jl) ) uses Stan.
 
-Note: Right now this project depends on StatisticalRethinking v3 which is not yet merged in Julia's package repository. To use that version of StatisticalRethinking you can `] add StatisticalRethinkinking@v3.0.0`
+## Installation
+
+To (locally) reproduce and use this project, do the following:
+
+1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github and move to the downloaded directory, e.g.:
+
+```
+$ git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
+$ cd StatisticalRethinkingTuring.jl
+$ julia
+```
+and in the Julia REPL:
+
+```
+julia> ]                                        # Actvate Pkg mode
+(@v1.5) pkg> activate .                         # Activate pkg in .
+(StatisticalRethinkingTuring) pkg> instantiate  # Install in pkg environment
+(StatisticalRethinkingTuring) pkg> <delete>     # Exit package mode
+julia>
+```
+
+The next step assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
+
+2. Start a Pluto notebook server.
+```
+$ julia
+
+julia> using Pluto
+julia> Pluto.run()
+```
+
+3. A Pluto page should open in a browser.
+
+Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/00/clip-00-01-03t.jl`. All notebooks will activate the project `StatisticalRethinkingTuring`.
 
 ## Usage
 
+Note: *StatisticalRethinkingTuring requires StatisticalRethinking.jl v 3.0.0.*
+
 StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
-1. `models`, which contains a subset of the Turing models,
+1. `models`, which contains a subset of the Turing language models,
 2. `notebooks`, used to store the Pluto notebooks,
 3. `scripts`, Julia scrips generated from the notebooks.
 
-The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. 
+The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`.
 
-All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`. 
+The scripts in the `scripts` subdirectory are directly generated from the notebooks and thus adhere to Pluto's programming restrictions.
 
 This leads to a typical set of opening lines in each notebook:
 ```
@@ -34,35 +69,11 @@ using Turing
 using StatisticalRethinking
 
 # To access e.g. the Howell1.csv data file:
-d = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
-d2 = d[d.age .>= 18, :]
+df = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
+df = df[df.age .>= 18, :]
 ```
 
-To (locally) reproduce and use this project, do the following:
-
-1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github and move to the downloaded directory, e.g.:
-
-```
-git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
-cd StatisticalRethinkingTuring.jl
-```
-
-The next step assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
-
-2. Start a Pluto notebook server and open a notebook in a browser.
-```
-$ julia
-
-julia> using Pluto
-julia> Pluto.run()
-```
-
-By default the Pluto server uses port 1234. In your browser go to
-`http://localhost:1234`.
-
-Each notebook will activate the project `StatisticalRethinkingTuring`.
-
-## Setup
+## Naming conventions
 
 All R snippets (fragments) have been organized in clips. Each clip is a notebook. 
 
@@ -75,9 +86,17 @@ Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
 
 Note: `d` is reserved for a combination Soss/DynamicHMC, `sl` is reserved for Stan models using the `logpdf` formulation and `m` is reserved for Mamba.
 
-The notebooks containing the clips are stored by chapter.
+The notebooks containing the clips are stored by chapter.  In addition to clips, in the early notebook chapters (0-3) it is also shown how to create some of the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
 
-Models and results of simulations are stored as follows:
+Special introductory notebooks have been included in `notebooks/intros`, e.g.
+in subdirectries `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
+
+Additional introductory notebooks showing Julia and statistics ( based on the [Statistics with Julia](https://statisticswithjulia.org/index.html) book ) can be found in [StatisticsWithJuliaPlutoNotebooks](https://github.com/StatisticalRethinkingJulia/StatisticsWithJuliaPlutoNotebooks.jl).
+
+One goal for the changes in StatisticalRethinking v3 was to make it easier to compare and mix and match results from different mcmc implementations. Hence consistent naming of models and results is important. The models and the results of simulations are stored as follows:
+
+Models:
+
 
 0. ppl5_1            : DynamicPPL language program
 1. m5_1t             : The Turing model based on m5_1 with data
@@ -90,18 +109,12 @@ Models and results of simulations are stored as follows:
 6. post5_1t_df       : Posterior Turing samples (DataFrame)
 7. quap5_1t_df       : Posterior samples using quap approximation (DataFrame)
 8. pred5_1t_df       : Posterior predictions (DataFrame)
-9. pred5_1t_sum_df   : Posterior prediction summary
 
 As before, the `t` at the end of the model number indicates Turing.
 
-All models in the `models` subdirectory return 0, 1, 2 and 3.
+All models in the `models` subdirectory return 0 and 1.
 
 ## Intros
-
-Special introductory notebooks have been included in `notebooks/intros`, e.g.
-in subdirectries `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
-
-In addition to clips, in the early notebook chapters (0-3) it is shown how to create the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
 
 ## Status
 
@@ -113,15 +126,13 @@ Any feedback is appreciated. Please open an issue.
 
 ## Acknowledgements
 
-This repository and format is derived from work by Karajan, previous versions of StatisticalRethinking.jl and many other contributors.
+Of course, without the excellent textbook by Richard McElreath, this package would not have been possible. The author has also been supportive of this work and gave permission to use the datasets.
 
-The availability of DynamicHMC, the huge progress made by the Turing.jl team over the last 2 years, the availability of Julia `projects` in addition to Julia `packages` and the novel approach to notebooks in Pluto.jl were a few of the ideas that triggered exploring a new setup for the StatisticalRethinkingJulia.
+This repository and format is derived from work by Karajan, previous versions of StatisticalRethinking.jl and many other contributors.
 
 ## Versions
 
-### Version 2.0.0 (late 2020, compatible with 2nd edition of the book)
-
-### Version 0.1.0 (in preparation, expected Oct 2020)
+### Version 1.0.0 (in preparation, expected late Nov 2020)
 
 1. Initial version
 
