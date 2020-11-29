@@ -5,7 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 @model ppl8_2(y) = begin
 

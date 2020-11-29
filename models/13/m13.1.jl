@@ -5,7 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 # Original data is generated with fixed R seed. To simplify the replication
 # of the result, the generated data is saved in data folder, named "d_13_1.csv"

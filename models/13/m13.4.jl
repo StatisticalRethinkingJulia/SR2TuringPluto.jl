@@ -5,7 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 df = CSV.read(sr_datadir("UCBadmit.csv"), DataFrame);
 dept_map = Dict(key => idx for (idx, key) in enumerate(unique(df.dept)))

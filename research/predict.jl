@@ -11,7 +11,7 @@ using StatisticalRethinking
 using Turing, DataFrames
 =#
 
-Turing.turnprogress(false);
+Turing.setprogress!(false);
 
 @model function linear_reg(x, y)
     β ~ Normal(0, 1)

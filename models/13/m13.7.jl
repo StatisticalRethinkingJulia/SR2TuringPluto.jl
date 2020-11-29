@@ -5,7 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 df = CSV.read(sr_datadir("Kline2.csv"), DataFrame);
 Dmat = CSV.read(sr_datadir("islandDistMatrix.csv"), DataFrame)

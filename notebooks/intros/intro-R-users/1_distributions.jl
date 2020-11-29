@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -7,14 +7,14 @@ using InteractiveUtils
 # ╔═╡ 998407c2-ed46-11ea-1c81-e33bc9e340f7
 using Pkg, DrWatson
 
-# ╔═╡ c3112cc0-ed46-11ea-1ecd-b3d8b8d51ac1
-using StatisticalRethinking
+# ╔═╡ c30a6ffc-ed46-11ea-1036-57f7da453ef2
+begin
+	@quickactivate "StatisticalRethinkingTuring"
+	using StatisticalRethinking
+end
 
 # ╔═╡ 115d3284-ed4c-11ea-366e-33869314ff98
 md"## Distributions.jl"
-
-# ╔═╡ c30a6ffc-ed46-11ea-1036-57f7da453ef2
-@quickactivate "StatisticalRethinkingTuring"
 
 # ╔═╡ c3119548-ed46-11ea-34e2-efd188f0457c
 # snippet 2.1
@@ -59,6 +59,9 @@ pdf(d, 6)                        # Probability density of getting a 6
 # ╔═╡ c3403d4e-ed46-11ea-3dce-7906235096c6
 cdf(d, 6)                        # Cumulative probability of getting 6
 
+# ╔═╡ 4b25bd40-2c0a-11eb-233c-4779fb7213e3
+md"##### Output goes to stdout."
+
 # ╔═╡ 17eee314-ed87-11ea-0343-fb0148a66a04
 pkg"st"
 
@@ -69,7 +72,6 @@ md"## End of distributions.jl"
 # ╟─115d3284-ed4c-11ea-366e-33869314ff98
 # ╠═998407c2-ed46-11ea-1c81-e33bc9e340f7
 # ╠═c30a6ffc-ed46-11ea-1036-57f7da453ef2
-# ╠═c3112cc0-ed46-11ea-1ecd-b3d8b8d51ac1
 # ╠═c3119548-ed46-11ea-34e2-efd188f0457c
 # ╟─edb843be-ed46-11ea-1f85-6b7a7bff28ec
 # ╠═c31a57f2-ed46-11ea-1303-c3bf7b3b7c8f
@@ -82,5 +84,6 @@ md"## End of distributions.jl"
 # ╠═c3298d88-ed46-11ea-1a28-578706bf1724
 # ╠═c335d4ee-ed46-11ea-3c3b-637d1a3d5bc8
 # ╠═c3403d4e-ed46-11ea-3dce-7906235096c6
+# ╟─4b25bd40-2c0a-11eb-233c-4779fb7213e3
 # ╠═17eee314-ed87-11ea-0343-fb0148a66a04
 # ╟─c354cad4-ed46-11ea-1244-9d97d407103f

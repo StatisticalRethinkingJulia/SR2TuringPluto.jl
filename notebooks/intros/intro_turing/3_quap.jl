@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -26,7 +26,7 @@ begin
 end;
 
 # ╔═╡ 2f0ce4de-187e-11eb-296e-8b4e16814350
-@model function m4_3(weights, heights)
+@model function ppl4_3(weights, heights)
     a ~ Normal(178, 20)
     b ~ LogNormal(0, 1)
     σ ~ Uniform(0, 50)
@@ -38,20 +38,24 @@ end
 
 # ╔═╡ 33b27276-187e-11eb-26a8-1bb7ad288539
 begin
-	m4_3t = m4_3(df.weight, df.height)
+	m4_3t = ppl4_3(df.weight, df.height)
     sampler=NUTS(0.65)
 	nsamples=2000
 	nchains=4
     chns4_3t = mapreduce(c -> sample(m4_3t, sampler, nsamples), chainscat, 1:nchains)
+	Particles(Chains(chns4_3t, [:parameters]))
 end
 
 # ╔═╡ 7779262e-187e-11eb-0441-37f564373c1e
 q4_3t = quap(m4_3t)
 
+# ╔═╡ 32db0b98-2c08-11eb-145d-a1ea44641e75
+rand(q4_3t.distr, 4_000)'
+
 # ╔═╡ 3efadbfe-1882-11eb-0900-b17b00bf8f31
 begin
 	scatter(df.weight, df.height, leg=false)
-	quap4_3t = DataFrame(rand(q4_3t.distr, 10_000)', q4_3t.params)
+	quap4_3t = DataFrame(rand(q4_3t.distr, 4_000)', q4_3t.params)
 	a_map = mean(quap4_3t.a)
 	b_map = mean(quap4_3t.b)
 	plot!(x, a_map .+ b_map .* x)
@@ -65,4 +69,5 @@ end
 # ╠═2f0ce4de-187e-11eb-296e-8b4e16814350
 # ╠═33b27276-187e-11eb-26a8-1bb7ad288539
 # ╠═7779262e-187e-11eb-0441-37f564373c1e
+# ╠═32db0b98-2c08-11eb-145d-a1ea44641e75
 # ╠═3efadbfe-1882-11eb-0900-b17b00bf8f31

@@ -3,6 +3,8 @@ authors = ["Karajan, Goedman"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"

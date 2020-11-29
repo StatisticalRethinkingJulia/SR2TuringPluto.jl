@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -12,7 +12,7 @@ begin
 	@quickactivate "StatisticalRethinkingTuring"
 	using Turing 
 	using StatisticalRethinking
-	Turing.turnprogress(false);
+	Turing.setprogress!(false);
 end;
 
 # ╔═╡ e6220984-1878-11eb-275c-db7fe829037a
@@ -29,7 +29,7 @@ begin
 end
 
 # ╔═╡ 5174d414-1879-11eb-28ed-b3f36412a25f
-@model function m4_3(weights, heights)
+@model function ppl4_3(weights, heights)
     a ~ Normal(178, 20)
     b ~ LogNormal(0, 1)
     σ ~ Uniform(0, 50)
@@ -41,11 +41,12 @@ end
 
 # ╔═╡ 517544f8-1879-11eb-3559-81508191d427
 begin
-	m4_3t = m4_3(df.weight, df.height)
+	m4_3t = ppl4_3(df.weight, df.height)
     sampler=NUTS(0.65)
 	nsamples=2000
 	nchains=4
     chns4_3t = mapreduce(c -> sample(m4_3t, sampler, nsamples), chainscat, 1:nchains)
+	Text(sprint(show, "text/plain", chns4_3t))
 end
 
 # ╔═╡ 2c0b2e42-187b-11eb-0c00-43aeac8b5045

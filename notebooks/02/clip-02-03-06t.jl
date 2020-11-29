@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -49,28 +49,72 @@ end
 md"## snippet 2.6"
 
 # ╔═╡ 3ca3ac90-f934-11ea-1a8e-edfa2c664f1a
-@model globethrowing(W, L) = begin
+@model function ppl2_0(W, L)
     p ~ Uniform(0, 1)
     W ~ Binomial(W + L, p)
 end
 
 # ╔═╡ 3caf45dc-f934-11ea-2d1d-796707d89526
-m = globethrowing(6, 3)
+m2_0t = ppl2_0(6, 3);
 
 # ╔═╡ 3cb18732-f934-11ea-3ebf-991c7b602d12
-r = quap(m)
-
-# ╔═╡ 3cb8986c-f934-11ea-1ffe-693fa1640736
-d = MvNormal([r.coef.p], √collect(reshape(r.vcov, 1, 1)))
+q2_0t = quap(m2_0t)
 
 # ╔═╡ 3cbf6b30-f934-11ea-3b10-433589e36648
-s = rand(d, 10000)';
-
-# ╔═╡ 3cc6c8d8-f934-11ea-0a23-8db011bce2bf
-histogram(collect(s), normalize = :probability)
+begin
+	quap2_0t_df = DataFrame(:μ => rand(q2_0t.distr, 4000))
+	Text(precis(quap2_0t_df; io=String))
+end
 
 # ╔═╡ 3cd586b6-f934-11ea-3820-b9ff7509f935
-plot(p_grid, posterior, m = 3)
+begin
+	x = 0:0.01:1
+	plot(x, pdf(q2_0t.distr, x), lab="quap distribution",
+		title="Turing sampling and quadratic approximation")
+	density!(quap2_0t_df.μ, lab="quap samples")
+	post2_0t = sample(m2_0t, NUTS(), 5000)
+	density!(DataFrame(post2_0t).p, lab="samples")
+end
+
+# ╔═╡ d1670910-2c0d-11eb-12d0-616c518e22da
+Text(sprint(show, "text/plain", post2_0t))
+
+# ╔═╡ c1bb397c-2cd3-11eb-06d6-1b873d39f1cf
+begin
+	struct QuapModel
+		nt
+	end
+
+	function Base.show(io::IO, ::MIME"test/plain", qm::QuapModel)
+		write(io, qm)
+	end
+	
+	
+end
+
+# ╔═╡ 0604d19a-2cd4-11eb-3797-975be539c612
+quap2_0t = QuapModel(q2_0t)
+
+# ╔═╡ 57af25e0-2d97-11eb-0c3e-bb88e690e5ae
+q2_0t
+
+# ╔═╡ 294f6288-2da0-11eb-3b38-d33436b5f1ba
+begin
+	struct Chns
+    	chns::MCMCChains.Chains
+	end
+
+	function Base.show(io::IO, ::MIME"test/plain", chns::Chns)
+		write(io, sprint(show, "text/plain", chns))
+	end
+
+	#function Chns(chns)
+    #	Text(io, sprint(show, "text/plain", chns))
+	#end
+end
+
+# ╔═╡ 36733c28-2da0-11eb-3b0b-d5c9b85e16ba
+Chns(post2_0t)
 
 # ╔═╡ 3ce617ae-f934-11ea-0e4a-ff1ec9ee2610
 md"## End clip-02-03-06t.jl"
@@ -89,8 +133,12 @@ md"## End clip-02-03-06t.jl"
 # ╠═3ca3ac90-f934-11ea-1a8e-edfa2c664f1a
 # ╠═3caf45dc-f934-11ea-2d1d-796707d89526
 # ╠═3cb18732-f934-11ea-3ebf-991c7b602d12
-# ╠═3cb8986c-f934-11ea-1ffe-693fa1640736
 # ╠═3cbf6b30-f934-11ea-3b10-433589e36648
-# ╠═3cc6c8d8-f934-11ea-0a23-8db011bce2bf
 # ╠═3cd586b6-f934-11ea-3820-b9ff7509f935
+# ╠═d1670910-2c0d-11eb-12d0-616c518e22da
+# ╠═c1bb397c-2cd3-11eb-06d6-1b873d39f1cf
+# ╠═0604d19a-2cd4-11eb-3797-975be539c612
+# ╠═57af25e0-2d97-11eb-0c3e-bb88e690e5ae
+# ╠═294f6288-2da0-11eb-3b38-d33436b5f1ba
+# ╠═36733c28-2da0-11eb-3b0b-d5c9b85e16ba
 # ╟─3ce617ae-f934-11ea-0e4a-ff1ec9ee2610

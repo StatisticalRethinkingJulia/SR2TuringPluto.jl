@@ -5,7 +5,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing
 using StatisticalRethinking
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 μ = 1.4
 σ = 1.5

@@ -5,7 +5,7 @@ using Pkg, DrWatson
 using Turing
 using StatisticalRethinking
 
-Turing.turnprogress(false)
+Turing.setprogress!(false)
 
 # Define the data
 

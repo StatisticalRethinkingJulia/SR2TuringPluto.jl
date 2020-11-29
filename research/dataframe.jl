@@ -3,7 +3,7 @@ using Pkg, DrWatson
 @quickactivate "StatisticalRethinkingTuring"
 using Turing 
 using StatisticalRethinking
-Turing.turnprogress(false);
+Turing.setprogress!(false);
 
 using DataFrames, Turing
 
@@ -38,6 +38,5 @@ DataFrame(chns, [:parameters])                  <- Still true?
 ...
 =#
 
-DataFrame(chns4_3t[[:a, :b, :σ]]) |> display    # [...] errors
 Array(chns4_3t, [:parameters]) |> display
-DataFrame(chns4_3t, [:parameters]) |> display   # Errors
+DataFrame(Chains(chns4_3t, [:parameters]) |> display

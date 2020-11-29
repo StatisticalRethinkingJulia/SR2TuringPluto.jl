@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -49,6 +49,7 @@ begin
 	k = 3
 	n = 6
 	chn = sample(globe_toss(n, k), NUTS(0.65), 11000)
+	Text(sprint(show, "text/plain", chn))
 end
 
 # ╔═╡ d64cb1f6-f921-11ea-3d8c-cd654a1bd6f6

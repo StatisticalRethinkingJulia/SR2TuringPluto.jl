@@ -97,17 +97,17 @@ One goal for the changes in StatisticalRethinking v3 was to make it easier to co
 
 Models:
 
-
-0. ppl5_1            : DynamicPPL language program
-1. m5_1t             : The Turing model based on m5_1 with data
-2. q5_1t             : The Turing quap model
+0. ppl5_1            : DynamicPPL language program (function)
+1. m5_1t             : The Turing model based on m5_1 with data (Turing.Model)
+2. q5_1t             : The Turing quap model (NamedTuple)
 
 3. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
-4. pred5_1t          : Turing predict result chain
+4. part5_1t          : Turing samples (Particle notations)
+5. quap5_1t          : Turing quap() samples (NamedTuple in Particle notation)
 
 5. prior5_1t_df      : Prior samples (DataFrame)
 6. post5_1t_df       : Posterior Turing samples (DataFrame)
-7. quap5_1t_df       : Posterior samples using quap approximation (DataFrame)
+7. quap5_1t_df       : Posterior quap() approximation (DataFrame)
 8. pred5_1t_df       : Posterior predictions (DataFrame)
 
 As before, the `t` at the end of the model number indicates Turing.

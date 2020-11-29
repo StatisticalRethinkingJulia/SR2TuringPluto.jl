@@ -13,7 +13,7 @@ begin
 	using LinearAlgebra
 	using Turing
 	using StatisticalRethinking
-	Turing.turnprogress(false)
+	Turing.setprogress!(false)
 end
 
 # ╔═╡ b32d14e8-0648-11eb-15d4-7d13643a1531

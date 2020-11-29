@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -56,12 +56,12 @@ pdf(Binomial(9, 0.5), 6)         # probability density of getting a 6
 md"## End of clip-02-01-02t.jl"
 
 # ╔═╡ Cell order:
-# ╠═0e0d2086-f926-11ea-0470-451b528c9d02
+# ╟─0e0d2086-f926-11ea-0470-451b528c9d02
 # ╠═206337dc-f928-11ea-04ac-278c8fc8079d
 # ╠═20646558-f928-11ea-3351-bf12703651b2
-# ╠═2069098c-f928-11ea-1008-d75cba2186b4
+# ╟─2069098c-f928-11ea-1008-d75cba2186b4
 # ╠═20699ba4-f928-11ea-3f37-8359c913281d
-# ╠═20762c66-f928-11ea-32ec-53742fbaff9b
+# ╟─20762c66-f928-11ea-32ec-53742fbaff9b
 # ╟─207be6ea-f928-11ea-32df-cd2ed1f344d1
 # ╠═aa0f1104-f928-11ea-0830-cbd5ac5bcb63
 # ╠═aa0f4d9a-f928-11ea-038e-c31458a61022

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -12,7 +12,7 @@ begin
 	@quickactivate "StatisticalRethinkingTuring"
 	using Turing 
 	using StatisticalRethinking
-	Turing.turnprogress(false);
+	Turing.setprogress!(false);
 end;
 
 # ╔═╡ e6220984-1878-11eb-275c-db7fe829037a
@@ -28,7 +28,7 @@ begin
 end
 
 # ╔═╡ 5174d414-1879-11eb-28ed-b3f36412a25f
-@model function m4_3(weights, heights)
+@model function ppl4_3(weights, heights)
     a ~ Normal(mean(weights), 50)
     b ~ Normal(0, 5)
     σ ~ Uniform(0, 20)
@@ -40,8 +40,9 @@ end
 
 # ╔═╡ 11151d8c-1916-11eb-2d70-69180f7be854
 begin
-	m4_3t = m4_3(df.weight, df.height)
+	m4_3t = ppl4_3(df.weight, df.height)
 	priors4_3t = sample(m4_3t, Prior(), 50)
+	Text(sprint(show, "text/plain", priors4_3t))
 end
 
 # ╔═╡ 1f9c6586-1916-11eb-055d-9dd844c9b0a7
@@ -52,7 +53,7 @@ end
 
 # ╔═╡ f1943d70-1916-11eb-2cc5-5b6afaea5fbd
 begin
-	plot(xlims=(25, 70), ylims=(-10, 300), title="Possible prior regression lines for this model", leg=false)
+	plot(xlims=(25, 70), ylims=(-10, 300), title="Possible prior regression", leg=false)
 	for row in eachrow(priors4_3t_df)
 		plot!(df.weight, row.a .+ row.b * df.weight)
 	end

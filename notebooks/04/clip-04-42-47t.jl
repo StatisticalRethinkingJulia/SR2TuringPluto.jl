@@ -12,6 +12,7 @@ begin
 	@quickactivate "StatisticalRethinkingTuring"
 	using Turing
 	using StatisticalRethinking
+    Turing.setprogress!(false)
 end
 
 # ╔═╡ b2616f98-0709-11eb-32a2-514954fe4fa5
