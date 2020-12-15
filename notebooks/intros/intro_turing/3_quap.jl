@@ -53,9 +53,10 @@ q4_3t = quap(m4_3t)
 rand(q4_3t.distr, 4_000)'
 
 # ╔═╡ 3efadbfe-1882-11eb-0900-b17b00bf8f31
+
 begin
 	scatter(df.weight, df.height, leg=false)
-	quap4_3t = DataFrame(rand(q4_3t.distr, 4_000)', q4_3t.params)
+	quap4_3t = sample(q4_3t)
 	a_map = mean(quap4_3t.a)
 	b_map = mean(quap4_3t.b)
 	plot!(x, a_map .+ b_map .* x)
