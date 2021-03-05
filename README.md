@@ -27,6 +27,9 @@ julia> ]                                        # Actvate Pkg mode
 julia>
 ```
 
+If above procedure fails, if present, try to delete the Manifest.toml file and repeat above steps. As mentioned above, these steps are only needed the first time.
+
+
 The next step assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
 
 2. Start a Pluto notebook server.
