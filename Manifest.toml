@@ -627,9 +627,9 @@ version = "1.2.1"
 
 [[Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "2671775801f2a79f2c748a42a6c6081e099d2d82"
+git-tree-sha1 = "a2484a6e0a48c694c41f69397657b6753e218923"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.14.8"
+version = "0.14.9"
 
 [[LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -1192,7 +1192,7 @@ version = "1.0.1"
 
 [[StatisticalRethinking]]
 deps = ["AxisArrays", "BSplines", "CSV", "DataFrames", "Distributions", "DocStringExtensions", "Formatting", "GLM", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MCMCChains", "MonteCarloMeasurements", "NamedArrays", "NamedTupleTools", "Optim", "OrderedCollections", "Parameters", "PrettyTables", "Random", "Reexport", "Requires", "Statistics", "StatsBase", "StatsFuns", "StatsModelComparisons", "StatsPlots", "StructuralCausalModels", "Test", "Unicode"]
-path = "/Users/rob/.julia/dev/StatisticalRethinking"
+git-tree-sha1 = "f636ad4cda70b1501cd0a1cb6b29095bd2ffa53a"
 uuid = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 version = "3.2.8"
 
@@ -1220,9 +1220,9 @@ version = "0.9.6"
 
 [[StatsModelComparisons]]
 deps = ["RecipesBase", "Statistics", "StatsFuns"]
-git-tree-sha1 = "bfb64c1c866a19f8ca5e8a7258ca9e2ef8773eb0"
+git-tree-sha1 = "dab481fc0f88d1a8b2c612e308140ec979e8ffe8"
 uuid = "854dedd9-9477-4a25-907d-7fd989bfdd01"
-version = "0.1.1"
+version = "0.1.2"
 
 [[StatsModels]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
@@ -1250,9 +1250,9 @@ version = "1.4.0"
 
 [[StructuralCausalModels]]
 deps = ["CSV", "Combinatorics", "DataFrames", "DataStructures", "Distributions", "DocStringExtensions", "LinearAlgebra", "NamedArrays", "Reexport", "Statistics"]
-git-tree-sha1 = "85b7a3d2e4e85cbdb9a7e5ce7f91cfdc5b4bf443"
+git-tree-sha1 = "f61e8a5dd84524b7a3cfd0a0d58fce17388e381a"
 uuid = "a41e6734-49ce-4065-8b83-aff084c01dfd"
-version = "1.0.4"
+version = "1.0.5"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays", "SuiteSparse_jll"]

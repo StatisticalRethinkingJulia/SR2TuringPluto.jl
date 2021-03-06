@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -46,11 +46,14 @@ md"##### Create an MCMCChains.Chains object."
 # ╔═╡ 178d0d36-f2e5-11ea-2593-bf4c46edb720
 chn = MCMCChains.Chains(reshape(samples, N, 1, 1), [:p]);
 
+# ╔═╡ df229f44-7dd0-11eb-2ebe-9b12eff28aa1
+typeof(chn)
+
 # ╔═╡ 179c95ce-f2e5-11ea-2358-714343a64afa
 md"##### Describe the chain."
 
 # ╔═╡ 17a5374c-f2e5-11ea-1bfe-3fb1cce48d48
-chn
+Text(sprint(show, "text/plain", summarize(chn)))
 
 # ╔═╡ 17a70c16-f2e5-11ea-2e3f-2dc8006c1ee7
 md"##### Plot the chain."
@@ -101,6 +104,7 @@ md"## End of clip-03-02-05t.jl"
 # ╠═1784a202-f2e5-11ea-051b-09f8abb69875
 # ╟─178bd8ba-f2e5-11ea-21dd-61c16076a938
 # ╠═178d0d36-f2e5-11ea-2593-bf4c46edb720
+# ╠═df229f44-7dd0-11eb-2ebe-9b12eff28aa1
 # ╟─179c95ce-f2e5-11ea-2358-714343a64afa
 # ╠═17a5374c-f2e5-11ea-1bfe-3fb1cce48d48
 # ╟─17a70c16-f2e5-11ea-2e3f-2dc8006c1ee7
