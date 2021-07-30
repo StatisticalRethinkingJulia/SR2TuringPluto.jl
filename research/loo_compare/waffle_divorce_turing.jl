@@ -31,7 +31,6 @@ end
 end
 
 chn5_1t = sample(m5_1t(df.A, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
-chn5_1t |> display
 
 @model function m5_2t(M, D)
     a ~ Normal(0, 0.2)
@@ -44,7 +43,6 @@ chn5_1t |> display
 end
 
 chn5_2t = sample(m5_2t(df.M, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
-chn5_2t |> display
 
 @model function m5_3t(A, M, D)
     a ~ Normal(0, 0.2)
@@ -58,7 +56,6 @@ chn5_2t |> display
 end
 
 chn5_3t = sample(m5_3t(df.A, df.M, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
-chn5_3t |> display
 
 pw_lls5_1t = pointwise_log_likelihoods(m5_1t(df.A, df.D), chn5_1t)
 pw_lls5_2t = pointwise_log_likelihoods(m5_2t(df.M, df.D), chn5_2t)
@@ -73,5 +70,8 @@ for (i, psis) in enumerate(loo_comparison.psis)
     savefig(joinpath(@__DIR__, "m5.$(i)t.png"))
 end
 println()
+Particles(chn5_1t[:,[:a, :bA, :σ],:]) |> display
+Particles(chn5_2t[:,[:a, :bM, :σ],:]) |> display
+Particles(chn5_3t[:,[:a, :bA, :bM, :σ],:]) |> display
 loo_comparison |> display
 
