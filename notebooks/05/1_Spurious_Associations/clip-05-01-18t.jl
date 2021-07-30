@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.3
+# v0.14.8
 
 using Markdown
 using InteractiveUtils
@@ -16,6 +16,9 @@ end
 
 # ╔═╡ 041b4048-077d-11eb-20b8-6f8b8ee72626
 md"## Clip-05-01-18t.jl"
+
+# ╔═╡ bbbbd388-3ada-4108-bd5e-d9bc107f9d01
+versioninfo()
 
 # ╔═╡ 08320f9a-077d-11eb-2181-9bacc9603e02
 begin
@@ -48,7 +51,7 @@ end
 # ╔═╡ 35f34180-07d0-11eb-2c53-d1a2454235d5
 begin
 	x = -2:0.1:2
-	plot()
+	plot(;dpi = 460)
 	for r in eachrow(prior5_1_At)
 		p = lin(r.a, x, r.bA)
 		plot!(x, p, color = :black, alpha = 0.4)
@@ -63,7 +66,7 @@ begin
 
 	scatter(df.A, df.D, alpha = 0.4, legend = false)
 	plot!(A_seq, mu5_1_At.mean, ribbon =
-		(mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean))
+		(mu5_1_At.mean .- mu5_1_At.lower, mu5_1_At.upper .- mu5_1_At.mean);dpi = 460)
 	vline!([0])
 end
 
@@ -90,7 +93,7 @@ begin
 	scatter(df.M, df.D, alpha = 0.4, legend = false)
 	plot!(M_seq, mu5_2_Mt.mean, ribbon = 
 		(mu5_2_Mt.mean .- mu5_2_Mt.lower, mu5_2_Mt.upper .- mu5_2_Mt.mean))
-	vline!([0])
+	vline!([0];dpi = 460)
 end
 
 # ╔═╡ 0db57a6a-07d7-11eb-2536-914facad3260
@@ -116,7 +119,7 @@ begin
 	scatter(df.M, df.D, alpha = 0.4, legend = false)
 	plot!(M_seq, mu5_3_A_Mt.mean, ribbon = 
 		(mu5_3_A_Mt.mean .- mu5_3_A_Mt.lower, mu5_3_A_Mt.upper .- mu5_3_A_Mt.mean))
-	vline!([0])
+	vline!([0];dpi = 460)
 end
 
 # ╔═╡ 86a824ae-0991-11eb-3ee5-8ffb37cce3ec
@@ -177,7 +180,7 @@ begin
 		coord = xy[df.Loc .== loc, :]
 		annotate!(coord..., loc, :bottom)
 	end
-	plot!()
+	plot!(;dpi = 460)
 end
 
 # ╔═╡ c13c8b1e-08db-11eb-2725-b521e559429c
@@ -189,7 +192,7 @@ begin
 										  # gives the DataFrame the names of the columns
 
 	@df d corrplot([:y :x_real :x_spur])  # either
-	corrplot(Matrix(d), label = names(d)) # or
+	corrplot(Matrix(d), label = names(d);dpi = 460) # or
 end
 
 # ╔═╡ 11d3317c-08df-11eb-1843-13d7b9b390ac
@@ -197,6 +200,7 @@ md"## End of clip-05-01-18t.jl"
 
 # ╔═╡ Cell order:
 # ╟─041b4048-077d-11eb-20b8-6f8b8ee72626
+# ╠═bbbbd388-3ada-4108-bd5e-d9bc107f9d01
 # ╠═0831131a-077d-11eb-2412-fbd0e7cc3436
 # ╠═08314e98-077d-11eb-1d86-f9c9dd52e2c3
 # ╠═08320f9a-077d-11eb-2181-9bacc9603e02

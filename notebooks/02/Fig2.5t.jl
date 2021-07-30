@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.18
+# v0.14.8
 
 using Markdown
 using InteractiveUtils
@@ -49,7 +49,7 @@ end
 
 
 # ╔═╡ dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-plot(p..., layout=(3, 3))
+plot(p..., layout=(3, 3);dpi = 460)
 
 # ╔═╡ ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
 md"## End of Fig2.5t.jl"
