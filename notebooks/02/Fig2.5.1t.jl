@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.11
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
@@ -31,7 +31,7 @@ md"## Fig 2.5.1t"
 md"""
 ##### This clip is only intended to generate part of Fig 2.5 using a PlutoUI slider.
 
-It is not intended to show how to use Stan (yet)!
+It is not intended to show how to use Turing (yet)!
 
 This notebook demonstrates simple PlutoUI interactivity."""
 

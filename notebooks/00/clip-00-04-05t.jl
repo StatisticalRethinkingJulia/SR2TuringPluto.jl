@@ -1,15 +1,16 @@
 ### A Pluto.jl notebook ###
-# v0.12.11
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ e5368ab2-eb97-11ea-1755-f5b9bae4e5c3
-using DrWatson
+using Pkg, DrWatson
 
 # ╔═╡ cb4a13ee-eb97-11ea-373e-474e38399b44
 begin
 	@quickactivate "StatisticalRethinkingTuring"
+	using GLM
 	using StatisticalRethinking
 end
 
