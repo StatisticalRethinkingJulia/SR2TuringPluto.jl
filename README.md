@@ -1,5 +1,7 @@
 ## Version 4 is under preparation!!!! It needs StatisticalRethinking v4 and StatisticalRethinkingPlots.jl. See the README in StatisticalRethinking.jl.
 
+
+
 ## Purpose of StatisticalRethinkingTuring.jl
 
 As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
@@ -17,13 +19,13 @@ To (locally) reproduce and use this project, do the following:
 ```
 $ git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
 $ cd StatisticalRethinkingTuring.jl
-$ julia
+$ julia # Note that Turing.jl is usally only supported in released version of Julia.
 ```
 and in the Julia REPL:
 
 ```
 julia> ]                                        # Actvate Pkg mode
-(@v1.5) pkg> activate .                         # Activate pkg in .
+(@v1.6) pkg> activate .                         # Activate pkg in .
 (StatisticalRethinkingTuring) pkg> instantiate  # Install in pkg environment
 (StatisticalRethinkingTuring) pkg> <delete>     # Exit package mode
 julia>
@@ -68,9 +70,11 @@ using Pkg, DrWatson
 # scripts use StatisticalRethinking. If mcmc sampling is
 # needed, it must be loaded before StatisticalRethinking:
 
-@quickactivate "StatisticalRethinkingTuring"
 using Turing
+# more using lines, e.g.
+using CSV, DataFrames, Distributions
 using StatisticalRethinking
+using StatisticalRethinkingPlots, StatsPlots, Plots
 
 # To access e.g. the Howell1.csv data file:
 df = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
@@ -135,6 +139,10 @@ Of course, without the excellent textbook by Richard McElreath, this package wou
 This repository and format is derived from work by Karajan, previous versions of StatisticalRethinking.jl and many other contributors.
 
 ## Versions
+
+### Version 4.0.0 (Under preparation!)
+
+Switch to StatisticalREthinking v4. See the StatisticalRethinking v4 README for more explanations.
 
 ### Version 1.0.0 (in preparation, expected late Nov 2020)
 
