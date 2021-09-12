@@ -1,3 +1,5 @@
+## Version 4 is under preparation!!!! It needs StatisticalRethinking v4 and StatisticalRethinkingPlots.jl. See the README in StatisticalRethinking.jl.
+
 ## Purpose of StatisticalRethinkingTuring.jl
 
 As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
