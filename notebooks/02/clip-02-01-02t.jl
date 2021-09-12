@@ -9,7 +9,6 @@ using Pkg, DrWatson
 
 # ╔═╡ 20646558-f928-11ea-3351-bf12703651b2
 begin
-	@quickactivate "StatisticalRethinkingTuring"
 	using StatisticalRethinking
 end
 
