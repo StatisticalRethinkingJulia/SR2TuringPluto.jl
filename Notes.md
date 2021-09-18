@@ -1,7 +1,7 @@
 
 ### Tag version notes
 
-1. git commit -m "Release v4.0.3"
+1. git commit -m "Release v4.0.3: Changes"
 2. git tag v4.0.3
 3. git push origin master --tags
 
