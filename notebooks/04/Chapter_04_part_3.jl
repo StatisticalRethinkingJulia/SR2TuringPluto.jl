@@ -4,90 +4,205 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ ea02e53e-e0cc-11ea-2265-3165c74e19b3
+# ╔═╡ 8483abbb-011f-4e36-976b-d04967d86af0
 using Pkg, DrWatson
 
-# ╔═╡ 02ea1c3e-e0cd-11ea-04d1-f34150f81c89
+# ╔═╡ 772c0ef3-aeb2-4c8f-aac9-fbd189770956
 begin
 	using Distributions
+	using CSV
 	using DataFrames
-	using MonteCarloMeasurements
-	using Turing
+	using LinearAlgebra
 	using Logging
-	using LaTeXStrings
-	using PlutoUI
+	using Random
+	using StatsBase
+	using Turing
 	using StatisticalRethinking
 	using StatisticalRethinkingPlots
-	using StatsPlots, Plots
+	using StatsPlots, LaTeXStrings
+	using BSplines
 end
 
-# ╔═╡ d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-md"## Fig 2.5t"
+# ╔═╡ 74a4750e-98a8-48af-a789-2109e2c5e01f
+md"#### Setting default attributes for plots."
 
-# ╔═╡ 11533bb6-e0cd-11ea-331e-278de5d6b26f
-md"### This clip is only intended to generate Fig 2.5."
-
-# ╔═╡ 3067f2d0-e0cd-11ea-17d4-ab40276a0379
-@model globe_toss(n, k) = begin
-  theta ~ Beta(1, 1) # prior
-  k ~ Binomial(n, theta) # model
-  return k, theta
+# ╔═╡ dbad5708-44ff-488e-a6ef-654c9252f940
+begin
+	default(label=false)
+	Logging.disable_logging(Logging.Warn);
 end;
 
-# ╔═╡ a501be4a-fb4a-11ea-3820-ad09c47beb7a
-begin
-	p = Vector{Plots.Plot{Plots.GRBackend}}(undef, 9)
-	dens = Vector{DataFrame}(undef, 10)
-	for n in 1:9
-		p[n] = plot(xlims=(0.0, 1.0), ylims=(0.0, 3.0), leg=false)
-		k = sum([1,0,1,1,1,0,1,0,1,1,0,1,1,1,0,1,0,1][1:n])
-		chns = sample(globe_toss(n, k), NUTS(0.65), 1000)
-		dfs=DataFrame(chns)
-		if n == 1
-			hline!([1.0], line=(:dash))
-		else
-			density!(dens[n][:, :theta], line=(:dash))
-		end
-		density!(dfs[:, :theta])
-		dens[n+1] = dfs
+# ╔═╡ 13285996-780c-4079-9991-8010e46ad582
+md"### Code 4.72"
 
-	end
+# ╔═╡ 5bb57e92-1f89-40d7-b025-8294ef3bec09
+begin
+	d = CSV.read(sr_datadir("cherry_blossoms.csv"), missingstring="NA", DataFrame)
+	PRECIS(d)
 end
 
+# ╔═╡ bf352765-ed56-436a-8dca-333435ec78eb
+md"### Code 4.73"
 
-# ╔═╡ dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-plot(p..., layout=(3, 3))
+# ╔═╡ 755df2d9-894a-4ee6-9cd4-32971672f025
+begin
+	d2 = d[completecases(d[!,[:doy]]),:]
+	d2 = disallowmissing(d2[!,[:year,:doy]])
+	num_knots = 15
+	knots_list = quantile(d2.year, range(0, 1; length=num_knots));
+end
 
-# ╔═╡ ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
-md"## End of Fig2.5t.jl"
+# ╔═╡ 881fb044-cdfe-46d4-9843-e28072b85387
+md"### Code 4.74"
+
+# ╔═╡ 20f677f0-56dc-4df2-9227-d3be826348e8
+basis = BSplineBasis(3, knots_list)
+
+# ╔═╡ d4c60a5d-cd5e-4e54-a496-38b204701af2
+md"### Code 4.75"
+
+# ╔═╡ c212dff1-5b2e-48a8-8906-9632fd1fc38f
+begin
+	p1 = plot(basis)
+	scatter!(knots_list, repeat([1], num_knots); xlab="year", ylab="basis",
+		legend=false)
+end
+
+# ╔═╡ 59024873-f622-4a7d-9763-bda8b4cd85f8
+md"### Code 4.76"
+
+# ╔═╡ dcd41a9e-e657-45a5-b0e2-8714d65b8aa8
+md"##### This way of calucalting bsplines is slightly slower, than shown in the book (with pre-calculated matrix) but it is much cleaner in my perspective."
+
+# ╔═╡ 35c9eb0e-1251-4359-8139-2b5351d696e4
+md"##### You can do comparison yourself by precalculating spline matrix outside of the model and do matrix multiplication in the model instead of spline evialutaion. Example of doing this is at code block 4.79."
+
+# ╔═╡ dc16d5af-6526-4043-81d0-8e6147d4bfdd
+@model function model_splines(year, doy)
+    w ~ MvNormal(zeros(length(basis)), 1)
+    a ~ Normal(100, 10)
+    s = Spline(basis, w)
+    μ = a .+ s.(year)
+    σ ~ Exponential(1)
+    doy ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ 7836a7a4-15cf-4e4e-9fe3-8577682e037e
+m4_7 = sample(model_splines(d2.year, d2.doy), NUTS(0.65; init_ϵ = 9.765625e-5),
+	1000)
+
+# ╔═╡ 861b03a9-f0a5-45ab-aceb-ec7c445031ff
+md"### Code 4.77"
+
+# ╔═╡ 9b9513f5-7a81-405d-864f-d2fc23a015e5
+begin
+	post = DataFrame(m4_7)
+
+	# convert columns w[*] into single column w
+	
+	w_df = DataFrames.select(post, r"w")
+	post = DataFrames.select(post, Not(r"w"))
+	post[!,:w] = Vector.(eachrow(w_df))
+
+	# vector of 16 average w values
+	
+	w_mean = mean.(eachcol(w_df))
+	p2 = plot(basis .* w_mean)
+	scatter!(knots_list, repeat([1], num_knots); xlab="year", ylab="basis × weight")
+end
+
+# ╔═╡ e2dcf8e1-309b-401a-9512-432e599fa438
+md"### Code 4.78"
+
+# ╔═╡ 780ba069-4e8b-4832-a0e0-e5cef802fa4a
+md"#### Explicit link logic."
+
+# ╔═╡ ec818ff5-79db-4911-b965-3bb7fb429960
+begin
+	μ = [
+		row.a .+ Spline(basis, row.w).(d2.year)
+		for row ∈ eachrow(post)
+	]
+	μ = hcat(μ...);
+
+	μ_PI = PI.(eachrow(μ))
+	μ_PI = vcat(μ_PI'...);
+
+	p3 = @df d2 scatter(:year, :doy; alpha=0.3)
+	μ_mean = mean.(eachrow(μ_PI))
+	plot!(d2.year, [μ_mean, μ_mean]; c=:black, fillrange=μ_PI, fillalpha=0.3,
+		alpha=0)
+end
+
+# ╔═╡ 33bcafa1-c96a-488c-8f6b-6398ebf0588a
+plot(p1, p2, p3; layout=(3, 1))
+
+# ╔═╡ ab0f4159-075f-4b05-9188-322a5e3bfe5a
+md"### Code 4.79"
+
+# ╔═╡ bf04f6d3-925c-47be-90ff-b8a5c3ccaa05
+md"#### How to build the model with explicit spline matrix calculation."
+
+# ╔═╡ 662d9645-50b7-4904-bffb-6939af0e11cf
+let
+	basis = BSplineBasis(3, knots_list)
+
+	# list of splines with 1 only at corresponding basis index
+	splines = [
+		Spline(basis, [float(idx == knot) for idx ∈ 1:length(basis)])
+		for knot ∈ 1:length(basis)
+	]
+
+	# calculate each spline for every year. Resulting matrix B is 827x16
+	B = [
+		map(s -> s(year), splines)
+		for year in d2.year
+	]
+	B = vcat(B'...);
+
+
+	# do not need years parameter anymore, all the information is in B matrix
+	@model function model_splines_matrix(doy)
+		w ~ MvNormal(zeros(length(basis)), 1)
+		a ~ Normal(100, 10)
+		μ = a .+ B * w
+		σ ~ Exponential(1)
+		doy ~ MvNormal(μ, σ)
+	end
+
+	m4_7alt = sample(model_splines_matrix(d2.doy), NUTS(0.65;
+			init_ϵ = 0.0001953125), 1000)
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+BSplines = "488c2830-172b-11e9-1591-253b8a7df96d"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-MonteCarloMeasurements = "0987c9cc-fe09-11e8-30f0-b96dd679fdca"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 StatisticalRethinkingPlots = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
+BSplines = "~0.3.2"
+CSV = "~0.8.5"
 DataFrames = "~1.2.2"
 Distributions = "~0.25.16"
 DrWatson = "~2.4.3"
 LaTeXStrings = "~1.2.1"
-MonteCarloMeasurements = "~1.0.2"
-Plots = "~1.21.3"
-PlutoUI = "~0.7.9"
 StatisticalRethinking = "~4.0.8"
 StatisticalRethinkingPlots = "~0.5.0"
+StatsBase = "~0.33.10"
 StatsPlots = "~0.14.27"
 Turing = "~0.18.0"
 """
@@ -200,6 +315,12 @@ deps = ["AbstractFFTs", "CovarianceEstimation", "IntervalSets", "InvertedIndices
 git-tree-sha1 = "8b382307c6195762a5473ba3522a2830c3014620"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 version = "0.1.19"
+
+[[BSplines]]
+deps = ["LinearAlgebra", "OffsetArrays", "RecipesBase"]
+git-tree-sha1 = "54308218333f6b8967311c76f2cf89ab495542d6"
+uuid = "488c2830-172b-11e9-1591-253b8a7df96d"
+version = "0.3.2"
 
 [[BangBang]]
 deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Setfield", "Tables", "ZygoteRules"]
@@ -1132,12 +1253,6 @@ git-tree-sha1 = "2dbafeadadcf7dadff20cd60046bba416b4912be"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.21.3"
 
-[[PlutoUI]]
-deps = ["Base64", "Dates", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "Suppressor"]
-git-tree-sha1 = "44e225d5837e2a2345e69a1d1e01ac2443ff9fcb"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.9"
-
 [[Polyester]]
 deps = ["ArrayInterface", "BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "ManualMemory", "Requires", "Static", "StrideArraysCore", "ThreadingUtilities"]
 git-tree-sha1 = "21d8a7163d0f3972ade36ca2b5a0e8a27ac96842"
@@ -1222,9 +1337,9 @@ version = "1.1.2"
 
 [[RecipesPipeline]]
 deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
-git-tree-sha1 = "7ad0dfa8d03b7bcf8c597f59f5292801730c55b8"
+git-tree-sha1 = "d4491becdc53580c6dadb0f6249f90caae888554"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
-version = "0.4.1"
+version = "0.4.0"
 
 [[RecursiveArrayTools]]
 deps = ["ArrayInterface", "ChainRulesCore", "DocStringExtensions", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
@@ -1421,11 +1536,6 @@ version = "1.0.8"
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
-[[Suppressor]]
-git-tree-sha1 = "a819d77f31f83e5792a76081eee1ea6342ab8787"
-uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
-version = "0.2.0"
-
 [[TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
@@ -1488,9 +1598,9 @@ version = "0.3.0"
 
 [[TriangularSolve]]
 deps = ["CloseOpenIntervals", "IfElse", "LayoutPointers", "LinearAlgebra", "LoopVectorization", "Polyester", "Static", "VectorizationBase"]
-git-tree-sha1 = "ed55426a514db35f58d36c3812aae89cfc057401"
+git-tree-sha1 = "1eed054a58d9332adc731103fe47dad2ad1a0adf"
 uuid = "d5829a12-d9aa-46ab-831f-fb7c9ab06edf"
-version = "0.1.6"
+version = "0.1.5"
 
 [[Tullio]]
 deps = ["ChainRulesCore", "DiffRules", "LinearAlgebra", "Requires"]
@@ -1757,13 +1867,31 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-# ╠═ea02e53e-e0cc-11ea-2265-3165c74e19b3
-# ╠═02ea1c3e-e0cd-11ea-04d1-f34150f81c89
-# ╟─11533bb6-e0cd-11ea-331e-278de5d6b26f
-# ╠═3067f2d0-e0cd-11ea-17d4-ab40276a0379
-# ╠═a501be4a-fb4a-11ea-3820-ad09c47beb7a
-# ╠═dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-# ╟─ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
+# ╠═8483abbb-011f-4e36-976b-d04967d86af0
+# ╠═772c0ef3-aeb2-4c8f-aac9-fbd189770956
+# ╟─74a4750e-98a8-48af-a789-2109e2c5e01f
+# ╠═dbad5708-44ff-488e-a6ef-654c9252f940
+# ╟─13285996-780c-4079-9991-8010e46ad582
+# ╠═5bb57e92-1f89-40d7-b025-8294ef3bec09
+# ╟─bf352765-ed56-436a-8dca-333435ec78eb
+# ╠═755df2d9-894a-4ee6-9cd4-32971672f025
+# ╟─881fb044-cdfe-46d4-9843-e28072b85387
+# ╠═20f677f0-56dc-4df2-9227-d3be826348e8
+# ╟─d4c60a5d-cd5e-4e54-a496-38b204701af2
+# ╠═c212dff1-5b2e-48a8-8906-9632fd1fc38f
+# ╟─59024873-f622-4a7d-9763-bda8b4cd85f8
+# ╟─dcd41a9e-e657-45a5-b0e2-8714d65b8aa8
+# ╟─35c9eb0e-1251-4359-8139-2b5351d696e4
+# ╠═dc16d5af-6526-4043-81d0-8e6147d4bfdd
+# ╠═7836a7a4-15cf-4e4e-9fe3-8577682e037e
+# ╟─861b03a9-f0a5-45ab-aceb-ec7c445031ff
+# ╠═9b9513f5-7a81-405d-864f-d2fc23a015e5
+# ╟─e2dcf8e1-309b-401a-9512-432e599fa438
+# ╟─780ba069-4e8b-4832-a0e0-e5cef802fa4a
+# ╠═ec818ff5-79db-4911-b965-3bb7fb429960
+# ╠═33bcafa1-c96a-488c-8f6b-6398ebf0588a
+# ╟─ab0f4159-075f-4b05-9188-322a5e3bfe5a
+# ╟─bf04f6d3-925c-47be-90ff-b8a5c3ccaa05
+# ╠═662d9645-50b7-4904-bffb-6939af0e11cf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

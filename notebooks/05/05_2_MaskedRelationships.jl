@@ -4,90 +4,388 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ ea02e53e-e0cc-11ea-2265-3165c74e19b3
+# ╔═╡ 80deafdd-ce8d-4b7d-9651-7ba281b38873
 using Pkg, DrWatson
 
-# ╔═╡ 02ea1c3e-e0cd-11ea-04d1-f34150f81c89
+# ╔═╡ 12d8d9bd-c72e-43e3-a183-6611619e774b
 begin
-	using Distributions
-	using DataFrames
-	using MonteCarloMeasurements
-	using Turing
-	using Logging
-	using LaTeXStrings
-	using PlutoUI
-	using StatisticalRethinking
-	using StatisticalRethinkingPlots
-	using StatsPlots, Plots
+    using Distributions
+    using StatsPlots
+    using StatsBase
+    using LaTeXStrings
+    using CSV
+    using DataFrames
+    using LinearAlgebra
+    using Logging
+    using Random
+    using Turing
+    using Dagitty
+    using StatisticalRethinking
+    using StatisticalRethinkingPlots
 end
 
-# ╔═╡ d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-md"## Fig 2.5t"
+# ╔═╡ 39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64
+md"#### Set defaults for plotting and logging."
 
-# ╔═╡ 11533bb6-e0cd-11ea-331e-278de5d6b26f
-md"### This clip is only intended to generate Fig 2.5."
+# ╔═╡ 9b65e1ff-e7eb-4800-9862-718c167a8e32
+begin
+	default(label=false)
+	Logging.disable_logging(Logging.Warn);
+end
 
-# ╔═╡ 3067f2d0-e0cd-11ea-17d4-ab40276a0379
-@model globe_toss(n, k) = begin
-  theta ~ Beta(1, 1) # prior
-  k ~ Binomial(n, theta) # model
-  return k, theta
+# ╔═╡ 6b9df7a9-556b-4b73-b67f-2ac8c48aa0c7
+md"## 5.2 Masked relationship."
+
+# ╔═╡ 2e0252f4-58c2-4fa1-a063-c2b5dd6a274a
+md"### Code 5.28"
+
+# ╔═╡ 3de73995-159f-4a62-8ca3-91a7c5c378e0
+begin
+	d = CSV.read(sr_datadir("milk.csv"),  missingstring="NA", DataFrame)
+
+	# get rid of dots in column names
+
+		rename!(n -> replace(n, "." => "_"), d)
+
+	describe(d)
+
+end
+
+# ╔═╡ 84025c5a-49d6-49bb-ada7-1a33e50fe0c4
+md"### Code 5.29"
+
+# ╔═╡ 7674fdcb-c7e8-4b87-ba55-ea05cd1a1f91
+begin
+	d[!,:K] = standardize(ZScoreTransform, d.kcal_per_g)
+	d[!,:M] = standardize(ZScoreTransform, log.(d.mass))
+
+	# column contains missing values, need to propagate them on standartization
+	
+	d[!,:N] = d.neocortex_perc
+	non_miss = findall(!ismissing, d.N);
+	d[non_miss,:N] = standardize(ZScoreTransform, disallowmissing(d.N[non_miss]));
 end;
 
-# ╔═╡ a501be4a-fb4a-11ea-3820-ad09c47beb7a
-begin
-	p = Vector{Plots.Plot{Plots.GRBackend}}(undef, 9)
-	dens = Vector{DataFrame}(undef, 10)
-	for n in 1:9
-		p[n] = plot(xlims=(0.0, 1.0), ylims=(0.0, 3.0), leg=false)
-		k = sum([1,0,1,1,1,0,1,0,1,1,0,1,1,1,0,1,0,1][1:n])
-		chns = sample(globe_toss(n, k), NUTS(0.65), 1000)
-		dfs=DataFrame(chns)
-		if n == 1
-			hline!([1.0], line=(:dash))
-		else
-			density!(dens[n][:, :theta], line=(:dash))
-		end
-		density!(dfs[:, :theta])
-		dens[n+1] = dfs
+# ╔═╡ adac6445-d51d-43a4-89fd-19a14bde89c4
+md"### Code 5.30"
 
+# ╔═╡ 37f91d86-0f12-4b87-935c-83e0bdb61dd0
+@model function model_m5_5_draft(N, K)
+    a ~ Normal(0, 1)
+    bN ~ Normal(0, 1)
+    σ ~ Exponential(1)
+    μ = @. a + bN * N
+    K ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ 01a4d9e6-493e-47bf-af7b-e1e826475d52
+try
+    m5_5_draft = sample(model_m5_5_draft(d.N, d.K), NUTS(), 1000)
+catch e
+    if isa(e, MethodError)
+        s = sprint(showerror, e)
+        println(s)
+    end
+end
+
+# ╔═╡ d1be5297-6a50-4028-8927-698ee6c3e804
+md"### Code 5.31"
+
+# ╔═╡ 9099b078-1ae1-4b78-bbc7-c9d5e7d9fea9
+d.neocortex_perc
+
+# ╔═╡ dbe69ae2-0646-4370-9d3e-918fc2db686c
+md"### Code 5.32"
+
+# ╔═╡ db826c7f-7396-4350-ac24-2aeddf50ba66
+dcc = d[completecases(d[!,[:K,:N,:M]]),:];
+
+# ╔═╡ d6134b92-8951-49dd-a448-6092f2ecabbe
+md"### Code 5.33"
+
+# ╔═╡ 8d10f16e-748c-4cfd-9297-f1d2eff99d13
+m5_5_draft = sample(model_m5_5_draft(dcc.N, dcc.K), NUTS(), 1000);
+
+# ╔═╡ e540f095-d956-4ff9-9f5b-f6ec07d5cad5
+md"### Code 5.34"
+
+# ╔═╡ 399e259d-6997-4017-98c2-a4e09df1acfb
+let
+	prior = sample(model_m5_5_draft(dcc.N, dcc.K), Prior(), 1000)
+	prior_df = DataFrame(prior)
+	xseq = [-2, 2]
+	μ = StatisticalRethinking.link(prior_df, [:a, :bN], xseq)
+	μ = hcat(μ...);
+
+	p = plot(; xlim=xseq, ylim=xseq, 
+		xlab="neocortex percent (std)", ylab="kilocal per g (std)", 
+		title=L"a \sim \mathcal{N}(0,1), bN \sim \mathcal{N}(0,1)"
+	)
+	for y ∈ first(eachrow(μ), 50)
+		plot!(p, xseq, y; c=:black, alpha=0.3)
+	end
+	p
+end
+
+# ╔═╡ 1b9660fb-4074-459c-ab07-ffcad4d45a26
+md"### Code 5.35"
+
+# ╔═╡ 4793fe6a-735b-4949-8e27-a1a8f6c8e3c8
+@model function model_m5_5(N, K)
+    a ~ Normal(0, 0.2)
+    bN ~ Normal(0, 0.5)
+    σ ~ Exponential(1)
+    μ = @. a + bN * N
+    K ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ ea7a7a99-29d5-4589-81bd-88d8aa64d885
+begin
+	m5_5 = sample(model_m5_5(dcc.N, dcc.K), NUTS(), 1000)
+	m5_5_df = DataFrame(m5_5)
+	PRECIS(m5_5_df)
+end
+
+# ╔═╡ 34b193e3-a4c3-40a9-b913-ef980e0aee35
+let
+	prior = sample(model_m5_5(dcc.N, dcc.K), Prior(), 1000)
+	prior_df = DataFrame(prior)
+	xseq = [-2, 2]
+
+
+	μ = StatisticalRethinking.link(prior_df, [:a, :bN], xseq)
+	μ = hcat(μ...);
+
+	p2 = plot(; xlim=xseq, ylim=xseq, 
+		xlab="neocortex percent (std)", ylab="kilocal per g (std)", 
+		title=L"a \sim \mathcal{N}(0,0.2), bN \sim \mathcal{N}(0,0.5)"
+	)
+	for y ∈ first(eachrow(μ), 50)
+		plot!(p2, xseq, y; c=:black, alpha=0.3)
 	end
 end
 
+# ╔═╡ 2b52e28e-57b1-4f94-9672-9ad1ca528594
+md"### Code 5.36"
 
-# ╔═╡ dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-plot(p..., layout=(3, 3))
+# ╔═╡ e292be02-0e44-4a6a-8de0-4046eac7c8b3
+PRECIS(m5_5_df)
 
-# ╔═╡ ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
-md"## End of Fig2.5t.jl"
+# ╔═╡ f48c5a95-b9e1-4783-943d-fbd51f8ccc79
+md"### Code 5.37"
+
+# ╔═╡ 075ce6cf-2b2f-4d88-97a4-d08a6d28bb02
+let
+	xseq = range(minimum(dcc.N) - 0.15, maximum(dcc.N) + 0.15; length=30)
+	μ = StatisticalRethinking.link(m5_5_df, [:a, :bN], xseq);
+	μ = hcat(μ...)
+	μ_mean = mean.(eachcol(μ))
+	μ_PI = PI.(eachcol(μ))
+	μ_PI = vcat(μ_PI'...)
+
+	@df dcc scatter(:N, :K; xlab="neocortex percent (std)",
+		ylab="kilocal per g (std)")
+	plot!(xseq, [μ_mean, μ_mean]; lw=2, fillrange=μ_PI, fillalpha=0.2, color=:black)
+end
+
+# ╔═╡ 74cbc4ab-b2d8-4e8e-8496-89b2c6e47ac7
+md"### Code 5.38"
+
+# ╔═╡ e51a1fa2-8716-49e1-806d-c54610212711
+@model function model_m5_6(M, K)
+    a ~ Normal(0, 0.2)
+    bM ~ Normal(0, 0.5)
+    σ ~ Exponential(1)
+    μ = @. a + bM * M
+    K ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ c49709e2-4893-422f-8936-615590d7773a
+begin
+	m5_6 = sample(model_m5_6(dcc.M, dcc.K), NUTS(), 1000)
+	m5_6_df = DataFrame(m5_6)
+	PRECIS(m5_6_df)
+end
+
+# ╔═╡ 17eea9d5-802c-49fd-b29f-d311811044a1
+let
+	xseq = range(minimum(dcc.M) - 0.15, maximum(dcc.M) + 0.15; length=30)
+	μ = StatisticalRethinking.link(m5_6_df, [:a, :bM], xseq);
+	μ = hcat(μ...)
+	μ_mean = mean.(eachcol(μ))
+	μ_PI = PI.(eachcol(μ))
+	μ_PI = vcat(μ_PI'...)
+
+	@df dcc scatter(:M, :K; xlab="log body mass (std)", ylab="kilocal per g (std)")
+	plot!(xseq, [μ_mean, μ_mean]; lw=2, fillrange=μ_PI, fillalpha=0.2, color=:black)
+end
+
+# ╔═╡ a1babcb0-d1a3-454f-95a4-7d7091e98f3e
+@model function model_m5_7(N, M, K)
+    a ~ Normal(0, 0.2)
+    bN ~ Normal(0, 0.5)
+    bM ~ Normal(0, 0.5)
+    σ ~ Exponential(1)
+    μ = @. a + bN * N + bM * M
+    K ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ fed67c7b-23f5-4e95-9bd7-cf174946b1e1
+begin
+	m5_7 = sample(model_m5_7(dcc.N, dcc.M, dcc.K), NUTS(), 1000)
+	m5_7_df = DataFrame(m5_7)
+	PRECIS(m5_7_df)
+end
+
+# ╔═╡ f4dd2f6b-0991-45cc-82ec-d4c361e8067b
+md"### Code 5.40"
+
+# ╔═╡ bc6c18e4-ee46-4f0a-9ee3-c1ea7351184e
+coeftab_plot(m5_7_df, m5_6_df, m5_5_df; pars=(:bM, :bN),
+	names=("m5.7", "m5.6", "m5.5"))
+
+# ╔═╡ 845129b4-db30-4d58-b9ad-682f5a9b15e3
+md"### Code 5.41"
+
+# ╔═╡ d8e83c21-fbeb-40d3-aa80-b810271d7399
+md"##### The code in the book corresponds to the bottom-right figure, which keeps N=0 (despite stated in the text)."
+
+# ╔═╡ 51ec6d48-9608-4021-9a3a-b89a4e3555d5
+md"##### Below is the code to produce the bottom-left figure (M=0)."
+
+# ╔═╡ a2f99116-de8d-4183-8725-9a22081d0b79
+let
+	xseq = range(minimum(dcc.N) - 0.15, maximum(dcc.N) + 0.15; length=30)
+	μ = StatisticalRethinking.link(m5_7_df, [:a, :bN], xseq);
+	μ = hcat(μ...)
+	μ_mean = mean.(eachcol(μ))
+	μ_PI = PI.(eachcol(μ))
+	μ_PI = vcat(μ_PI'...)
+
+	plot(title="Counterfactual holding M=0", 
+		xlab="neocortex percent (std)", ylab="kilocal per g (std)")
+	plot!(xseq, [μ_mean, μ_mean]; lw=2, fillrange=μ_PI, fillalpha=0.2, color=:black)
+
+	# +
+	xseq = range(minimum(dcc.M) - 0.15, maximum(dcc.M) + 0.15; length=30)
+	μ = StatisticalRethinking.link(m5_7_df, [:a, :bM], xseq);
+	μ = hcat(μ...)
+	μ_mean = mean.(eachcol(μ))
+	μ_PI = PI.(eachcol(μ))
+	μ_PI = vcat(μ_PI'...)
+
+	plot(title="Counterfactual holding N=0", 
+		xlab="log body mass (std)", ylab="kilocal per g (std)")
+	plot!(xseq, [μ_mean, μ_mean]; lw=2, fillrange=μ_PI, fillalpha=0.2, color=:black)
+end
+
+# ╔═╡ 343e3408-595e-47ba-8100-a99cb4dc0781
+md"### Code 5.42"
+
+# ╔═╡ 4d6dc4aa-fb17-44fb-8029-4775866be39d
+let
+	# M → K ← N
+	# M → N
+	
+	n = 100
+	M = rand(Normal(), n)
+	N = [rand(Normal(μ)) for μ ∈ M]
+	K = [rand(Normal(μ)) for μ ∈ N .- M] 
+	d_sim = DataFrame(:K => K, :N => N, :M => M);
+
+	s5 = sample(model_m5_5(d_sim.N, d_sim.K), NUTS(), 1000)
+	s6 = sample(model_m5_6(d_sim.M, d_sim.K), NUTS(), 1000)
+	s7 = sample(model_m5_7(d_sim.N, d_sim.M, d_sim.K), NUTS(), 1000)
+	s5_df = DataFrame(s5)
+	s6_df = DataFrame(s6)
+	s7_df = DataFrame(s7)
+	coeftab_plot(s7_df, s6_df, s5_df; pars=(:bM, :bN), names=("s7", "s6", "s5"))
+end
+
+# ╔═╡ 5e9a7797-a8cb-4f30-8982-08f04d251797
+md"### Code 5.43"
+
+# ╔═╡ df429c0b-7297-4a80-bfc0-1e68c7112961
+let
+	# M → K ← N
+	# N → M
+	n = 100
+	N = rand(Normal(), n)
+	M = [rand(Normal(μ)) for μ ∈ N]
+	K = [rand(Normal(μ)) for μ ∈ N .- M] 
+	d_sim2 = DataFrame(:K => K, :N => N, :M => M);
+
+	# M → K ← N
+	# M ← U → N
+	n = 100
+	U = rand(Normal(), n)
+	N = [rand(Normal(μ)) for μ ∈ U]
+	M = [rand(Normal(μ)) for μ ∈ U]
+	K = [rand(Normal(μ)) for μ ∈ N .- M] 
+	global d_sim3 = DataFrame(:K => K, :N => N, :M => M);
+	# -
+
+	s5 = sample(model_m5_5(d_sim2.N, d_sim2.K), NUTS(), 1000)
+	s6 = sample(model_m5_6(d_sim2.M, d_sim2.K), NUTS(), 1000)
+	s7 = sample(model_m5_7(d_sim2.N, d_sim2.M, d_sim2.K), NUTS(), 1000)
+	s5_df = DataFrame(s5)
+	s6_df = DataFrame(s6)
+	s7_df = DataFrame(s7)
+	coeftab_plot(s7_df, s6_df, s5_df; pars=(:bM, :bN), names=("s7", "s6", "s5"))
+end
+
+# ╔═╡ 48ad9b7b-1f32-4acb-9e9c-9f823e1d6255
+let
+s5 = sample(model_m5_5(d_sim3.N, d_sim3.K), NUTS(), 1000)
+	s6 = sample(model_m5_6(d_sim3.M, d_sim3.K), NUTS(), 1000)
+	s7 = sample(model_m5_7(d_sim3.N, d_sim3.M, d_sim3.K), NUTS(), 1000)
+	s5_df = DataFrame(s5)
+	s6_df = DataFrame(s6)
+	s7_df = DataFrame(s7)
+	coeftab_plot(s7_df, s6_df, s5_df; pars=(:bM, :bN), names=("s7", "s6", "s5"))
+end
+
+# ╔═╡ 13d4f85d-1a4e-4209-850d-2ee2ca0890a7
+md"### Code 5.44"
+
+# ╔═╡ f3bb3a8d-265e-4053-9917-922805c9d8ad
+begin
+	dag5_7 = Dagitty.DAG(:M => :K, :N => :K, :M => :N)
+	drawdag(dag5_7, [1, 0, 1], [0, 0, 1])
+end
+
+# ╔═╡ 83d1ddf2-e9a2-4c13-864e-f9c3978b161f
+md"##### EquivalentDAGs is TODO in Dagitty.jl."
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Dagitty = "d56128e0-8113-48cd-82a0-fc808dc30d4b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-MonteCarloMeasurements = "0987c9cc-fe09-11e8-30f0-b96dd679fdca"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 StatisticalRethinkingPlots = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
+CSV = "~0.8.5"
+Dagitty = "~0.0.1"
 DataFrames = "~1.2.2"
 Distributions = "~0.25.16"
 DrWatson = "~2.4.3"
 LaTeXStrings = "~1.2.1"
-MonteCarloMeasurements = "~1.0.2"
-Plots = "~1.21.3"
-PlutoUI = "~0.7.9"
 StatisticalRethinking = "~4.0.8"
 StatisticalRethinkingPlots = "~0.5.0"
+StatsBase = "~0.33.10"
 StatsPlots = "~0.14.27"
 Turing = "~0.18.0"
 """
@@ -162,6 +460,12 @@ version = "2.1.0"
 [[ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 
+[[ArnoldiMethod]]
+deps = ["LinearAlgebra", "Random", "StaticArrays"]
+git-tree-sha1 = "f87e559f87a45bece9c9ed97458d3afe98b1ebb9"
+uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
+version = "0.1.0"
+
 [[Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra"]
 git-tree-sha1 = "2ff92b71ba1747c5fdd541f8fc87736d82f40ec9"
@@ -214,6 +518,12 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 git-tree-sha1 = "aebf55e6d7795e02ca500a689d326ac979aaf89e"
 uuid = "9718e550-a3fa-408a-8086-8db961cd8217"
 version = "0.1.1"
+
+[[BenchmarkTools]]
+deps = ["JSON", "Logging", "Printf", "Statistics", "UUIDs"]
+git-tree-sha1 = "42ac5e523869a84eac9669eaceed9e4aa0e1587b"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "1.1.4"
 
 [[Bijectors]]
 deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "IrrationalConstants", "LinearAlgebra", "LogExpFunctions", "MappedArrays", "NonlinearSolve", "Random", "Reexport", "Requires", "SparseArrays", "Statistics"]
@@ -283,9 +593,9 @@ version = "3.14.0"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
-git-tree-sha1 = "024fe24d83e4a5bf5fc80501a314ce0d1aa35597"
+git-tree-sha1 = "32a2b8af383f11cbb65803883837a149d10dfe8a"
 uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
-version = "0.11.0"
+version = "0.10.12"
 
 [[Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
@@ -318,6 +628,12 @@ version = "3.37.0"
 [[CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+
+[[Compose]]
+deps = ["Base64", "Colors", "DataStructures", "Dates", "IterTools", "JSON", "LinearAlgebra", "Measures", "Printf", "Random", "Requires", "Statistics", "UUIDs"]
+git-tree-sha1 = "c6461fc7c35a4bb8d00905df7adafcff1fe3a6bc"
+uuid = "a81c6b42-2e10-5240-aca2-a61377ecd94b"
+version = "0.9.2"
 
 [[CompositionsBase]]
 git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
@@ -352,6 +668,12 @@ version = "0.2.6"
 git-tree-sha1 = "3f71217b538d7aaee0b69ab47d9b7724ca8afa0d"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.0.4"
+
+[[Dagitty]]
+deps = ["BenchmarkTools", "Combinatorics", "Compose", "DataStructures", "Documenter", "GraphPlot", "LightGraphs", "Test"]
+git-tree-sha1 = "c9746c7593c784cdd5502f2fb5a0dfdbfeb8eebf"
+uuid = "d56128e0-8113-48cd-82a0-fc808dc30d4b"
+version = "0.0.1"
 
 [[DataAPI]]
 git-tree-sha1 = "bec2532f8adb82005476c141ec23e921fc20971b"
@@ -603,6 +925,12 @@ git-tree-sha1 = "7bf67e9a481712b3dbe9cb3dac852dc4b1162e02"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.68.3+0"
 
+[[GraphPlot]]
+deps = ["ArnoldiMethod", "ColorTypes", "Colors", "Compose", "DelimitedFiles", "LightGraphs", "LinearAlgebra", "Random", "SparseArrays"]
+git-tree-sha1 = "dd8f15128a91b0079dfe3f4a4a1e190e54ac7164"
+uuid = "a2cc645c-3eea-5389-862e-a155d0052231"
+version = "0.4.4"
+
 [[Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "344bf40dcab1073aca04aa0df4fb092f920e4011"
@@ -654,6 +982,11 @@ version = "0.2.2"
 git-tree-sha1 = "28e837ff3e7a6c3cdb252ce49fb412c8eb3caeef"
 uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
 version = "0.1.0"
+
+[[Inflate]]
+git-tree-sha1 = "f5fc07d4e706b84f72d54eedcc1c13d92fb0871c"
+uuid = "d25df0c9-e2be-5dd7-82c8-3ad0b3e990b9"
+version = "0.1.2"
 
 [[IniFile]]
 deps = ["Test"]
@@ -867,6 +1200,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "7f3efec06033682db852f8b3bc3c1d2b0a0ab066"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
+
+[[LightGraphs]]
+deps = ["ArnoldiMethod", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
+git-tree-sha1 = "432428df5f360964040ed60418dd5601ecd240b6"
+uuid = "093fc24a-ae57-5d10-9952-331d41423f4d"
+version = "1.3.5"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
@@ -1132,12 +1471,6 @@ git-tree-sha1 = "2dbafeadadcf7dadff20cd60046bba416b4912be"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.21.3"
 
-[[PlutoUI]]
-deps = ["Base64", "Dates", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "Suppressor"]
-git-tree-sha1 = "44e225d5837e2a2345e69a1d1e01ac2443ff9fcb"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.9"
-
 [[Polyester]]
 deps = ["ArrayInterface", "BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "ManualMemory", "Requires", "Static", "StrideArraysCore", "ThreadingUtilities"]
 git-tree-sha1 = "21d8a7163d0f3972ade36ca2b5a0e8a27ac96842"
@@ -1222,9 +1555,9 @@ version = "1.1.2"
 
 [[RecipesPipeline]]
 deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
-git-tree-sha1 = "7ad0dfa8d03b7bcf8c597f59f5292801730c55b8"
+git-tree-sha1 = "d4491becdc53580c6dadb0f6249f90caae888554"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
-version = "0.4.1"
+version = "0.4.0"
 
 [[RecursiveArrayTools]]
 deps = ["ArrayInterface", "ChainRulesCore", "DocStringExtensions", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
@@ -1316,6 +1649,12 @@ deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
+
+[[SimpleTraits]]
+deps = ["InteractiveUtils", "MacroTools"]
+git-tree-sha1 = "5d7e3f4e11935503d3ecaf7186eac40602e7d231"
+uuid = "699a6c99-e7fa-54fc-8d76-47d257e15c1d"
+version = "0.9.4"
 
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
@@ -1421,11 +1760,6 @@ version = "1.0.8"
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
-[[Suppressor]]
-git-tree-sha1 = "a819d77f31f83e5792a76081eee1ea6342ab8787"
-uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
-version = "0.2.0"
-
 [[TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
@@ -1488,9 +1822,9 @@ version = "0.3.0"
 
 [[TriangularSolve]]
 deps = ["CloseOpenIntervals", "IfElse", "LayoutPointers", "LinearAlgebra", "LoopVectorization", "Polyester", "Static", "VectorizationBase"]
-git-tree-sha1 = "ed55426a514db35f58d36c3812aae89cfc057401"
+git-tree-sha1 = "1eed054a58d9332adc731103fe47dad2ad1a0adf"
 uuid = "d5829a12-d9aa-46ab-831f-fb7c9ab06edf"
-version = "0.1.6"
+version = "0.1.5"
 
 [[Tullio]]
 deps = ["ChainRulesCore", "DiffRules", "LinearAlgebra", "Requires"]
@@ -1757,13 +2091,53 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─d8ea5d90-e0cc-11ea-0d2d-25c807c1ae80
-# ╠═ea02e53e-e0cc-11ea-2265-3165c74e19b3
-# ╠═02ea1c3e-e0cd-11ea-04d1-f34150f81c89
-# ╟─11533bb6-e0cd-11ea-331e-278de5d6b26f
-# ╠═3067f2d0-e0cd-11ea-17d4-ab40276a0379
-# ╠═a501be4a-fb4a-11ea-3820-ad09c47beb7a
-# ╠═dd63b5f0-e0cd-11ea-0063-61ba73f99cac
-# ╟─ee6b3094-e0cd-11ea-1ceb-6f178f55cb23
+# ╠═80deafdd-ce8d-4b7d-9651-7ba281b38873
+# ╠═12d8d9bd-c72e-43e3-a183-6611619e774b
+# ╠═39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64
+# ╠═9b65e1ff-e7eb-4800-9862-718c167a8e32
+# ╠═6b9df7a9-556b-4b73-b67f-2ac8c48aa0c7
+# ╠═2e0252f4-58c2-4fa1-a063-c2b5dd6a274a
+# ╠═3de73995-159f-4a62-8ca3-91a7c5c378e0
+# ╟─84025c5a-49d6-49bb-ada7-1a33e50fe0c4
+# ╠═7674fdcb-c7e8-4b87-ba55-ea05cd1a1f91
+# ╟─adac6445-d51d-43a4-89fd-19a14bde89c4
+# ╠═37f91d86-0f12-4b87-935c-83e0bdb61dd0
+# ╠═01a4d9e6-493e-47bf-af7b-e1e826475d52
+# ╟─d1be5297-6a50-4028-8927-698ee6c3e804
+# ╠═9099b078-1ae1-4b78-bbc7-c9d5e7d9fea9
+# ╟─dbe69ae2-0646-4370-9d3e-918fc2db686c
+# ╠═db826c7f-7396-4350-ac24-2aeddf50ba66
+# ╟─d6134b92-8951-49dd-a448-6092f2ecabbe
+# ╠═8d10f16e-748c-4cfd-9297-f1d2eff99d13
+# ╟─e540f095-d956-4ff9-9f5b-f6ec07d5cad5
+# ╠═399e259d-6997-4017-98c2-a4e09df1acfb
+# ╟─1b9660fb-4074-459c-ab07-ffcad4d45a26
+# ╠═4793fe6a-735b-4949-8e27-a1a8f6c8e3c8
+# ╠═ea7a7a99-29d5-4589-81bd-88d8aa64d885
+# ╠═34b193e3-a4c3-40a9-b913-ef980e0aee35
+# ╠═2b52e28e-57b1-4f94-9672-9ad1ca528594
+# ╠═e292be02-0e44-4a6a-8de0-4046eac7c8b3
+# ╠═f48c5a95-b9e1-4783-943d-fbd51f8ccc79
+# ╠═075ce6cf-2b2f-4d88-97a4-d08a6d28bb02
+# ╟─74cbc4ab-b2d8-4e8e-8496-89b2c6e47ac7
+# ╠═e51a1fa2-8716-49e1-806d-c54610212711
+# ╠═c49709e2-4893-422f-8936-615590d7773a
+# ╠═17eea9d5-802c-49fd-b29f-d311811044a1
+# ╠═a1babcb0-d1a3-454f-95a4-7d7091e98f3e
+# ╠═fed67c7b-23f5-4e95-9bd7-cf174946b1e1
+# ╟─f4dd2f6b-0991-45cc-82ec-d4c361e8067b
+# ╠═bc6c18e4-ee46-4f0a-9ee3-c1ea7351184e
+# ╟─845129b4-db30-4d58-b9ad-682f5a9b15e3
+# ╟─d8e83c21-fbeb-40d3-aa80-b810271d7399
+# ╟─51ec6d48-9608-4021-9a3a-b89a4e3555d5
+# ╠═a2f99116-de8d-4183-8725-9a22081d0b79
+# ╟─343e3408-595e-47ba-8100-a99cb4dc0781
+# ╠═4d6dc4aa-fb17-44fb-8029-4775866be39d
+# ╟─5e9a7797-a8cb-4f30-8982-08f04d251797
+# ╠═df429c0b-7297-4a80-bfc0-1e68c7112961
+# ╠═48ad9b7b-1f32-4acb-9e9c-9f823e1d6255
+# ╠═13d4f85d-1a4e-4209-850d-2ee2ca0890a7
+# ╠═f3bb3a8d-265e-4053-9917-922805c9d8ad
+# ╟─83d1ddf2-e9a2-4c13-864e-f9c3978b161f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

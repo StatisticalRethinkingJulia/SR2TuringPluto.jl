@@ -9,10 +9,12 @@ using Pkg, DrWatson
 
 # ╔═╡ 0090af24-f9dd-11ea-0eb4-eb1758ba5442
 begin
-	@quickactivate "StatisticalRethinkingTuring"
+	using Distributions
+	using StatsPlots, Plots
 	using Turing
-	using StatisticalRethinking
-end
+	using Logging
+	using LaTeXStrings
+nd
 
 # ╔═╡ 9453eb8e-f9dc-11ea-1865-f168816cdb46
 md"## Clip-02-06-07.jl"

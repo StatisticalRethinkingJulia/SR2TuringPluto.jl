@@ -9,8 +9,11 @@ using Pkg, DrWatson
 
 # ╔═╡ 7eeb666e-f2e1-11ea-1237-db0c2818822c
 begin
-	@quickactivate "StatisticalRethinkingTuring"
-	using StatisticalRethinking
+	using Distributions
+	using StatsPlots, Plots
+	using Turing
+	using Logging
+	using LaTeXStrings
 end
 
 # ╔═╡ 6688dfb8-f2df-11ea-2511-2d9736b27265
