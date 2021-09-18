@@ -1,8 +1,8 @@
 
 ### Tag version notes
 
-1. git commit -m "Release v..."
-2. git tag vx.y.z
+1. git commit -m "Release v4.0.3"
+2. git tag v4.0.3
 3. git push origin master --tags
 
 ### Cloning the repository
