@@ -30,3 +30,7 @@ If you want to use a specific tagged version, use:
 # cd to cloned directory, switch to e.g. v2.0.0:
 $ git checkout v2.0.0
 ```
+
+### Extract .jl from Jupyter notebook (``jupytext` needs to be installed)
+
+# jupytext --to jl "./ch7.ipynb"

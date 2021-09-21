@@ -1,5 +1,5 @@
 name = "StatisticalRethinkingTuring"
-authors = ["Karajan, Goedman"]
+authors = ["Lapan (@Shmuma), Karajan, Goedman"]
 
 [deps]
 BSplines = "488c2830-172b-11e9-1591-253b8a7df96d"
