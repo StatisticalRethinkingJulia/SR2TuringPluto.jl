@@ -18,7 +18,7 @@ using DrWatson
 
 # ╔═╡ 3bd0c52c-f2b4-11ea-09e6-05dbd556433f
 begin
-	@quickactivate "StatisticalRethinkingTuring"
+	@quickactivate "SR2TuringPluto"
 	using StatisticalRethinking
 	using PlutoUI
 end

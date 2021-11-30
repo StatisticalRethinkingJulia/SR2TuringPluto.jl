@@ -11,7 +11,7 @@ using Pkg, DrWatson
 md"## Clip-03-01t.jl"
 
 # ╔═╡ f2526f60-f2e3-11ea-2d32-276d0b91d917
-@quickactivate "StatisticalRethinkingTuring"
+@quickactivate "SR2TuringPluto"
 
 # ╔═╡ f252ea76-f2e3-11ea-093a-01c585ee2ea1
 md"### snippet 3.1"

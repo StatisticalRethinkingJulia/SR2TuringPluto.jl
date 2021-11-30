@@ -1,10 +1,10 @@
 ## Version 4 is under preparation!!!! It needs StatisticalRethinking v4 and StatisticalRethinkingPlots.jl. See the README in StatisticalRethinking.jl.
 
-## Purpose of StatisticalRethinkingTuring.jl
+## Purpose of SR2TuringPluto.jl
 
 As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
 
-StatisticalRethinkingTuring is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
+SR2TuringPluto is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
 If you prefer to work with scripts instead of notebooks, a utility in the `src` directory is provided (`generate_scripts.jl`) to create scripts from all notebooks and store those in a newly created `scripts` directory. Note that this is a simple tool and will override all files in the `scripts` directory. For exploration purposes I suggest to move some of those scripts to e.g. the `research` directory.
 
@@ -14,11 +14,11 @@ This Julia project uses Turing as the underlying mcmc implementation.  A compani
 
 To (locally) reproduce and use this project, do the following:
 
-1. Download this [project](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl) from Github and move to the downloaded directory, e.g.:
+1. Download this [project](https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl) from Github and move to the downloaded directory, e.g.:
 
 ```
-$ git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
-$ cd StatisticalRethinkingTuring.jl
+$ git clone https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl
+$ cd SR2TuringPluto.jl
 # Note that Turing.jl is usally only supported in released version of Julia.
 ```
 
@@ -35,8 +35,8 @@ and in the Julia REPL:
 ```
 julia> ]                                        # Actvate Pkg mode
 (@v1.6) pkg> activate .                         # Activate pkg in .
-(StatisticalRethinkingTuring) pkg> instantiate  # Install in pkg environment
-(StatisticalRethinkingTuring) pkg> <delete>     # Exit package mode
+(SR2TuringPluto) pkg> instantiate  # Install in pkg environment
+(SR2TuringPluto) pkg> <delete>     # Exit package mode
 ```
 
 If above procedure fails, if present, try to delete the Manifest.toml file and repeat above steps. As mentioned above, these steps are only needed the first time.
@@ -55,11 +55,11 @@ julia> Pluto.run()
 
 ## Usage
 
-Note: *StatisticalRethinkingTuring v4 requires StatisticalRethinking.jl v 4.*
+Note: *SR2TuringPluto v4 requires StatisticalRethinking.jl v 4.*
 
 Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/00/clip-00-01-03t.jl`.
 
-StatisticalRethinkingTuring.jl is a DrWatson project, with some added/re-purposed subdirectories:
+SR2TuringPluto.jl is a DrWatson project, with some added/re-purposed subdirectories:
 
 1. `models`, which contains a subset of the Turing language models,
 2. `notebooks`, used to store the Pluto notebooks,
@@ -134,7 +134,7 @@ All models in the `models` subdirectory return 0 and 1.
 
 ## Status
 
-StatisticalRethinkingTuring.jl is compatible with the 2nd edition of the book.
+SR2TuringPluto.jl is compatible with the 2nd edition of the book.
 
 StructuralCausalModels.jl is included as en experimental dependency in the StatisticalRethinking.jl v3 package.
 

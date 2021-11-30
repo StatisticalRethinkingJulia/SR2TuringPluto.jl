@@ -14,7 +14,7 @@ using StatisticalRethinking
 md"## Clip-03-02-05t.jl"
 
 # ╔═╡ 175ca6a0-f2e5-11ea-066c-49e37107aea2
-@quickactivate "StatisticalRethinkingTuring"
+@quickactivate "SR2TuringPluto"
 
 # ╔═╡ 176c899a-f2e5-11ea-3f17-59b92f0a2483
 md"### snippet 3.2"

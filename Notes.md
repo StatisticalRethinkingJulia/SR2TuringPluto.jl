@@ -9,8 +9,8 @@
 
 ```
 # Cd to where you would like to clone to
-$ git clone https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingTuring.jl
-$ cd StatisticalRethinkingTuring.jl
+$ git clone https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl
+$ cd SR2TuringPluto.jl
 $ julia
 ```
 and in the Julia REPL:
@@ -18,8 +18,8 @@ and in the Julia REPL:
 ```
 julia> ]                                        # Actvate Pkg mode
 (@v1.5) pkg> activate .                         # Activate pkg in .
-(StatisticalRethinkingTuring) pkg> instantiate    # Install in pkg environment
-(StatisticalRethinkingTuring) pkg> <delete>       # Exit package mode
+(SR2TuringPluto) pkg> instantiate               # Install in pkg environment
+(SR2TuringPluto) pkg> <delete>                  # Exit package mode
 julia>
 ```
 

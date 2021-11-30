@@ -9,7 +9,7 @@ using Pkg, DrWatson
 
 # ╔═╡ 5168ed8e-1879-11eb-31cd-d3a727fff08d
 begin
-	@quickactivate "StatisticalRethinkingTuring"
+	@quickactivate "SR2TuringPluto"
 	using Turing 
 	using StatisticalRethinking
 	Turing.setprogress!(false);

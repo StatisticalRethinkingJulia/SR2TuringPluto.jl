@@ -1,7 +1,7 @@
 
 using Pkg, DrWatson
 
-@quickactivate "StatisticalRethinkingTuring"
+@quickactivate "SR2TuringPluto"
 
 indir = projectdir("notebooks")
 outdir = projectdir("scripts")

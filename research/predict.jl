@@ -3,7 +3,7 @@ using Pkg, DrWatson, Random, Test
 
 Random.seed!(123)
 
-@quickactivate "StatisticalRethinkingTuring"
+@quickactivate "SR2TuringPluto"
 using Turing 
 using StatisticalRethinking
 

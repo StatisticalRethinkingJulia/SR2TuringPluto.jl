@@ -1464,15 +1464,15 @@ version = "1.2.13"
 
 [[StatisticalRethinking]]
 deps = ["AxisKeys", "CSV", "DataFrames", "Distributions", "DocStringExtensions", "Documenter", "Formatting", "KernelDensity", "LinearAlgebra", "MCMCChains", "MonteCarloMeasurements", "NamedArrays", "NamedTupleTools", "Optim", "OrderedCollections", "Parameters", "ParetoSmooth", "ParetoSmoothedImportanceSampling", "PrettyTables", "Random", "Reexport", "Requires", "Statistics", "StatsBase", "StatsFuns", "StructuralCausalModels", "Tables", "Test", "Unicode"]
-path = "/Users/rob/.julia/dev/StatisticalRethinking"
+git-tree-sha1 = "e6056190bca625c5b6f52999dbbab059c255020b"
 uuid = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 version = "4.4.2"
 
 [[StatisticalRethinkingPlots]]
 deps = ["Distributions", "DocStringExtensions", "KernelDensity", "LaTeXStrings", "Parameters", "Plots", "Reexport", "Requires", "StatisticalRethinking", "StatsPlots"]
-path = "/Users/rob/.julia/dev/StatisticalRethinkingPlots"
+git-tree-sha1 = "20135362e5daedd2f651f72ed7ea9e1363f9b81f"
 uuid = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
-version = "0.9.3"
+version = "1.0.0"
 
 [[StatisticalTraits]]
 deps = ["ScientificTypesBase"]

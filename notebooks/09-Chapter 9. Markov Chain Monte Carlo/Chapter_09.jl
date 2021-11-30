@@ -47,7 +47,7 @@ begin
 	num_weeks = 10^5
 	positions = []
 	current = 10
-end
+end;
 
 # ╔═╡ b71b59cb-b9ed-4a18-a713-400d8fb48517
 for i ∈ 1:num_weeks

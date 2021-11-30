@@ -5,7 +5,7 @@ using InteractiveUtils
 using DrWatson
 
 begin
-  @quickactivate "StatisticalRethinkingTuring"
+  @quickactivate "SR2TuringPluto"
   using Turing
   using StatisticalRethinking
 end

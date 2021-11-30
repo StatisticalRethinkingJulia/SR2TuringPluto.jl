@@ -1,6 +1,6 @@
 using Pkg, DrWatson
 
-@quickactivate "StatisticalRethinkingTuring"
+@quickactivate "SR2TuringPluto"
 using Turing
 using StatisticalRethinking
 
