@@ -111,26 +111,32 @@ Additional introductory notebooks showing Julia and statistics ( based on the [S
 
 One goal for the changes in StatisticalRethinking v3 was to make it easier to compare and mix and match results from different mcmc implementations. Hence consistent naming of models and results is important. The models and the results of simulations are stored as follows:
 
-Models:
+Models and results:
 
-0. ppl5_1            : DynamicPPL language program (function)
-1. m5_1t             : The Turing model based on m5_1 with data (Turing.Model)
-2. q5_1t             : The Turing quap model (NamedTuple)
+0. @model            : Turing model
+1. m5_1t             : The sampled StanSample model
+2. q5_1st            : Stan quap model (NamedTuple similar to Turing)
 
-3. chns5_1t          : MCMCChains object (4000 samples collected from 4 chains)
-4. part5_1t          : Turing samples (Particle notations)
-5. quap5_1t          : Turing quap() samples (NamedTuple in Particle notation)
+Draws:
 
-5. prior5_1t_df      : Prior samples (DataFrame)
-6. post5_1t_df       : Posterior Turing samples (DataFrame)
-7. quap5_1t_df       : Posterior quap() approximation (DataFrame)
-8. pred5_1t_df       : Posterior predictions (DataFrame)
+3. chns5_1t          : MCMCChains object (4000 samples from 4 chains)
+4. part5_1t          : Stan samples (Particles notation)
+5. quap5_1t          : Quap samples (Particles notation)
+6. nt5_1t            : NamedTuple with samples values
+7. ka5_1t            : KeyedArray object (see AxisArrays.jl)
+8. da5_1t            : DimArray object (see DimensionalData.jl)
+9. st5_1t            : StanTable 0bject
+
+The default for `read_samples(m1_1s)` is a StanTable chains object.
+
+Results as a DataFrame:
+
+10. prior5_1t_df      : Prior samples (DataFrame)
+11. post5_1t_df       : Posterior samples (DataFrame)
+12. quap5_1t_df       : Quap approximation to posterior samples (DataFrame)
+13. pred5_1t_df       : Posterior predictions (DataFrame)
 
 As before, the `t` at the end of the model number indicates Turing.
-
-All models in the `models` subdirectory return 0 and 1.
-
-## Intros
 
 ## Status
 

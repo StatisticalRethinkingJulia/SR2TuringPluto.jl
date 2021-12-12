@@ -1,3 +1,533 @@
+### A Pluto.jl notebook ###
+# v0.17.2
+
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ bddf36ac-5547-491c-94bb-763ce7df3cd9
+using Pkg, DrWatson
+
+# ╔═╡ 7bf4154b-0009-46e4-9d03-8e3b81a202f2
+begin
+	using CSV
+	using Random
+	using StatsBase
+	using DataFrames
+	using Turing
+	using StatsPlots
+	using StatsFuns
+	using LaTeXStrings
+	using StatisticalRethinking
+	using StatisticalRethinking: link
+	using StatisticalRethinkingPlots
+	using ParetoSmooth
+	using ParetoSmoothedImportanceSampling
+	using Logging
+end
+
+# ╔═╡ 8720cc1f-58a0-4a70-9497-480456b26f85
+begin
+	default(labels=false)
+	Logging.disable_logging(Logging.Warn);
+end
+
+# ╔═╡ fdbf8fe2-7e99-4da6-bd8d-6a21bb68bc71
+md"## 8.1 Building an interaction."
+
+# ╔═╡ 04affaff-2593-4b6c-8638-ab54fde6d2cc
+md"### Code 8.1"
+
+# ╔═╡ 73ee2643-330f-485f-94f5-be46fbd33d4f
+begin
+	rugged = CSV.read(sr_datadir("rugged.csv"), DataFrame)
+	dd = rugged[completecases(rugged, :rgdppc_2000),:]
+	dd[:,:log_gdp] = log.(dd.rgdppc_2000);
+	dd[:,:log_gdp_std] = dd.log_gdp / mean(dd.log_gdp)
+	dd[:,:rugged_std] = dd.rugged / maximum(dd.rugged)
+end;
+
+# ╔═╡ eb3fef03-acf9-4c41-9760-e0f492df55e2
+md"### Code 8.2"
+
+# ╔═╡ 3eeab20c-6d42-4b31-bd8f-bfa691cb4587
+begin
+	r̄ = mean(dd.rugged_std)
+	
+	@model function model_m8_1(rugged_std, log_gdp_std)
+	    σ ~ Exponential()
+	    a ~ Normal(1, 1)
+	    b ~ Normal(0, 1)
+	    μ = @. a + b * (rugged_std - r̄)
+	    log_gdp_std ~ MvNormal(μ, σ)
+	end
+end
+
+# ╔═╡ bc0a3a04-1b8c-4332-a6ba-3da2b8eaea05
+md"### Code 8.3"
+
+# ╔═╡ f74d5bf7-ae57-4678-be5f-25af1959173b
+begin
+	m8_1_p = sample(model_m8_1(dd.rugged_std, dd.log_gdp_std), Prior(), 1000)
+	m8_1_p_df = DataFrame(m8_1_p);
+end
+
+# ╔═╡ 1bc733fa-0062-4521-8617-4e757a9fff24
+begin
+	rugged_seq = range(-0.1, 1.1; length=30)
+	μ = link(m8_1_p_df, (r, x) -> r.a + r.b*(x - r̄), rugged_seq)
+	μ = hcat(μ...)
+	
+	p = plot(
+	    xlim=(0, 1),
+	    ylim=(0.5, 1.5),
+	    #title=L"a \sim \mathcal{N}(1,1), b \sim \mathcal{N}(0, 1)",
+	    xlab="ruggedness", ylab="log GDP",
+	)
+	hline!(collect(extrema(dd.log_gdp_std)); c=:black, s=:dash)
+	for μ₀ ∈ first(eachrow(μ), 50)
+	    plot!(rugged_seq, μ₀; c=:black, alpha=0.3)
+	end
+	p
+end
+
+# ╔═╡ 4f444d5f-6058-4cb8-975f-17782d8b86c9
+md"### Code 8.4"
+
+# ╔═╡ cee469b4-83b1-4e29-aa75-8bb6dfc4d207
+mean(abs.(m8_1_p_df.b) .> 0.6)
+
+# ╔═╡ 3d677fac-ff09-45b1-9377-4d29cfa86a7f
+md"### Code 8.5"
+
+# ╔═╡ 8f904830-dc3e-4875-9af7-1e7285e7fc43
+r̄_std = mean(dd.rugged_std)
+
+# ╔═╡ ad981e3c-df35-43f0-9b19-e128a9f2a12d
+@model function model_m8_1a(rugged_std, log_gdp_std)
+    σ ~ Exponential()
+    a ~ Normal(1, 0.1)
+    b ~ Normal(0, 0.3)
+    μ = @. a + b * (rugged_std - r̄_std)
+    log_gdp_std ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ 527fd7d7-7375-4dee-9405-cee0363ca92e
+begin
+	m8_1 = sample(model_m8_1a(dd.rugged_std, dd.log_gdp_std), NUTS(), 1000)
+	m8_1_df = DataFrame(m8_1)
+end
+
+# ╔═╡ d11c957d-bc78-4011-9dc8-5335a9d3f4f7
+md"### Code 8.6"
+
+# ╔═╡ 16574ab6-a53e-4f9d-bbbe-23714ee39abd
+PRECIS(m8_1_df)
+
+# ╔═╡ 40799cc2-cdaa-4a86-a678-1b50b3dff6cc
+md"### Code 8.7"
+
+# ╔═╡ ca390706-13d7-4aa0-952e-8f06b4bc370e
+dd[:,:cid] = @. ifelse(dd.cont_africa == 1, 1, 2);
+
+# ╔═╡ 1d902b61-2387-4664-a39e-7ff73440dd43
+md"### Code 8.8"
+
+# ╔═╡ 62e35bf2-cefd-413d-a2ea-60e7193c94b6
+@model function model_m8_2(rugged_std, cid,  log_gdp_std)
+    σ ~ Exponential()
+    a ~ MvNormal([1, 1], 0.1)
+    b ~ Normal(0, 0.3)
+    μ = @. a[cid] + b * (rugged_std - r̄)
+    log_gdp_std ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ 43e22387-2afd-4ed1-80c2-608f82c224f6
+begin
+	m8_2 = sample(model_m8_2(dd.rugged_std, dd.cid,  dd.log_gdp_std), NUTS(), 1000)
+	m8_2_df = DataFrame(m8_2);
+end# -
+
+# ╔═╡ f5cb4db3-99d4-4498-ba6d-5b36064b5328
+md"### Code 8.9"
+
+# ╔═╡ 5f24eb52-4bf3-47b9-ab55-f92aaeca0d45
+let
+	# Compute log likelihoods for both models
+	fun = (r, (x,y)) -> normlogpdf(r.a + r.b * (x - r̄), r.σ, y)
+	global m8_1_ll = link(m8_1_df, fun, zip(dd.rugged_std, dd.log_gdp_std))
+	m8_1_ll = hcat(m8_1_ll...)
+end
+
+# ╔═╡ 612456bd-2bee-4f1c-beed-d3f697c80509
+let
+	# need DF with a as a vector of both a[1] and a[2]
+	global df = DataFrame(m8_2_df)
+	df[!,:a] = collect.(zip(m8_2_df.:"a[1]", m8_2_df.:"a[2]"))
+	
+	fun = (r, (x,c,y)) -> normlogpdf(r.a[c] + r.b * (x - r̄), r.σ, y)
+	global m8_2_ll = link(df, fun, zip(dd.rugged_std, dd.cid, dd.log_gdp_std))
+	m8_2_ll = hcat(m8_2_ll...);
+	
+	compare([m8_1_ll, m8_2_ll], :waic, mnames=["m8.1", "m8.2"])
+end
+
+# ╔═╡ 8ca7b83a-ffab-42cc-bca1-13cb60a45b97
+md"### Code 8.10"
+
+# ╔═╡ fd2ed8f7-c276-4df6-8d08-9d4ea02effd7
+PRECIS(m8_2_df)
+
+# ╔═╡ e396ec23-f67f-4f1b-b6e1-3968120463a9
+md"### Code 8.11"
+
+# ╔═╡ 38d6aeb9-5b1f-456b-9de6-7484ba94f9c8
+PI(map(r -> r[1] - r[2], df.a))
+
+# ╔═╡ 4850e051-166a-4b4a-b7bd-4181578338dc
+md"### Code 8.12"
+
+# ╔═╡ 356ef2ab-ee33-42ba-802e-84e1d7425a61
+begin
+	rugged_seq_2 = range(-0.1, 1.1, length=30)
+	africa     = link(df, (r, x) -> r.a[1] + r.b*(x-r̄), rugged_seq_2)
+	africa     = hcat(africa...)'
+	not_africa = link(df, (r, x) -> r.a[2] + r.b*(x-r̄), rugged_seq_2)
+	not_africa = hcat(not_africa...)'
+	
+	μₐ = mean.(eachrow(africa))
+	μₙ = mean.(eachrow(not_africa))
+	PIₐ = PI.(eachrow(africa))
+	PIₐ = vcat(PIₐ'...)
+	PIₙ = PI.(eachrow(not_africa))
+	PIₙ = vcat(PIₙ'...);
+end
+
+# ╔═╡ 02a727d7-5095-4728-abd4-413100d56acd
+let
+	p = plot(xlab="ruggedness (std)", ylab="log GDP")
+	scatter!(dd.rugged_std[dd.cid.==1], dd.log_gdp_std[dd.cid.==1], c=:blue)
+	scatter!(dd.rugged_std[dd.cid.==2], dd.log_gdp_std[dd.cid.==2], c=:white)
+	
+	plot!(rugged_seq, [μₐ, μₐ], c=:black, fillrange=PIₐ, fillalpha=0.4)
+	plot!(rugged_seq, [μₙ, μₙ], c=:black, fillrange=PIₙ, fillalpha=0.2)
+	annotate!([
+	    (1, 0.87, ("Africa", 9)),
+	    (1, 1.05, ("Not Africa", 9))
+	])
+end
+
+# ╔═╡ 083b4a77-da6e-43e7-a7f0-f45cb2b56ff8
+md"### Code 8.13"
+
+# ╔═╡ 3571a823-63f5-4124-ab8f-d7b060b82d6a
+@model function model_m8_3(rugged_std, cid,  log_gdp_std)
+    σ ~ Exponential()
+    a ~ MvNormal([1, 1], 0.1)
+    b ~ MvNormal([0, 0], 0.3)
+    μ = @. a[cid] + b[cid] * (rugged_std - r̄)
+    log_gdp_std ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ f2a34af7-2706-4d58-a3c9-88ca3539538e
+begin
+	m8_3 = sample(model_m8_3(dd.rugged_std, dd.cid,  dd.log_gdp_std), NUTS(), 1000)
+	m8_3_df = DataFrame(m8_3);
+end
+
+# ╔═╡ e77013bc-1386-4f07-bf64-2571fdbc5212
+md"### Code 8.14"
+
+# ╔═╡ 87311d6b-db5f-41d3-a2ec-1e76aa13dd8d
+PRECIS(m8_3_df)
+
+# ╔═╡ 1462e546-c794-45aa-8ac2-097b5a0fc168
+md"### Code 8.15"
+
+# ╔═╡ 3a55d73d-2cf8-4411-a075-81157a544973
+let
+	global df3 = DataFrame(m8_3_df)
+	df3[!,:a] = collect.(zip(m8_3_df.:"a[1]", m8_3_df.:"a[2]"))
+	df3[!,:b] = collect.(zip(m8_3_df.:"b[1]", m8_3_df.:"b[2]"))
+	
+	fun = (r, (x,c,y)) -> normlogpdf(r.a[c] + r.b[c] * (x - r̄), r.σ, y)
+	global m8_3_ll = link(df3, fun, zip(dd.rugged_std, dd.cid, dd.log_gdp_std))
+	m8_3_ll = hcat(m8_3_ll...);
+	
+	compare([m8_1_ll, m8_2_ll, m8_3_ll], :psis, mnames=["m8.1", "m8.2", "m8.3"])
+end
+
+# ╔═╡ 80eca5f8-762b-4b73-a246-5883a04d72e5
+md"### Code 8.16"
+
+# ╔═╡ 9b1a7350-4311-48b2-91ce-8f4f87e34aef
+let
+	t = m8_3_ll'
+	m8_3_t = collect(reshape(t, size(t)..., 1))
+	PSIS_m8_3 = psis_loo(m8_3_t)
+	scatter(PSIS_m8_3.pointwise(:pareto_k))
+end
+
+# ╔═╡ b384f828-985d-4f6e-9040-2af4bc888ec8
+md"### Code 8.17"
+
+# ╔═╡ 8d2cc03b-4e3f-409d-8bdb-e99ed0365046
+let
+	# build data
+	africa     = link(df3, (r, x) -> r.a[1] + r.b[1]*(x-r̄), rugged_seq)
+	africa     = hcat(africa...)'
+	not_africa = link(df3, (r, x) -> r.a[2] + r.b[2]*(x-r̄), rugged_seq)
+	not_africa = hcat(not_africa...)'
+	
+	μₐ = mean.(eachrow(africa))
+	μₙ = mean.(eachrow(not_africa))
+	PIₐ = PI.(eachrow(africa))
+	PIₐ = vcat(PIₐ'...)
+	PIₙ = PI.(eachrow(not_africa))
+	PIₙ = vcat(PIₙ'...);
+	
+	# plot Africa, cid=1
+	p1 = plot(xlab="ruggedness (std)", ylab="log GDP", title="African nations")
+	scatter!(dd.rugged_std[dd.cid.==1], dd.log_gdp_std[dd.cid.==1], c=:blue)
+	plot!(rugged_seq, [μₐ, μₐ], c=:blue, fillrange=PIₐ, fillalpha=0.2)
+	
+	# plot non Africa, cid=2
+	p2 = plot(xlab="ruggedness (std)", ylab="log GDP", title="Non-African nations")
+	scatter!(dd.rugged_std[dd.cid.==2], dd.log_gdp_std[dd.cid.==2], c=:white)
+	plot!(rugged_seq, [μₙ, μₙ], c=:black, fillrange=PIₙ, fillalpha=0.2)
+	
+	plot(p1, p2, size=(800, 400))
+end
+
+# ╔═╡ e8cbf4c4-885e-4e2f-b058-4b41a3ce6857
+md"## 8.2 Symmetry of interations"
+
+# ╔═╡ b0a849d8-315a-44ea-ac6a-769bf47de6ff
+md"### Code 8.18"
+
+# ╔═╡ 3383537c-7af4-4de9-b9eb-9389a02d4aaf
+let
+	rugged_seq = range(-0.2, 1.2, length=30)
+	μA = link(df3, (r, x) -> r.a[1] + r.b[1]*(x-r̄), rugged_seq)
+	μA = vcat(μA'...)
+	μN = link(df3, (r, x) -> r.a[2] + r.b[2]*(x-r̄), rugged_seq)
+	μN = vcat(μN'...)
+	delta = μA .- μN;
+	
+	# +
+	μ = mean.(eachrow(delta))
+	PI_v = PI.(eachrow(delta))
+	PI_v = vcat(PI_v'...)
+	
+	plot(xlab="ruggedness", ylab="expected difference log GDP",)
+	plot!(rugged_seq, [μ, μ], c=:blue, fillrange=PI_v, fillalpha=0.2)
+	hline!([0.0], s=:dash, c=:black)
+	annotate!([
+	    (0.0, 0.03, ("Africa higher GPD", 10)),
+	    (0.0, -0.03, ("Africa lower GPD", 10)),
+	])
+end
+
+# ╔═╡ 7d5e4157-7abe-4fb1-893a-51a520a934d0
+md"## 8.3 Continuous interaction"
+
+# ╔═╡ 48573194-9cf9-4c9d-b883-62547e4debbc
+md"### Code 8.19"
+
+# ╔═╡ 9025cb4c-80cc-463f-b588-913e59c35560
+begin
+	tulips = CSV.read(sr_datadir("tulips.csv"), DataFrame)
+	describe(tulips)
+end
+
+# ╔═╡ b2dbe2bd-19ae-4a8f-a408-0353cccd3b84
+md"## Code 8.20"
+
+# ╔═╡ 9c905e24-fa5d-4169-bf73-684f5e0a5b8c
+begin
+	tulips.blooms_std = tulips.blooms / maximum(tulips.blooms)
+	tulips.water_cent = tulips.water .- mean(tulips.water)
+	tulips.shade_cent = tulips.shade .- mean(tulips.shade);
+end;
+
+# ╔═╡ 2f086d7b-658d-42e8-a112-d22807a66586
+md"### Code 8.21"
+
+# ╔═╡ 69e42d8d-062a-4061-896b-2781a4aab5b0
+let
+	Random.seed!(1)
+	a = rand(Normal(0.5, 1), 10^4)
+	sum(@. (a < 0) | (a > 1))/length(a)
+end
+
+# ╔═╡ 219bc61b-a458-488c-91cb-0b3708c74a48
+md"### Code 8.22"
+
+# ╔═╡ 4443c25d-7f6a-4d01-b672-1c9606ab28f8
+let
+	Random.seed!(1)
+	a = rand(Normal(0.5, 0.25), 10^4)
+	sum(@. (a < 0) | (a > 1))/length(a)
+end
+
+# ╔═╡ 738c7fb8-8f9c-4fce-ad6a-b58fd7085be6
+md"### Code 8.23"
+
+# ╔═╡ 01b45f6a-adbe-4791-88d5-fa0623bb107c
+# +
+@model function m8_4(water_cent, shade_cent, blooms_std)
+    a ~ Normal(0.5, 0.25)
+    bw ~ Normal(0, 0.25)
+    bs ~ Normal(0, 0.25)
+    μ = @. a + bw*water_cent + bs*shade_cent
+    σ ~ Exponential(1)
+    blooms_std ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ 715b797a-88c6-46b9-87b9-a59d5765cd99
+begin
+	m8_4_c = sample(m8_4(tulips.water_cent, tulips.shade_cent, tulips.blooms_std), 
+		NUTS(), 1000)
+	m8_4_df = DataFrame(m8_4_c)
+	PRECIS(m8_4_df)
+end
+
+# ╔═╡ 1f7c87b9-a93c-442e-b5b2-8501a289200c
+md"### Code 8.24"
+
+# ╔═╡ 6a5a4d0f-5932-4862-87b0-1fafed29318e
+@model function m8_5(water_cent, shade_cent, blooms_std)
+    a ~ Normal(0.5, 0.25)
+    bw ~ Normal(0, 0.25)
+    bs ~ Normal(0, 0.25)
+    bws ~ Normal(0, 0.25)
+    μ = @. a + bw*water_cent + bs*shade_cent + bws*water_cent*shade_cent
+    σ ~ Exponential(1)
+    blooms_std ~ MvNormal(μ, σ)
+end
+
+# ╔═╡ a369c511-017d-406f-9178-b4cced1b97e9
+begin
+	m8_5_c = sample(m8_5(tulips.water_cent, tulips.shade_cent, tulips.blooms_std),
+		NUTS(), 1000)
+	m8_5_df = DataFrame(m8_5_c)
+	PRECIS(m8_5_df)
+end
+
+# ╔═╡ 04be14ef-fe26-447b-823e-243d9cba8466
+md"### Code 8.25"
+
+# ╔═╡ f822f689-a92c-4535-ae88-ef604e31753f
+let
+	plts = []
+	
+	for shade ∈ -1:1
+	    idx = findall(==(shade), tulips.shade_cent)
+	    p = plot(xlims=(-1.2,1.2), ylims=(-.2,1.2), xlab="water", ylab="blooms", 
+	             title="shade=$shade", titlefontsize=12)
+	    scatter!(tulips.water_cent[idx], tulips.blooms_std[idx])
+	    water_seq = -1:1
+	    mu = link(m8_4_df, (r, water) -> r.a + r.bw * water + r.bs * shade, 
+			water_seq)
+	    mu = hcat(mu...);
+	    for μ ∈ first(eachrow(mu), 20)
+	        plot!(water_seq, μ, c=:black, alpha=0.2)
+	    end
+	    push!(plts, p)
+	end
+	plot(plts..., layout=(1, 3), size=(800, 400), plot_title="m8.4 post", 
+		plot_titlefontsize=14)
+end
+
+# ╔═╡ 745a0c84-4243-4efa-9871-7d2dcd096553
+let
+	plts = []
+	
+	for shade ∈ -1:1
+	    idx = findall(==(shade), tulips.shade_cent)
+	    p = plot(xlims=(-1.2,1.2), ylims=(-.2,1.2), xlab="water", ylab="blooms", 
+	             title="shade=$shade", titlefontsize=12)
+	    scatter!(tulips.water_cent[idx], tulips.blooms_std[idx])
+	    water_seq = -1:1
+	    mu = link(m8_5_df, (r, water) -> r.a + r.bw*water + r.bs*shade + 
+			r.bws*water*shade, water_seq)
+	    mu = hcat(mu...);
+	    for μ ∈ first(eachrow(mu), 20)
+	        plot!(water_seq, μ, c=:black, alpha=0.2)
+	    end
+	    push!(plts, p)
+	end
+	plot(plts..., layout=(1, 3), size=(800, 400), plot_title="m8.5 post", 
+		plot_titlefontsize=14)
+end
+
+# ╔═╡ e0bc4345-c125-42ca-a088-b70a7c2f762c
+md"### Code 8.26"
+
+# ╔═╡ 0c58026c-ec86-4b16-9f00-398bed8d627a
+begin
+	Random.seed!(7)
+	m8_5p_c = sample(m8_5(tulips.water_cent, tulips.shade_cent, tulips.blooms_std), 
+		Prior(), 1000)
+	m8_5p_df = DataFrame(m8_5p_c);
+end
+
+# ╔═╡ 20a3b233-a892-4518-8912-a49dc8ee2126
+let
+	plts = []
+	
+	for shade ∈ -1:1
+	    p = plot(xlims=(-1, 1), ylims=(-0.5, 1.5), xlab="water", ylab="blooms", 
+	             title="shade=$shade", titlefontsize=12)
+	    water_seq = -1:1
+	    mu = link(m8_5p_df, (r, water) -> r.a + r.bw*water + r.bs*shade + 
+			r.bws*water*shade, water_seq)
+	    mu = hcat(mu...);
+	    for μ ∈ first(eachrow(mu), 20)
+	        plot!(water_seq, μ, c=:black, alpha=0.2)
+	    end
+	    hline!([0.0, 1.0], s=:dash, c=:black)
+	    push!(plts, p)
+	end
+	plot(plts..., layout=(1, 3), size=(800, 400), plot_title="m8.5 prior", 
+		plot_titlefontsize=14)
+end
+
+# ╔═╡ 00000000-0000-0000-0000-000000000001
+PLUTO_PROJECT_TOML_CONTENTS = """
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+ParetoSmooth = "a68b5a21-f429-434e-8bfa-46b447300aac"
+ParetoSmoothedImportanceSampling = "98f080ec-61e2-11eb-1c7b-31ea1097256f"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
+StatisticalRethinkingPlots = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+
+[compat]
+CSV = "~0.9.11"
+DataFrames = "~1.2.2"
+DrWatson = "~2.7.5"
+LaTeXStrings = "~1.3.0"
+ParetoSmooth = "~0.7.0"
+ParetoSmoothedImportanceSampling = "~1.1.0"
+StatisticalRethinking = "~4.4.3"
+StatisticalRethinkingPlots = "~1.0.0"
+StatsBase = "~0.33.13"
+StatsFuns = "~0.9.14"
+StatsPlots = "~0.14.29"
+Turing = "~0.19.0"
+"""
+
+# ╔═╡ 00000000-0000-0000-0000-000000000002
+PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
 [[ANSIColoredPrinters]]
@@ -22,12 +552,6 @@ deps = ["AbstractMCMC"]
 git-tree-sha1 = "15f34cc635546ac072d03fc2cc10083adb4df680"
 uuid = "7a57a42e-76ec-4ea3-a279-07e840d6d9cf"
 version = "0.2.0"
-
-[[AbstractPlutoDingetjes]]
-deps = ["Pkg"]
-git-tree-sha1 = "abb72771fd8895a7ebd83d5632dc4b989b022b5b"
-uuid = "6e696c72-6542-2067-7265-42206c756150"
-version = "1.1.2"
 
 [[AbstractTrees]]
 git-tree-sha1 = "03e0550477d86222521d254b741d470ba17ea0b5"
@@ -72,12 +596,6 @@ version = "2.1.0"
 [[ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 
-[[ArnoldiMethod]]
-deps = ["LinearAlgebra", "Random", "StaticArrays"]
-git-tree-sha1 = "f87e559f87a45bece9c9ed97458d3afe98b1ebb9"
-uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
-version = "0.1.0"
-
 [[Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra"]
 git-tree-sha1 = "2ff92b71ba1747c5fdd541f8fc87736d82f40ec9"
@@ -112,16 +630,10 @@ uuid = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
 version = "0.4.4"
 
 [[AxisKeys]]
-deps = ["AbstractFFTs", "ChainRulesCore", "CovarianceEstimation", "IntervalSets", "InvertedIndices", "LazyStack", "LinearAlgebra", "NamedDims", "OffsetArrays", "Statistics", "StatsBase", "Tables"]
-git-tree-sha1 = "8fd46bee70b52bfc11d90f5db51b33bda9c148df"
+deps = ["AbstractFFTs", "CovarianceEstimation", "IntervalSets", "InvertedIndices", "LazyStack", "LinearAlgebra", "NamedDims", "OffsetArrays", "Statistics", "StatsBase", "Tables"]
+git-tree-sha1 = "7bf355be5615178fdac1252a16e247eca6ee166f"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
-version = "0.1.24"
-
-[[BSplines]]
-deps = ["LinearAlgebra", "OffsetArrays", "RecipesBase"]
-git-tree-sha1 = "54308218333f6b8967311c76f2cf89ab495542d6"
-uuid = "488c2830-172b-11e9-1591-253b8a7df96d"
-version = "0.3.2"
+version = "0.1.22"
 
 [[BangBang]]
 deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Setfield", "Tables", "ZygoteRules"]
@@ -136,12 +648,6 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 git-tree-sha1 = "aebf55e6d7795e02ca500a689d326ac979aaf89e"
 uuid = "9718e550-a3fa-408a-8086-8db961cd8217"
 version = "0.1.1"
-
-[[BenchmarkTools]]
-deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
-git-tree-sha1 = "61adeb0823084487000600ef8b1c00cc2474cd47"
-uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-version = "1.2.0"
 
 [[Bijectors]]
 deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "IrrationalConstants", "LinearAlgebra", "LogExpFunctions", "MappedArrays", "Random", "Reexport", "Requires", "Roots", "SparseArrays", "Statistics"]
@@ -179,17 +685,11 @@ git-tree-sha1 = "f2202b55d816427cd385a9a4f3ffb226bee80f99"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+0"
 
-[[CategoricalArrays]]
-deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
-git-tree-sha1 = "c308f209870fdbd84cb20332b6dfaf14bf3387f8"
-uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-version = "0.10.2"
-
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "RealDot", "Statistics"]
-git-tree-sha1 = "d9d08f88759465c7895db73d052c23e5c260f4a2"
+git-tree-sha1 = "65a0826ac25869556070076459925d1700316aab"
 uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "1.15.0"
+version = "1.14.0"
 
 [[ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -223,9 +723,9 @@ version = "3.15.0"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
-git-tree-sha1 = "32a2b8af383f11cbb65803883837a149d10dfe8a"
+git-tree-sha1 = "024fe24d83e4a5bf5fc80501a314ce0d1aa35597"
 uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
-version = "0.10.12"
+version = "0.11.0"
 
 [[Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
@@ -259,22 +759,10 @@ version = "3.40.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 
-[[Compose]]
-deps = ["Base64", "Colors", "DataStructures", "Dates", "IterTools", "JSON", "LinearAlgebra", "Measures", "Printf", "Random", "Requires", "Statistics", "UUIDs"]
-git-tree-sha1 = "c6461fc7c35a4bb8d00905df7adafcff1fe3a6bc"
-uuid = "a81c6b42-2e10-5240-aca2-a61377ecd94b"
-version = "0.9.2"
-
 [[CompositionsBase]]
 git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
 uuid = "a33af91c-f02d-484b-be07-31d278c5ca2b"
 version = "0.1.1"
-
-[[Configurations]]
-deps = ["ExproniconLite", "OrderedCollections", "TOML"]
-git-tree-sha1 = "b0dcafb34cfff977df79fc9927b70a9157a702ad"
-uuid = "5218b696-f38b-4ac9-8b61-a12ec717816d"
-version = "0.17.0"
 
 [[ConsoleProgressMonitor]]
 deps = ["Logging", "ProgressMeter"]
@@ -305,12 +793,6 @@ git-tree-sha1 = "3f71217b538d7aaee0b69ab47d9b7724ca8afa0d"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.0.4"
 
-[[Dagitty]]
-deps = ["BenchmarkTools", "Combinatorics", "Compose", "DataStructures", "Documenter", "GraphPlot", "LightGraphs", "Test"]
-path = "/Users/rob/.julia/dev/Dagitty"
-uuid = "d56128e0-8113-48cd-82a0-fc808dc30d4b"
-version = "0.0.1"
-
 [[DataAPI]]
 git-tree-sha1 = "cc70b17275652eb47bc9e5f81635981f13cea5c8"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
@@ -318,9 +800,9 @@ version = "1.9.0"
 
 [[DataFrames]]
 deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
-git-tree-sha1 = "2e993336a3f68216be91eb8ee4625ebbaba19147"
+git-tree-sha1 = "d785f42445b63fc86caa08bb9a9351008be9b765"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "1.3.0"
+version = "1.2.2"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -371,10 +853,10 @@ uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
 version = "1.5.0"
 
 [[Distances]]
-deps = ["LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI"]
-git-tree-sha1 = "3258d0659f812acde79e8a74b11f17ac06d0ca04"
+deps = ["LinearAlgebra", "Statistics", "StatsAPI"]
+git-tree-sha1 = "837c83e5574582e07662bbbba733964ff7c26b9d"
 uuid = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
-version = "0.10.7"
+version = "0.10.6"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -444,16 +926,6 @@ git-tree-sha1 = "b3bfd02e98aedfa5cf885665493c5598c350cd2f"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.2.10+0"
 
-[[ExprTools]]
-git-tree-sha1 = "b7e3d17636b348f005f11040025ae8c6f645fe92"
-uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
-version = "0.1.6"
-
-[[ExproniconLite]]
-git-tree-sha1 = "8b08cc88844e4d01db5a2405a08e9178e19e479e"
-uuid = "55351af7-c7e9-48d6-89ff-24e801d99491"
-version = "0.6.13"
-
 [[FFMPEG]]
 deps = ["FFMPEG_jll"]
 git-tree-sha1 = "b57e3acbe22f8484b4b5ff66a7499717fe1a9cc8"
@@ -489,9 +961,6 @@ deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
 git-tree-sha1 = "04d13bfa8ef11720c24e4d840c0033d145537df7"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.9.17"
-
-[[FileWatching]]
-uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -550,23 +1019,11 @@ version = "0.2.7"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
-[[FuzzyCompletions]]
-deps = ["REPL"]
-git-tree-sha1 = "2cc2791b324e8ed387a91d7226d17be754e9de61"
-uuid = "fb4132e2-a121-4a70-b8a1-d5b831dcdcc2"
-version = "0.4.3"
-
 [[GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
 git-tree-sha1 = "0c603255764a1fa0b61752d2bec14cfbd18f7fe8"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.3.5+1"
-
-[[GLM]]
-deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "StatsModels"]
-git-tree-sha1 = "f564ce4af5e79bb88ff1f4488e64363487674278"
-uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-version = "1.5.1"
 
 [[GR]]
 deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -594,15 +1051,9 @@ version = "0.21.0+0"
 
 [[Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "74ef6288d071f58033d54fd6708d4bc23a8b8972"
+git-tree-sha1 = "7bf67e9a481712b3dbe9cb3dac852dc4b1162e02"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.68.3+1"
-
-[[GraphPlot]]
-deps = ["ArnoldiMethod", "ColorTypes", "Colors", "Compose", "DelimitedFiles", "LightGraphs", "LinearAlgebra", "Random", "SparseArrays"]
-git-tree-sha1 = "dd8f15128a91b0079dfe3f4a4a1e190e54ac7164"
-uuid = "a2cc645c-3eea-5389-862e-a155d0052231"
-version = "0.4.4"
+version = "2.68.3+0"
 
 [[Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -623,9 +1074,9 @@ version = "0.9.17"
 
 [[HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
-git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
+git-tree-sha1 = "8a954fed8ac097d5be04921d595f741115c1b2ad"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
-version = "2.8.1+1"
+version = "2.8.1+0"
 
 [[HostCPUFeatures]]
 deps = ["BitTwiddlingConvenienceFunctions", "IfElse", "Libdl", "Static"]
@@ -645,17 +1096,6 @@ git-tree-sha1 = "3395d4d4aeb3c9d31f5929d32760d8baeee88aaf"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
 version = "2.5.0+0"
 
-[[Hyperscript]]
-deps = ["Test"]
-git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
-uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
-version = "0.0.4"
-
-[[HypertextLiteral]]
-git-tree-sha1 = "2b078b5a615c6c0396c77810d92ee8c6f470d238"
-uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-version = "0.9.3"
-
 [[IOCapture]]
 deps = ["Logging", "Random"]
 git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
@@ -666,11 +1106,6 @@ version = "0.2.2"
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
 uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
 version = "0.1.1"
-
-[[Inflate]]
-git-tree-sha1 = "f5fc07d4e706b84f72d54eedcc1c13d92fb0871c"
-uuid = "d25df0c9-e2be-5dd7-82c8-3ad0b3e990b9"
-version = "0.1.2"
 
 [[IniFile]]
 deps = ["Test"]
@@ -685,9 +1120,9 @@ version = "0.2.11"
 
 [[InlineStrings]]
 deps = ["Parsers"]
-git-tree-sha1 = "ca99cac337f8e0561c6a6edeeae5bf6966a78d21"
+git-tree-sha1 = "19cb49649f8c41de7fea32d089d37de917b553da"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
-version = "1.1.0"
+version = "1.0.1"
 
 [[InplaceOps]]
 deps = ["LinearAlgebra", "Test"]
@@ -897,12 +1332,6 @@ git-tree-sha1 = "7f3efec06033682db852f8b3bc3c1d2b0a0ab066"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
-[[LightGraphs]]
-deps = ["ArnoldiMethod", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
-git-tree-sha1 = "432428df5f360964040ed60418dd5601ecd240b6"
-uuid = "093fc24a-ae57-5d10-9952-331d41423f4d"
-version = "1.3.5"
-
 [[LineSearches]]
 deps = ["LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "Printf"]
 git-tree-sha1 = "f27132e551e959b3667d8c93eae90973225032dd"
@@ -1002,12 +1431,6 @@ version = "1.0.2"
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
-[[Mocking]]
-deps = ["Compat", "ExprTools"]
-git-tree-sha1 = "29714d0a7a8083bba8427a4fbfb00a540c681ce7"
-uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
-version = "0.7.3"
-
 [[MonteCarloMeasurements]]
 deps = ["Distributed", "Distributions", "LinearAlgebra", "MacroTools", "Random", "RecipesBase", "Requires", "SLEEFPirates", "StaticArrays", "Statistics", "StatsBase", "Test"]
 git-tree-sha1 = "d9dc441d5a0393ee80aea49d0fb13281d7cc7c91"
@@ -1016,12 +1439,6 @@ version = "1.0.3"
 
 [[MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-
-[[MsgPack]]
-deps = ["Serialization"]
-git-tree-sha1 = "a8cbf066b54d793b9a48c5daa5d586cf2b5bd43d"
-uuid = "99f44e22-a591-53d1-9472-aa23ef4bd671"
-version = "1.1.0"
 
 [[MultivariateStats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsBase"]
@@ -1054,9 +1471,9 @@ version = "0.9.6"
 
 [[NamedDims]]
 deps = ["AbstractFFTs", "ChainRulesCore", "CovarianceEstimation", "LinearAlgebra", "Pkg", "Requires", "Statistics"]
-git-tree-sha1 = "88dce79529a358f6efd13225d131bec958a18f1d"
+git-tree-sha1 = "4f34e3ff2fa7f2a1c03fb2c4fdd637380d760bbc"
 uuid = "356022a1-0364-5f58-8944-0da4b18d706f"
-version = "0.2.43"
+version = "0.2.42"
 
 [[NamedTupleTools]]
 git-tree-sha1 = "63831dcea5e11db1c0925efe5ef5fc01d528c522"
@@ -1191,21 +1608,9 @@ version = "1.0.15"
 
 [[Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun"]
-git-tree-sha1 = "8789439a899b77f4fbb4d7298500a6a5781205bc"
+git-tree-sha1 = "d73736030a094e8d24fdf3629ae980217bf1d59d"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.25.0"
-
-[[Pluto]]
-deps = ["Base64", "Configurations", "Dates", "Distributed", "FileWatching", "FuzzyCompletions", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "TableIOInterface", "Tables", "UUIDs"]
-git-tree-sha1 = "a5b3fee95de0c0a324bab53a03911395936d15d9"
-uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.17.2"
-
-[[PlutoUI]]
-deps = ["AbstractPlutoDingetjes", "Base64", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "b68904528fd538f1cb6a3fbc44d2abdc498f9e8e"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.21"
+version = "1.24.3"
 
 [[PooledArrays]]
 deps = ["DataAPI", "Future"]
@@ -1235,10 +1640,6 @@ version = "1.2.3"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
-[[Profile]]
-deps = ["Printf"]
-uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
-
 [[ProgressLogging]]
 deps = ["Logging", "SHA", "UUIDs"]
 git-tree-sha1 = "80d919dee55b9c50e8d9e2da5eeafff3fe58b539"
@@ -1262,12 +1663,6 @@ deps = ["DataStructures", "LinearAlgebra"]
 git-tree-sha1 = "78aadffb3efd2155af139781b8a8df1ef279ea39"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.2"
-
-[[RData]]
-deps = ["CategoricalArrays", "CodecZlib", "DataFrames", "Dates", "FileIO", "Requires", "TimeZones", "Unicode"]
-git-tree-sha1 = "19e47a495dfb7240eb44dc6971d660f7e4244a72"
-uuid = "df47a6cb-8c03-5eed-afd8-b6050d6c41da"
-version = "0.8.3"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1382,30 +1777,19 @@ uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
 [[Setfield]]
 deps = ["ConstructionBase", "Future", "MacroTools", "Requires"]
-git-tree-sha1 = "0afd9e6c623e379f593da01f20590bacc26d1d14"
+git-tree-sha1 = "def0718ddbabeb5476e51e5a43609bee889f285d"
 uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
-version = "0.8.1"
+version = "0.8.0"
 
 [[SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
-
-[[ShiftedArrays]]
-git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
-uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
-version = "1.0.0"
 
 [[Showoff]]
 deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
-
-[[SimpleTraits]]
-deps = ["InteractiveUtils", "MacroTools"]
-git-tree-sha1 = "5d7e3f4e11935503d3ecaf7186eac40602e7d231"
-uuid = "699a6c99-e7fa-54fc-8d76-47d257e15c1d"
-version = "0.9.4"
 
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
@@ -1501,12 +1885,6 @@ git-tree-sha1 = "bedb3e17cc1d94ce0e6e66d3afa47157978ba404"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.14"
 
-[[StatsModels]]
-deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
-git-tree-sha1 = "677488c295051568b0b79a77a8c44aa86e78b359"
-uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
-version = "0.6.28"
-
 [[StatsPlots]]
 deps = ["Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
 git-tree-sha1 = "d6956cefe3766a8eb5caae9226118bb0ac61c8ac"
@@ -1532,11 +1910,6 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [[TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-
-[[TableIOInterface]]
-git-tree-sha1 = "9a0d3ab8afd14f33a35af7391491ff3104401a35"
-uuid = "d1efa939-5518-4425-949f-ab857e148477"
-version = "0.1.6"
 
 [[TableOperations]]
 deps = ["SentinelArrays", "Tables", "Test"]
@@ -1569,12 +1942,6 @@ version = "0.1.5"
 [[Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[[TimeZones]]
-deps = ["Dates", "Downloads", "InlineStrings", "LazyArtifacts", "Mocking", "Pkg", "Printf", "RecipesBase", "Serialization", "Unicode"]
-git-tree-sha1 = "8de32288505b7db196f36d27d7236464ef50dba1"
-uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "1.6.2"
 
 [[Tracker]]
 deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics"]
@@ -1874,3 +2241,77 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Wayland_jll", "Wayland_prot
 git-tree-sha1 = "ece2350174195bb31de1a63bea3a41ae1aa593b6"
 uuid = "d8fb68d0-12a3-5cfd-a85a-d49703b185fd"
 version = "0.9.1+5"
+"""
+
+# ╔═╡ Cell order:
+# ╠═bddf36ac-5547-491c-94bb-763ce7df3cd9
+# ╠═7bf4154b-0009-46e4-9d03-8e3b81a202f2
+# ╠═8720cc1f-58a0-4a70-9497-480456b26f85
+# ╟─fdbf8fe2-7e99-4da6-bd8d-6a21bb68bc71
+# ╟─04affaff-2593-4b6c-8638-ab54fde6d2cc
+# ╠═73ee2643-330f-485f-94f5-be46fbd33d4f
+# ╟─eb3fef03-acf9-4c41-9760-e0f492df55e2
+# ╠═3eeab20c-6d42-4b31-bd8f-bfa691cb4587
+# ╟─bc0a3a04-1b8c-4332-a6ba-3da2b8eaea05
+# ╠═f74d5bf7-ae57-4678-be5f-25af1959173b
+# ╠═1bc733fa-0062-4521-8617-4e757a9fff24
+# ╟─4f444d5f-6058-4cb8-975f-17782d8b86c9
+# ╠═cee469b4-83b1-4e29-aa75-8bb6dfc4d207
+# ╟─3d677fac-ff09-45b1-9377-4d29cfa86a7f
+# ╠═8f904830-dc3e-4875-9af7-1e7285e7fc43
+# ╠═ad981e3c-df35-43f0-9b19-e128a9f2a12d
+# ╠═527fd7d7-7375-4dee-9405-cee0363ca92e
+# ╠═d11c957d-bc78-4011-9dc8-5335a9d3f4f7
+# ╠═16574ab6-a53e-4f9d-bbbe-23714ee39abd
+# ╟─40799cc2-cdaa-4a86-a678-1b50b3dff6cc
+# ╠═ca390706-13d7-4aa0-952e-8f06b4bc370e
+# ╠═1d902b61-2387-4664-a39e-7ff73440dd43
+# ╠═62e35bf2-cefd-413d-a2ea-60e7193c94b6
+# ╠═43e22387-2afd-4ed1-80c2-608f82c224f6
+# ╟─f5cb4db3-99d4-4498-ba6d-5b36064b5328
+# ╠═5f24eb52-4bf3-47b9-ab55-f92aaeca0d45
+# ╠═612456bd-2bee-4f1c-beed-d3f697c80509
+# ╟─8ca7b83a-ffab-42cc-bca1-13cb60a45b97
+# ╠═fd2ed8f7-c276-4df6-8d08-9d4ea02effd7
+# ╟─e396ec23-f67f-4f1b-b6e1-3968120463a9
+# ╠═38d6aeb9-5b1f-456b-9de6-7484ba94f9c8
+# ╟─4850e051-166a-4b4a-b7bd-4181578338dc
+# ╠═356ef2ab-ee33-42ba-802e-84e1d7425a61
+# ╠═02a727d7-5095-4728-abd4-413100d56acd
+# ╠═083b4a77-da6e-43e7-a7f0-f45cb2b56ff8
+# ╠═3571a823-63f5-4124-ab8f-d7b060b82d6a
+# ╠═f2a34af7-2706-4d58-a3c9-88ca3539538e
+# ╠═e77013bc-1386-4f07-bf64-2571fdbc5212
+# ╠═87311d6b-db5f-41d3-a2ec-1e76aa13dd8d
+# ╟─1462e546-c794-45aa-8ac2-097b5a0fc168
+# ╠═3a55d73d-2cf8-4411-a075-81157a544973
+# ╟─80eca5f8-762b-4b73-a246-5883a04d72e5
+# ╠═9b1a7350-4311-48b2-91ce-8f4f87e34aef
+# ╠═b384f828-985d-4f6e-9040-2af4bc888ec8
+# ╠═8d2cc03b-4e3f-409d-8bdb-e99ed0365046
+# ╠═e8cbf4c4-885e-4e2f-b058-4b41a3ce6857
+# ╠═b0a849d8-315a-44ea-ac6a-769bf47de6ff
+# ╠═3383537c-7af4-4de9-b9eb-9389a02d4aaf
+# ╟─7d5e4157-7abe-4fb1-893a-51a520a934d0
+# ╟─48573194-9cf9-4c9d-b883-62547e4debbc
+# ╠═9025cb4c-80cc-463f-b588-913e59c35560
+# ╟─b2dbe2bd-19ae-4a8f-a408-0353cccd3b84
+# ╠═9c905e24-fa5d-4169-bf73-684f5e0a5b8c
+# ╟─2f086d7b-658d-42e8-a112-d22807a66586
+# ╠═69e42d8d-062a-4061-896b-2781a4aab5b0
+# ╟─219bc61b-a458-488c-91cb-0b3708c74a48
+# ╠═4443c25d-7f6a-4d01-b672-1c9606ab28f8
+# ╟─738c7fb8-8f9c-4fce-ad6a-b58fd7085be6
+# ╠═01b45f6a-adbe-4791-88d5-fa0623bb107c
+# ╠═715b797a-88c6-46b9-87b9-a59d5765cd99
+# ╟─1f7c87b9-a93c-442e-b5b2-8501a289200c
+# ╠═6a5a4d0f-5932-4862-87b0-1fafed29318e
+# ╠═a369c511-017d-406f-9178-b4cced1b97e9
+# ╟─04be14ef-fe26-447b-823e-243d9cba8466
+# ╠═f822f689-a92c-4535-ae88-ef604e31753f
+# ╠═745a0c84-4243-4efa-9871-7d2dcd096553
+# ╟─e0bc4345-c125-42ca-a088-b70a7c2f762c
+# ╠═0c58026c-ec86-4b16-9f00-398bed8d627a
+# ╠═20a3b233-a892-4518-8912-a49dc8ee2126
+# ╟─00000000-0000-0000-0000-000000000001
+# ╟─00000000-0000-0000-0000-000000000002
