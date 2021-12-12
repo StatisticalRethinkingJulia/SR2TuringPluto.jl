@@ -1,5 +1,3 @@
-## Version 4 is under preparation!!!! It needs StatisticalRethinking v4 and StatisticalRethinkingPlots.jl. See the README in StatisticalRethinking.jl.
-
 ## Purpose of SR2TuringPluto.jl
 
 As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
@@ -142,7 +140,7 @@ As before, the `t` at the end of the model number indicates Turing.
 
 SR2TuringPluto.jl is compatible with the 2nd edition of the book.
 
-StructuralCausalModels.jl is included as en experimental dependency in the StatisticalRethinking.jl v3 package.
+StructuralCausalModels.jl and ParetoSmoothedImportanceSampling.jl are included as experimental dependencies in the StatisticalRethinking.jl v3 package. Definitely work in progress!
 
 Any feedback is appreciated. Please open an issue.
 
