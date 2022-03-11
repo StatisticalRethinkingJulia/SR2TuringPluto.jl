@@ -15,9 +15,8 @@ To (locally) reproduce and use this project, do the following:
 1. Download this [project](https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl) from Github and move to the downloaded directory, e.g.:
 
 ```
-$ git clone https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl
-$ cd SR2TuringPluto.jl
-# Note that Turing.jl is usally only supported in released version of Julia.
+$ git clone https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl SR2TuringPluto
+$ cd SR2TuringPluto
 ```
 
 If you want a specific tagged version, use:
@@ -25,14 +24,14 @@ If you want a specific tagged version, use:
 ```
 $ git tag -l # To see available tags, followed by:
 $ git checkout tags/<tag_name> # or simply:
-$ git checkout v1.1.1
+$ git checkout v4.0.3
 ```
 
 and in the Julia REPL:
 
 ```
 julia> ]                                        # Actvate Pkg mode
-(@v1.6) pkg> activate .                         # Activate pkg in .
+(@v1.8) pkg> activate .                         # Activate pkg in .
 (SR2TuringPluto) pkg> instantiate  # Install in pkg environment
 (SR2TuringPluto) pkg> <delete>     # Exit package mode
 ```
@@ -55,13 +54,9 @@ julia> Pluto.run()
 
 Note: *SR2TuringPluto v4 requires StatisticalRethinking.jl v 4.*
 
-Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/00/clip-00-01-03t.jl`.
+Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/TuringGuide.jl`.
 
-SR2TuringPluto.jl is a DrWatson project, with some added/re-purposed subdirectories:
-
-1. `models`, which contains a subset of the Turing language models,
-2. `notebooks`, used to store the Pluto notebooks,
-3. `scripts`, Julia scrips generated from the notebooks.
+SR2TuringPluto.jl is a DrWatson project, with some added/re-purposed subdirectories,
 
 The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`.
 
@@ -87,52 +82,14 @@ df = CSV.read(sr_datadir("Howell1.csv"), DataFrame)
 df = df[df.age .>= 18, :]
 ```
 
-## Naming conventions
+## Naming of models and results:
 
-All R snippets (fragments) have been organized in clips. Each clip is a notebook. 
 
-Clips are named as `clip-cc-fs-ls[s|t|d].jl` where
-
-* `cc`      : Chapter number
-* `fs`      : First snippet in clip
-* `ls`      : Last snippet in cli
-* `[s|sl|t|d|m]` : Mcmc flavor used (s : Stan, t : Turing)
-
-Note: `d` is reserved for a combination Soss/DynamicHMC, `sl` is reserved for Stan models using the `logpdf` formulation and `m` is reserved for Mamba.
-
-The notebooks containing the clips are stored by chapter.  In addition to clips, in the early notebook chapters (0-3) it is also shown how to create some of the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
-
-Special introductory notebooks have been included in `notebooks/intros`, e.g.
-in subdirectories `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
-
-Additional introductory notebooks showing Julia and statistics ( based on the [Statistics with Julia](https://statisticswithjulia.org/index.html) book ) can be found in [StatisticsWithJuliaPlutoNotebooks](https://github.com/StatisticalRethinkingJulia/StatisticsWithJuliaPlutoNotebooks.jl).
-
-One goal for the changes in StatisticalRethinking v3 was to make it easier to compare and mix and match results from different mcmc implementations. Hence consistent naming of models and results is important. The models and the results of simulations are stored as follows:
-
-Models and results:
-
-0. @model            : Turing model
-1. m5_1t             : The sampled StanSample model
-2. q5_1st            : Stan quap model (NamedTuple similar to Turing)
-
-Draws:
 
 3. chns5_1t          : MCMCChains object (4000 samples from 4 chains)
-4. part5_1t          : Stan samples (Particles notation)
-5. quap5_1t          : Quap samples (Particles notation)
-6. nt5_1t            : NamedTuple with samples values
-7. ka5_1t            : KeyedArray object (see AxisArrays.jl)
-8. da5_1t            : DimArray object (see DimensionalData.jl)
-9. st5_1t            : StanTable 0bject
-
-The default for `read_samples(m1_1s)` is a StanTable chains object.
 
 Results as a DataFrame:
 
-10. prior5_1t_df      : Prior samples (DataFrame)
-11. post5_1t_df       : Posterior samples (DataFrame)
-12. quap5_1t_df       : Quap approximation to posterior samples (DataFrame)
-13. pred5_1t_df       : Posterior predictions (DataFrame)
 
 As before, the `t` at the end of the model number indicates Turing.
 
@@ -152,7 +109,11 @@ This repository and format is derived from work by Karajan, previous versions of
 
 ## Versions
 
-### Version 4.0.0 (Under preparation!)
+### Version 5.0.0 (Under development, will tale time)
+
+1. Complete overhaul using Makie.jl, Graphs.jl and more.
+
+### Version 4.0.0
 
 1. Switch to StatisticalRethinking v4.
 2. Switch to notebooks under development by Max Lapan. Notebooks are being converted to Pluto (vs. Jupyter notebooks).
