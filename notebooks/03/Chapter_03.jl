@@ -122,13 +122,13 @@ hpdi(samples2, alpha=0.5)
 md"### Code 3.14"
 
 # ╔═╡ c47a769d-fb74-4397-bd49-594a6281185f
-p_grid[argmax(posterior)]
+p_grid[argmax(posterior2)]
 
 # ╔═╡ 0c379759-9e6d-4e78-a189-4b0907906e12
 md"### Code 3.15"
 
 # ╔═╡ 969ad003-e132-45c9-a7a8-3bbedbc50f43
-k = kde(samples, bandwidth=0.01)
+k = kde(samples2, bandwidth=0.01)
 
 # ╔═╡ ae92a07a-9473-4ac7-8e5b-29023e9054a1
 k.x[argmax(k.density)]
@@ -137,19 +137,19 @@ k.x[argmax(k.density)]
 md"### Code 3.16"
 
 # ╔═╡ 2643b2a8-41fa-4a8c-b154-70c253b5c414
-mean(samples), median(samples)
+mean(samples2), median(samples2)
 
 # ╔═╡ 9a1863c0-8c7e-4962-882c-6ddb4968a4d6
 md"### Code 3.17"
 
 # ╔═╡ e938bb1c-d47a-4627-a850-0ac255892482
-sum(@. posterior * abs(0.5 - p_grid))
+sum(@. posterior2 * abs(0.5 - p_grid))
 
 # ╔═╡ 37a8aeac-1942-4b95-8ead-98d86c03f2bc
 md"### Code 3.18"
 
 # ╔═╡ 678b1bf3-f137-46a7-a558-1a8c22964f89
-loss = map(d -> sum(@. posterior * abs(d - p_grid)), p_grid);
+loss = map(d -> sum(@. posterior2 * abs(d - p_grid)), p_grid);
 
 # ╔═╡ 135eaf3d-e370-4f0b-99ba-55c30884d23a
 md"### Code 3.19"
