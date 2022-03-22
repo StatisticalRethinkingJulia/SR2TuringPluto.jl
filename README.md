@@ -103,7 +103,7 @@ Note: `d` is reserved for a combination Soss/DynamicHMC, `sl` is reserved for St
 The notebooks containing the clips are stored by chapter.  In addition to clips, in the early notebook chapters (0-3) it is also shown how to create some of the figures in the book, e.g. `Fig2.5t.jl` in `notebooks/chapter/02`.
 
 Special introductory notebooks have been included in `notebooks/intros`, e.g.
-in subdirectries `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
+in subdirectories `intro-R-users`, `intro-pluto` and `intro-turing`. They are intended to illustrate ways of using Julia and Pluto and of basic patterns to work with Turing models.
 
 Additional introductory notebooks showing Julia and statistics ( based on the [Statistics with Julia](https://statisticswithjulia.org/index.html) book ) can be found in [StatisticsWithJuliaPlutoNotebooks](https://github.com/StatisticalRethinkingJulia/StatisticsWithJuliaPlutoNotebooks.jl).
 
