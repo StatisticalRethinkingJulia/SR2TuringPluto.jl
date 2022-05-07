@@ -123,6 +123,10 @@ This repository and format is derived from work by Max Lapan, Karajan, previous 
 2. Larger notebooks.
 3. Dropped additional figures in early chapters.    r
 
+### Version 4.0.5
+
+1. Minor updates to chapters 1-5.
+
 ### Version 4.0.4
 
 1. Package updates.
