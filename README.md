@@ -4,9 +4,9 @@ As stated many times by the author in his [online lectures](https://www.youtube.
 
 SR2TuringPluto is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
 
-If you prefer to work with scripts instead of notebooks, a utility in the `src` directory is provided (`generate_scripts.jl`) to create scripts from all notebooks and store those in a newly created `scripts` directory. Note that this is a simple tool and will override all files in the `scripts` directory. For exploration purposes I suggest to move some of those scripts to e.g. the `research` directory.
+This Julia project uses Turing as the underlying mcmc implementation.  A companion project ( [SR2StanPluto.jl](https://github.com/StatisticalRethinkingJulia/SR2StanPluto.jl) ) uses Stan.
 
-This Julia project uses Turing as the underlying mcmc implementation.  A companion project ( [StatisticalRethinkingStan.jl](https://github.com/StatisticalRethinkingJulia/StatisticalRethinkingStan.jl) ) uses Stan.
+**Note: A new version (v5.0.0) is under development. This is a breaking version. Probably safe to stick with tagged version 4.0.3 until then.**
 
 ## Installation
 
@@ -30,15 +30,15 @@ $ git checkout v4.0.3
 and in the Julia REPL:
 
 ```
-julia> ]                                        # Actvate Pkg mode
-(@v1.8) pkg> activate .                         # Activate pkg in .
+julia> ]                           # Actvate Pkg mode
+(@v1.8) pkg> activate .            # Activate pkg in .
 (SR2TuringPluto) pkg> instantiate  # Install in pkg environment
 (SR2TuringPluto) pkg> <delete>     # Exit package mode
 ```
 
-If above procedure fails, if present, try to delete the Manifest.toml file and repeat above steps. As mentioned above, these steps are only needed the first time.
+If above procedure fails, if present, try to delete the Manifest.toml file and repeat above steps. **These steps are only needed the first time.**
 
-The next step assumes your Julia setup includes `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
+The next step assumes your Julia setup includes at least `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
 
 2. Start a Pluto notebook server.
 ```
@@ -84,12 +84,19 @@ df = df[df.age .>= 18, :]
 
 ## Naming of models and results:
 
+1. ppl5_1 or m5_1    : Turing model
+1. m5_1t             : The instantiated Turing model (includes data)
 
+Chain(s):
 
 3. chns5_1t          : MCMCChains object (4000 samples from 4 chains)
 
 Results as a DataFrame:
 
+4. prior5_1t_df      : Prior samples (DataFrame)
+5. post5_1t_df       : Posterior samples (DataFrame)
+6. quap5_1t_df       : MAP approximation to posterior samples (DataFrame)
+7. pred5_1t_df       : Posterior predictions (DataFrame)
 
 As before, the `t` at the end of the model number indicates Turing.
 
@@ -105,15 +112,17 @@ Any feedback is appreciated. Please open an issue.
 
 Of course, without the excellent textbook by Richard McElreath, this package would not have been possible. The author has also been supportive of this work and gave permission to use the datasets.
 
-This repository and format is derived from work by Karajan, previous versions of StatisticalRethinking.jl and many other contributors.
+This repository and format is derived from work by Max Lapan, Karajan, previous and Stan versions of StatisticalRethinking.jl and many other contributors.
 
 ## Versions
 
-### Version 5.0.0 (Under development, will tale time)
+### Version 5.0.0 (Under development, will take time)
 
-1. Complete overhaul using Makie.jl, Graphs.jl and more.
+1. Complete overhaul.likely using Makie.jl, Graphs.jl and more.
+2. Larger notebooks.
+3. Dropped additional figures in early chapters.    r
 
-### Version 4.0.0
+### Version 4.0.0-4.0.3
 
 1. Switch to StatisticalRethinking v4.
 2. Switch to notebooks under development by Max Lapan. Notebooks are being converted to Pluto (vs. Jupyter notebooks).
