@@ -1,6 +1,29 @@
 ### A Pluto.jl notebook ###
 # v0.19.3
 
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ 14088e14-1fe6-41bd-a70a-38595fde2d41
+using Pkg, DrWatson
+
+# ╔═╡ 10cd1a4b-7190-4a1e-a867-80555d4bf730
+begin
+	using Turing
+	using DataFrames
+	using CSV
+	using Random
+	using StatisticalRethinking
+	using StatisticalRethinking: link
+	using StatisticalRethinkingPlots
+	using ParetoSmooth
+	using StatsPlots
+	using StatsBase
+	using FreqTables
+	using Logging
+end
+
+# ╔═╡ 6975f6c3-8eec-47d9-ade5-88e8447b2dce
 html"""
 <style>
 	main {
@@ -12,112 +35,1011 @@ html"""
 </style>
 """
 
-using Markdown
-using InteractiveUtils
 
-# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
-macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
-        local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
-        el
+# ╔═╡ 22f28b65-a270-4778-8933-57459e1249c7
+begin
+	default(label=false)
+	Logging.disable_logging(Logging.Warn);
+end;
+
+# ╔═╡ f3a514c8-bc3e-487f-af11-b43ff41c34e6
+md" ## 11.1 Binomial regression."
+
+# ╔═╡ e05e454f-c5b8-4f09-b745-a0265b5718a8
+md" #### Code 11.1"
+
+# ╔═╡ a67ed97c-59ed-461b-803b-f2cb42498dda
+chimpanzees = CSV.read(sr_datadir("chimpanzees.csv"), DataFrame; delim=';');
+
+# ╔═╡ d6404e85-ceea-47c1-bc0e-c7c3deeb0ad6
+md" #### Code 11.2"
+
+# ╔═╡ dcfef783-e51f-400b-9702-9068b8ef45b7
+chimpanzees[!,:treatment] = 1 .+ chimpanzees.prosoc_left .+ 2*chimpanzees.condition;
+
+# ╔═╡ 62cf8524-0b46-434f-b813-f7befa9eb7f9
+md" #### Code 11.3"
+
+# ╔═╡ 079e0242-0d68-4e72-be44-9e317733071c
+freqtable(chimpanzees, :treatment, :prosoc_left, subset=chimpanzees.condition .== 0)
+
+# ╔═╡ e88ff706-532d-4890-ad6d-928aed3da558
+freqtable(chimpanzees, :treatment, :prosoc_left, subset=chimpanzees.condition .== 1)
+
+# ╔═╡ addadf8a-a757-4927-9e78-0b64a9bcf3eb
+md" #### Code 11.4"
+
+# ╔═╡ 247d18b1-dd98-49db-9185-2f76dae4b346
+@model function ppl11_1(pulled_left)
+    a ~ Normal(0, 10)
+    p = logistic(a)     # inverse of the `logit` function
+    pulled_left ~ Binomial(1, p)
+end
+
+# ╔═╡ c5e308ce-2a23-4773-b8d1-9dfb6a011d16
+md" #### Code 11.5"
+
+# ╔═╡ 35afca2b-8537-4ff1-a1c1-3021f3af3d4c
+begin
+	Random.seed!(1999)
+	prior11_1 = sample(ppl11_1(chimpanzees.pulled_left), Prior(), 10000)
+	prior11_1_df = DataFrame(prior11_1);
+end
+
+# ╔═╡ 38668cc3-5bcb-42fe-b89f-fed08dfacce5
+md" #### Code 11.6"
+
+# ╔═╡ 0195e6da-43f9-4ed3-bcad-7bee87fe23cf
+let
+	p = logistic.(prior11_1_df.a)
+	density(p, bandwidth=0.01)
+end
+
+# ╔═╡ 3172be0c-e3f6-43c3-b740-137584b19bcf
+md" #### Code 11.7"
+
+# ╔═╡ 1322553d-53ba-4166-a65f-a1350158dd46
+@model function ppl11_2(pulled_left, treatment)
+    a ~ Normal(0, 1.5)
+    treat_levels = length(levels(treatment))
+    b ~ MvNormal(zeros(treat_levels), 10)
+    
+    p = @. logistic(a + b[treatment])
+    for i ∈ eachindex(pulled_left)
+        pulled_left[i] ~ Binomial(1, p[i])
     end
 end
 
-# ╔═╡ e6dd9f40-a007-439f-bafd-0127f2d7b742
-using Pkg, DrWatson, PlutoUI
-
-# ╔═╡ bd37f4aa-5e4e-4823-b758-16c7ee2b2fa0
+# ╔═╡ ae02befe-b6b1-49d4-8f85-00f59cd57f92
 begin
-	using CSV, DataFrames
-	using GLM
-	using StatisticalRethinking
-	using StatisticalRethinkingPlots
+	Random.seed!(1999)
+	prior_chain11_2t = sample(ppl11_2(chimpanzees.pulled_left, chimpanzees.treatment), Prior(), 10000)
+	prior11_2t_df = DataFrame(prior_chain11_2t)
+	PRECIS(prior11_2t_df)
 end
 
-# ╔═╡ 397f31b2-eba9-11ea-3fd5-1704e3a50a96
-md"## Chapter_00.jl"
-
-# ╔═╡ 2c7baec4-0f38-4050-be86-b54de4112dc7
-md" ### Code 0.0"
-
-# ╔═╡ 1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
-md"### Code 0.1"
-
-# ╔═╡ 624b8daa-dc1f-11ea-114f-19896cd76aa5
-"All models are wrong, but some are useful."
-
-# ╔═╡ 8fa79b3e-dc1f-11ea-1437-d7bfe6cdea51
-md"### Code 0.2"
-
-# ╔═╡ c4321a66-de4f-11ea-3449-774edd51eb10
-@bind N Slider(1:5, default=3)
-
-# ╔═╡ 35330a6a-dc20-11ea-2929-9b904165e207
-md"##### Variable x initially is a StepRange, not a vector. The log.(x) notation `broadcast` the log function to all steprange elements in x and returns a vector."
-
-# ╔═╡ df73cd1c-dc1f-11ea-0e14-c7e381f49c4a
-begin
-	x = 1:N
-	x = x*10
-	x = log.(x)
-	x = sum(x)
-	x = exp(x)
-	x = x*10
-	x = log(x)
-	x = sum(x)
-	x = exp(x)
+# ╔═╡ 93cdbcce-1958-4476-a32a-9b1cf3ab9f17
+let
+	f = i -> @. logistic(prior11_2t_df.a + prior11_2t_df[!,"b[$i]"])
+	p1 = map(f, 1:4)
+	density(abs.(p1[1] .- p1[2]), bandwidth=0.01)
 end
 
-# ╔═╡ 975e15f4-122c-11eb-2a4d-ed836c7bade0
-md"##### Notice that in Pluto notebooks varables can only be defined once. This is needed in Pluto to make the `reactivity` work (e.g. when updating above slider setting). Bracketing above sequence of assignments with a `begin` and `end` is allowed."
+# ╔═╡ 140245a2-38cc-440a-96f2-7e375b60ef7b
+md" #### Code 11.8"
 
-# ╔═╡ b1d6b4ac-dc20-11ea-3237-a515964f9176
-md"### Code 0.3"
+# ╔═╡ b5dcad20-acc6-446b-8231-cf9d6eb6bf6d
+md" #### Code 11.9"
 
-# ╔═╡ 88e3bb64-dc1e-11ea-1136-bd822afb72e4
-[log(0.01^200) 200 * log(0.01)]
+# ╔═╡ 1430a43d-d75d-4aff-8f43-a3c5e047c6eb
+@model function m11_3(pulled_left, treatment)
+    a ~ Normal(0, 1.5)
+    treat_levels = length(levels(treatment))
+    b ~ MvNormal(zeros(treat_levels), 0.5)
+    
+    p = @. logistic(a + b[treatment])
+    for i ∈ eachindex(pulled_left)
+        pulled_left[i] ~ Binomial(1, p[i])
+    end
+end
 
-# ╔═╡ dc515b15-a11a-4372-9fad-c00d9c508dd5
-md"### Code 0.4"
-
-# ╔═╡ 3a3e7ff9-a76c-4766-9dc8-4de5a4a14caa
+# ╔═╡ a86c573b-d227-46f7-bd5b-81c44ef2b326
 begin
-	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim=';')
-	df = filter(row -> row[:age] >= 18, df);
+	Random.seed!(1999)
+	prior_chain3 = sample(m11_3(chimpanzees.pulled_left, chimpanzees.treatment), Prior(), 10000)
+	prior3 = DataFrame(prior_chain3);
+end
+
+# ╔═╡ e172123a-8186-4038-b9d6-edd5deffefd9
+let
+	f = i -> @. logistic(prior3.a + prior3[!,"b[$i]"])
+	p2 = map(f, 1:4)
+	mean(abs.(p2[1] .- p2[2]))
+end
+
+# ╔═╡ 776b5efd-f42b-49bc-98ed-4893eb216e2c
+md" #### Code 11.10"
+
+# ╔═╡ 9780cf8c-ca3f-486e-bae3-ca480dfd8d72
+dat_list = chimpanzees[!,[:pulled_left, :actor, :treatment]];
+
+# ╔═╡ b9d8d506-d88c-48a6-9e39-d33f0984047c
+md" #### Code 11.11"
+
+# ╔═╡ ca8c5830-cd5d-421f-af9e-a0da2656d953
+@model function m11_4(actor, treatment, pulled_left)
+    act_levels = length(levels(actor))
+    a ~ MvNormal(zeros(act_levels), 1.5)
+    treat_levels = length(levels(treatment))
+    b ~ MvNormal(zeros(treat_levels), 0.5)
+    
+    p = @. logistic(a[actor] + b[treatment])
+    for i ∈ eachindex(pulled_left)
+        pulled_left[i] ~ Binomial(1, p[i])
+    end
+end
+
+# ╔═╡ a80e763b-9f3b-44aa-9abc-26362b4618bd
+begin
+	m11_4_chain = sample(m11_4(dat_list.actor, dat_list.treatment, dat_list.pulled_left), NUTS(), 1000)
+	m11_4_df = DataFrame(m11_4_chain)
+	PRECIS(m11_4_df)
+end
+
+# ╔═╡ b6a5f2a8-6e45-47ba-be97-961cfeb57699
+md" #### Code 11.12"
+
+# ╔═╡ e0fb292f-8aba-4ca9-ba0c-1791cf063623
+let
+	p_left = DataFrame(map(i -> "V$i" => logistic.(m11_4_df[:,"a[$i]"]), 1:7)...);
+	coeftab_plot(p_left)
+end
+
+# ╔═╡ c778178e-a6ab-4071-90d7-9cf543ef2606
+md" #### Code 11.13"
+
+# ╔═╡ da6198fa-c7f2-4277-98f7-d6ba2e092815
+let
+	names = ["R/N", "L/N", "R/P", "L/P"]
+	labs = DataFrame(map(i -> names[i] => m11_4_df[:,"b[$i]"], 1:4)...)
+	coeftab_plot(labs)
+end
+
+# ╔═╡ 14bc80d0-3528-4cda-9311-02af2c322fc4
+md" #### Code 11.14"
+
+# ╔═╡ 5dd96185-34b6-460e-8f7f-e34d0c5eb469
+let
+	diffs = DataFrame(
+	    db13=m11_4_df."b[1]" .- m11_4_df."b[3]",
+	    db24=m11_4_df."b[2]" .- m11_4_df."b[4]",
+	)
+	coeftab_plot(diffs)
+end
+
+# ╔═╡ ea6f1ad4-781a-47a6-9cee-785da25f5967
+md" #### Code 11.15"
+
+# ╔═╡ 8adfcdf2-3da5-4d30-9301-b9c2e63d5490
+let
+	gd = groupby(chimpanzees, [:actor, :treatment])
+	c = combine(gd, :pulled_left => mean => :val)
+	global pl = unstack(c, :actor, :treatment, :val)
+	pl[1,:]
+end
+
+# ╔═╡ 4e297c9d-e181-41ce-b1be-d5a6669bb903
+md" #### Code 11.16"
+
+# ╔═╡ c8bd4ef6-7a94-46c7-be9a-6943043a6670
+let
+	names = ["R/N", "L/N", "R/P", "L/P"]
+	p = plot(ylims=(0, 1.1), ylab="proportion left lever", showaxis=:y, xticks=false)
+	hline!([0.5], c=:gray, s=:dash)
+	for actor in 1:7
+	    ofs = (actor-1)*4
+	    actor > 1 && vline!([ofs+0.5], c=:gray)
+	    plot!([ofs+1,ofs+3], collect(pl[actor,["1","3"]]), lw=2, m=:o, c=:blue)
+	    plot!([ofs+2,ofs+4], collect(pl[actor,["2","4"]]), lw=2, m=:o, c=:blue)
+	    anns = [
+	        (ofs+idx, pl[actor,string(idx)]+.04, (name, 8))
+	        for (idx,name) ∈ enumerate(names)
+	    ]
+	    actor != 2 && annotate!(anns)
+	end
+	
+	annotate!([
+	    (2.5 + (idx-1)*4, 1.1, ("actor $idx", 8))
+	    for idx ∈ 1:7
+	])
+	p
+end
+
+# ╔═╡ e80cb9db-b93b-4b43-a55a-ee547fbc9d48
+md" #### Code 11.17"
+
+# ╔═╡ fa2b5e49-933f-4fba-886c-0cf99f81eab5
+let
+	l_fun = (r, (ai, bi)) -> logistic(get(r, "a[$ai]", missing) + get(r, "b[$bi]", missing))
+	p_post = link(m11_4_df, l_fun, Iterators.product(1:7, 1:4))
+	p_μ = map(mean, p_post)
+	p_ci = map(PI, p_post);
+	
+	# visualize mean and cred intervals of posterior distribution
+	
+	# compute relative intervals 
+	rel_ci = map(idx -> (p_μ[idx]-p_ci[idx][1], p_ci[idx][2]-p_μ[idx]), CartesianIndices(p_ci))
+	
+	names = ["R/N", "L/N", "R/P", "L/P"]
+	p = plot(ylims=(0, 1.1), ylab="proportion left lever", title="Posterior", showaxis=:y, xticks=false)
+	hline!([0.5], c=:gray, s=:dash)
+	for actor in 1:7
+	    ofs = (actor-1)*4
+	    actor > 1 && vline!([ofs+0.5], c=:gray)
+	    err = [rel_ci[actor,1], rel_ci[actor,3]]
+	    plot!([ofs+1,ofs+3], collect(p_μ[actor,[1,3]]), err=err, lw=2, m=:o, c=:blue)
+	    err = [rel_ci[actor,2], rel_ci[actor,4]]    
+	    plot!([ofs+2,ofs+4], collect(p_μ[actor,[2,4]]), err=err, lw=2, m=:o, c=:blue)
+	    anns = [
+	        (ofs+idx, p_μ[actor,idx]+.04, (name, 8))
+	        for (idx,name) ∈ enumerate(names)
+	    ]
+	    actor != 2 && annotate!(anns)
+	end
+	
+	annotate!([
+	    (2.5 + (idx-1)*4, 1.1, ("actor $idx", 8))
+	    for idx ∈ 1:7
+	])
+	p
+end
+
+# ╔═╡ 47a558cd-abbb-4dcb-8130-625d433d94fa
+md" #### Code 11.18"
+
+# ╔═╡ 82744b52-b300-4821-b095-19229835c5d4
+begin
+	chimpanzees.side = chimpanzees.prosoc_left .+ 1
+	chimpanzees.cond = chimpanzees.condition .+ 1;
 end;
 
-# ╔═╡ 5d3acee5-3515-44e7-80a5-a4927f854554
-PRECIS(df)
+# ╔═╡ 9a9ca097-db59-4e94-b2d5-47f4dbde48a3
+md" #### Code 11.19"
 
-# ╔═╡ b8339211-7cf8-4dd0-8009-05d410373922
-md"##### Fit a linear regression of distance on speed."
+# ╔═╡ ea03ef5e-6332-41e7-a07b-55109cb97697
+@model function m11_5(actor, side, cond, pulled_left)
+    act_levels = length(levels(actor))
+    a ~ MvNormal(zeros(act_levels), 1.5)
+    side_levels = length(levels(side))
+    bs ~ MvNormal(zeros(side_levels), 0.5)    
+    cond_levels = length(levels(cond))
+    bc ~ MvNormal(zeros(cond_levels), 0.5)
+    
+    p = @. logistic(a[actor] + bs[side] + bc[cond])
+    for i ∈ eachindex(pulled_left)
+        pulled_left[i] ~ Binomial(1, p[i])
+    end
+end
 
-# ╔═╡ 32f1748c-e8fc-4afc-8d03-d79afa01ad36
-m = lm(@formula(height ~ weight), df)
+# ╔═╡ 7750a022-ef28-4104-84ac-ba43c03efaf5
+begin
+	m11_5_chain = sample(m11_5(chimpanzees.actor, chimpanzees.side, chimpanzees.cond, chimpanzees.pulled_left), NUTS(), 1000)
+	m11_5_df = DataFrame(m11_5_chain)
+	PRECIS(m11_5_df)
+end
 
-# ╔═╡ c186e7ab-0c18-4a5c-a61f-a061389e21c2
-md"##### Estimated coefficients from the model."
+# ╔═╡ ca353ff4-fabb-4c72-8ba4-4294def7a751
+md" #### Code 11.20"
 
-# ╔═╡ 4655ab6c-0951-4a3b-bfc8-e991aaf0eff7
-coef(m)
+# ╔═╡ 3f4c5f34-216d-4b8e-84a1-2c6c8b83716d
+l_fun1 = (r, (ai, bi, pull_left)) -> begin
+    p = logistic(get(r, "a[$ai]", 0) + get(r, "b[$bi]", 0))
+    binomlogpdf(1, p, pull_left)
+end
 
-# ╔═╡ 88eaa866-b87e-419b-a910-309c07cbde3c
-md"##### Plot residuals against height."
+# ╔═╡ f7940bb6-00f5-4ea3-87a2-cdaf719f6147
+m11_4_ll_1 = link(m11_4_df, l_fun1, zip(chimpanzees.actor, chimpanzees.treatment, chimpanzees.pulled_left))
 
-# ╔═╡ 9641b455-c5dd-4cd1-9d9c-aebe91139f5f
-scatter( df.height, residuals(m), xlab="Height",
-  ylab="Model residual values", lab="Model residuals", leg=:bottomright)
+# ╔═╡ 9d3de9ec-3b74-41fc-86cd-4fca5ed0d3fe
+m11_4_ll_2 = hcat(m11_4_ll_1...);
 
-# ╔═╡ bc3de68d-e669-4233-96df-9ff82865ccfb
-md"### Code 0.5"
+# ╔═╡ a734af10-a0ff-49bf-87ab-a39c12ba68a2
+l_fun2 = (r, (ai, si, ci, pull_left)) -> begin
+    p = logistic(get(r, "a[$ai]", 0) + get(r, "bs[$si]", 0) + get(r, "bc[$ci]", 0))
+    binomlogpdf(1, p, pull_left)
+end
 
-# ╔═╡ 14c96b8b-dca7-4d6f-a76a-e9947bf5c3bd
-md" ##### See Code 0.0"
+# ╔═╡ 2b6cf6d6-5d97-46f5-8359-c069342afa82
+# Code 11.21 and 11.22 were omitted, as they are stan-specific
 
-# ╔═╡ c4403280-dc20-11ea-0550-5f2f606a9fea
-md"## End of Chapter_00.jl"
+# ╔═╡ 19a1560d-3524-484d-a4ca-e1f9678f3f4e
+md" #### Code 11.23"
+
+# ╔═╡ 1f67c25c-1ef2-4d07-aa04-e5e8e06b6092
+mean(@. exp(m11_4_df."b[4]" - m11_4_df."b[2]"))
+
+# ╔═╡ c70321cd-ef51-41bd-9744-aeec09bf2efb
+md" #### Code 11.24"
+
+# ╔═╡ 297964d6-d5ff-46a1-8b96-c6bba81f6be4
+let
+	gb = groupby(chimpanzees, [:treatment, :actor, :side, :cond])
+	global d_aggregated = combine(gb, :pulled_left => sum => :left_pulls)
+	first(d_aggregated, 8)
+end
+
+# ╔═╡ 5ce38815-7ef8-44fc-899e-e2158d6ca291
+md" #### Code 11.25"
+
+# ╔═╡ cbd9fc1e-6035-4513-b113-e36dd36c56b9
+@model function m11_6(actor, treatment, left_pulls)
+    act_levels = length(levels(actor))
+    a ~ MvNormal(zeros(act_levels), 1.5)
+    treat_levels = length(levels(treatment))
+    b ~ MvNormal(zeros(treat_levels), 0.5)
+    
+    p = @. logistic(a[actor] + b[treatment])
+    for i ∈ eachindex(left_pulls)
+        left_pulls[i] ~ Binomial(18, p[i])
+    end
+end
+
+# ╔═╡ a952f503-d7d7-4b31-8a5a-510770d15bea
+begin
+	m11_6_chain = sample(m11_6(d_aggregated.actor, d_aggregated.treatment, d_aggregated.left_pulls), NUTS(), 1000)
+	m11_6_df = DataFrame(m11_6_chain)
+end
+
+# ╔═╡ 65c3888c-490f-46dd-9a41-c9fa135c5f3c
+md" #### Code 11.26"
+
+# ╔═╡ 216bb14d-f167-4b18-87e2-ae635a413622
+l_fun = (r, (ai, bi, left_pulls)) -> begin
+    p = logistic(get(r, "a[$ai]", 0) + get(r, "b[$bi]", 0))
+    binomlogpdf(18, p, left_pulls)
+end
+
+# ╔═╡ 6e5e457f-e829-4bf4-95ee-cc71f5f05818
+begin
+	m11_5_ll_3 = link(m11_5_df, l_fun, zip(chimpanzees.actor, chimpanzees.side, chimpanzees.cond, chimpanzees.pulled_left))
+	m11_5_ll_4 = hcat(m11_5_ll_3...);
+	
+	compare([m11_5_ll_4, m11_4_ll_2], :psis, mnames=["m5", "m4"])
+end
+
+# ╔═╡ a021c167-1334-4aaf-89b6-1b363ea90978
+begin
+	m11_6_ll = link(m11_6_df, l_fun, zip(d_aggregated.actor, d_aggregated.treatment, d_aggregated.left_pulls))
+	m11_6_ll = hcat(m11_6_ll...)
+	
+	try
+	    compare([m11_6_ll, m11_4_ll], :psis, mnames=["m6", "m4"])
+	catch e
+	    println(e)
+	end
+end
+
+# ╔═╡ 087b4dea-68af-4022-a35b-b2e09e68ca59
+md" #### Code 11.27"
+
+# ╔═╡ ae7e3091-3917-4bc7-80d6-2770c72f374f
+(
+    -2*binomlogpdf(9, 0.2, 6),
+    -2*sum(binomlogpdf.(1, 0.2, [1,1,1,1,1,1,0,0,0]))
+)
+
+# ╔═╡ e2403387-7305-4c58-98f8-c9e60061a23f
+md" #### Code 11.28"
+
+# ╔═╡ 51f74f4e-3b24-49ef-8221-0c74de9a8fd4
+ucbadmit = CSV.read(sr_datadir("UCBadmit.csv"), DataFrame)
+
+# ╔═╡ d2ef4d6c-6c77-4b88-8443-dd3dea5f4fa4
+md" #### Code 11.29"
+
+# ╔═╡ bf0f80c3-9049-4d0f-82cb-c2561fcc2aae
+begin
+	dat = ucbadmit[!, [:admit, :applications]]
+	dat.gid = @. ifelse(ucbadmit.gender == "male", 1, 2)
+	dat
+end
+
+# ╔═╡ 0290f649-11df-4d3e-81af-626d196316f3
+
+
+# ╔═╡ 8b3dc9ea-fdac-4080-b284-4a8d3cf16f28
+@model function m11_7(admit, applications, gid)
+    a ~ MvNormal([0, 0], 1.5)
+    p = @. logistic(a[gid])
+    for i ∈ eachindex(applications)
+        admit[i] ~ Binomial(applications[i], p[i])
+    end
+end
+
+# ╔═╡ f60af3f5-1048-49fb-a3a7-3f0b2b2884f9
+begin
+	m11_7_chain = sample(m11_7(dat.admit, dat.applications, dat.gid), NUTS(), 1000)
+	m11_7_df = DataFrame(m11_7_chain)
+	PRECIS(m11_7_df)
+end
+
+# ╔═╡ 67f5cc12-e357-4104-a3c6-7d3e381c281c
+md" #### Code 11.30"
+
+# ╔═╡ 540dcd1c-a44a-4c8a-9048-3cb5c382c278
+let
+	diff_a = m11_7_df."a[1]" .- m11_7_df."a[2]"
+	diff_p = @. logistic(m11_7_df."a[1]") - logistic(m11_7_df."a[2]")
+	PRECIS(DataFrame(diff_a=diff_a, diff_p=diff_p))
+end
+
+# ╔═╡ 515ddb6a-5917-43c6-8312-96e57753b478
+md" #### Code 11.31"
+
+# ╔═╡ 151de157-f083-476b-8fb4-4f4814f0a062
+let
+	Random.seed!(1)
+	
+	fun = (r, (apps, gid)) -> begin
+	    p = logistic(get(r, "a[$gid]", 0))
+	    rand(Binomial(apps, p))
+	end
+	
+	admit_pred = link(m11_7_df, fun, zip(dat.applications, dat.gid))
+	admit_rate = @. admit_pred ./ dat.applications
+	
+	# plot
+	xrange = 1:12
+	p = plot(yrange=(0, 1), title="Posterior validation check", xlab="case", ylab="admit")
+	scatter!(xrange, mean.(admit_rate), yerr=std.(admit_rate))
+	pi_rate = PI.(admit_rate)
+	scatter!(xrange, first.(pi_rate), shape=:cross, c=:black)
+	scatter!(xrange, last.(pi_rate), shape=:cross, c=:black)
+	
+	dat_rates = dat.admit ./ dat.applications
+	
+	for idx in 1:2:12
+	    r = [dat_rates[idx], dat_rates[idx+1]]
+	    plot!([idx, idx+1], r, mark=:o, lw=2, c=:blue)
+	    annotate!([(idx+0.5, mean(r)+0.03, (ucbadmit.dept[idx], 8))])
+	end
+	p
+end
+
+# ╔═╡ 22c6ef5a-6a54-4be6-a3ff-3a13382d5bcf
+md" #### Code 11.32"
+
+# ╔═╡ ef44deb9-b1f0-40a0-82a7-b970ed7fdfc0
+dat.dept_id = reshape(hcat(1:6, 1:6)', 12)
+
+# ╔═╡ 3ad96e80-177a-4b74-8d2f-9e1efc60ed4c
+dat
+
+# ╔═╡ 7bb690a7-04dc-4f0e-aabb-13190ec2cc6a
+@model function model_m11_8(admit, applications, gid, dept_id)
+    a ~ MvNormal([0, 0], 1.5)
+    delta ~ MvNormal(zeros(6), 1.5)
+    p = @. logistic(a[gid] + delta[dept_id])
+    for i ∈ eachindex(applications)
+        admit[i] ~ Binomial(applications[i], p[i])
+    end
+end
+
+# ╔═╡ b9e52a64-ed27-49f0-b5d4-8f1d5af96457
+begin
+	m11_8n = sample(model_m11_8(dat.admit, dat.applications, dat.gid, dat.dept_id), NUTS(), 1000)
+	m11_8_df = DataFrame(m11_8n)
+	PRECIS(m11_8_df)
+end
+
+# ╔═╡ ab439d9e-d427-4262-bacc-4e88759a04f4
+md" #### Code 11.33"
+
+# ╔═╡ 0e79c84d-c016-4ecd-bea1-b4a80f84e007
+let
+	diff_a = m11_8_df."a[1]" .- m11_8_df."a[2]"
+	diff_p = logistic.(m11_8_df."a[1]") .- logistic.(m11_8_df."a[2]")
+	PRECIS(DataFrame(diff_a=diff_a, diff_p=diff_p))
+end
+
+# ╔═╡ cd0a1208-2721-4629-9784-1b1e137cd966
+md" #### Code 11.34"
+
+# ╔═╡ f768fbac-9982-44b8-9518-883760201de7
+let
+	gb1 = groupby(ucbadmit, :dept)
+	fun = (as,gs) -> [(gender=g, a_ratio=a/sum(as)) for (a,g) in zip(as,gs)]
+	c = combine(gb1, [:applications, :gender] => fun => AsTable)
+	unstack(c, :gender, :dept, :a_ratio)
+end
+
+# ╔═╡ bb371f48-2aaf-4205-a3ae-832da7254c16
+md" #### Code 11.32"
+
+# ╔═╡ 989be969-0dd0-4ef9-9203-df59af4b7825
+dat.dept_id = reshape(hcat(1:6, 1:6)', 12)
+
+# ╔═╡ 46c1aa71-6177-4d9c-9fab-996cfe4187b9
+@model function m11_8(admit, applications, gid, dept_id)
+    a ~ MvNormal([0, 0], 1.5)
+    delta ~ MvNormal(zeros(6), 1.5)
+    p = @. logistic(a[gid] + delta[dept_id])
+    for i ∈ eachindex(applications)
+        admit[i] ~ Binomial(applications[i], p[i])
+    end
+end
+
+# ╔═╡ 239721f2-2dcf-478c-9266-ff186389185f
+let
+	m11_8_chain = sample(m11_8(dat.admit, dat.applications, dat.gid, dat.dept_id), NUTS(), 1000)
+	m11_8_df = DataFrame(m11_8_chain)
+	PRECIS(m11_8_df)
+end
+
+# ╔═╡ c0e44ae1-e1c9-481e-a748-e94d4fa4932b
+md" #### Code 11.33"
+
+# ╔═╡ 3bc11427-36c1-4a75-b8dd-36a61a7e8350
+begin
+	diff_a = m11_8_df."a[1]" .- m11_8_df."a[2]"
+	diff_p = logistic.(m11_8_df."a[1]") .- logistic.(m11_8_df."a[2]")
+	PRECIS(DataFrame(diff_a=diff_a, diff_p=diff_p))
+end
+
+# ╔═╡ 9b4c1ba4-74c3-4ed0-a558-f326940335ff
+# Code 11.34
+
+gb = groupby(ucbadmit, :dept)
+
+# ╔═╡ 7785e952-0275-44fd-a91a-fe08ee29368c
+fun = (as,gs) -> [(gender=g, a_ratio=a/sum(as)) for (a,g) in zip(as,gs)]
+
+# ╔═╡ baa3ad4e-539a-4f2a-9daa-c0183472ca66
+c = combine(gb, [:applications, :gender] => fun => AsTable)
+
+# ╔═╡ cd0358bb-f42e-4cd5-9dee-d0104cf3e07b
+unstack(c, :gender, :dept, :a_ratio)
+
+# ╔═╡ 0cafb1cb-956f-4ba2-afb6-3546c8f2d990
+md" ## 11.2 Poisson regression."
+
+# ╔═╡ 511ee325-6aab-4cb3-8e55-33f838007758
+md" #### Code 11.35"
+
+# ╔═╡ 766883c2-ff90-4ca3-bab4-278942bdf308
+let
+	Random.seed!(1)
+	y_bin = rand(Binomial(1000, 1/1000), 10^5)
+	mean(y_bin), var(y_bin)
+end
+
+# ╔═╡ 94195529-1d37-42cd-a5ee-9cf777b1f1bb
+md" #### Code 11.36"
+
+# ╔═╡ 8b4d82a3-8a9c-462f-a3cb-e5a71f94ec58
+begin
+	kline = CSV.read(sr_datadir("Kline.csv"), DataFrame)
+	kline.P = standardize(ZScoreTransform, log.(kline.population))
+	kline.contact_id = ifelse.(kline.contact .== "high", 2, 1)
+end
+
+# ╔═╡ b5d03baa-7e2c-403b-8d65-983dad4723f3
+md" #### Code 11.38"
+
+# ╔═╡ a49dc7d3-4743-4464-aabc-7a7fceb74bf6
+let
+	p = plot(xlims=(-1, 100), ylims=(0, 0.08), 
+        xlab="mean number of tools", ylab="Density")
+	r = 0:0.5:100
+	plot!(r, LogNormal(0, 10), label=L"a \sim \ln \mathcal{N}(0, 10)")
+	plot!(r, LogNormal(3, 0.5), label=L"a \sim \ln \mathcal{N}(3, 0.5)")
+end
+
+# ╔═╡ db5ad34c-65c4-432d-a6e2-c420d43d7faa
+md" #### Code 11.39"
+
+# ╔═╡ 8e16a5cb-1cd3-4ad5-8297-af28e503aac8
+let
+	a = rand(Normal(0, 10), 10^4)
+	λ = exp.(a)
+	mean(λ)
+end
+
+# ╔═╡ 6d083875-75e2-47b9-b58f-6cb6b5d95172
+md" #### Code 11.40 - joined with 11.38"
+
+# ╔═╡ 53acdf8b-a783-4272-bd5e-147a5b0e1ae8
+md" #### Code 11.41"
+
+# ╔═╡ 957254e4-c9c0-4954-b6c4-24e6146151ff
+let
+	Random.seed!(1)
+	N = 100
+	a = rand(Normal(3, 0.5), N)
+	b = rand(Normal(0, 10), N)
+	p = plot(xlims=(-2, 2), ylims=(0, 100))
+	r = -2:0.05:2
+	for (aᵢ, bᵢ) ∈ zip(a, b)
+    	plot!(r, x -> exp(aᵢ + bᵢ * x), c=:gray)
+	end
+	p
+end
+
+# ╔═╡ 6c57ae79-8980-426a-bc27-d18b92e094e2
+md" #### Code 11.42"
+
+# ╔═╡ 6e4d7d10-1dae-40f6-9c1b-8ee0924c2f16
+let
+	Random.seed!(1)
+	N = 100
+	a = rand(Normal(3, 0.5), N)
+	b = rand(Normal(0, .2), N)
+	p = plot(xlims=(-2, 2), ylims=(0, 100))
+	r = -2:0.05:2
+	for (aᵢ, bᵢ) ∈ zip(a, b)
+    	plot!(r, x -> exp(aᵢ + bᵢ * x), c=:gray)
+	end
+	p
+end
+
+# ╔═╡ 8d45b2c3-8305-477d-9f88-9c4152d726df
+md" #### Code 11.43"
+
+# ╔═╡ 99cee684-134c-4def-bb8c-c7cb03cd06ab
+let
+	N = 100
+	x_seq = range(log(100), log(200_000), length=100)
+	a = rand(Normal(3, 0.5), N)
+	b = rand(Normal(0, .2), N)
+	λ = map(x -> (@. exp(a + b * x)), x_seq)
+	λ = hcat(λ...)
+	p = plot(xlims=extrema(x_seq), ylims=(0, 500), xlab="log population", ylab="total tools")
+	for λᵢ ∈ eachrow(λ)
+    	plot!(x_seq, λᵢ, c=:gray)
+	end
+	p
+end
+
+# ╔═╡ 13c4376e-616f-44dc-8185-87a4f2def727
+md" #### Code 11.44"
+
+# ╔═╡ a5b54f8c-e670-4402-b218-8164170db469
+let
+	N = 100
+	x_seq = range(log(100), log(200_000), length=100)
+	a = rand(Normal(3, 0.5), N)
+	b = rand(Normal(0, .2), N)
+	λ = map(x -> (@. exp(a + b * x)), x_seq)
+	x_seq = range(log(100), log(200_000), length=100)
+	p = plot(xlims=extrema(exp.(x_seq)), ylims=(0, 500), 
+	    xlab="population", ylab="total tools")
+	for λᵢ ∈ eachrow(λ)
+    	plot!(exp.(x_seq), λᵢ, c=:gray)
+	end
+	p
+end
+
+# ╔═╡ d0af8d51-7fc8-41cd-9a51-20775f11e1e1
+md" #### Code 11.45"
+
+# ╔═╡ 7d462c37-f172-4624-8012-02a44bb19a4e
+# intercept only
+@model function m11_9(T)
+    a ~ Normal(3, 0.5)
+    λ = exp(a)
+    T ~ Poisson(λ)
+end
+
+# ╔═╡ 9e910804-5539-424f-a769-d22302020888
+begin
+	m11_9_ch = sample(m11_9(kline.total_tools), NUTS(), 1000)
+	m11_9_df = DataFrame(m11_9_ch)
+end
+
+# ╔═╡ f603a8ff-ba98-4bc0-80c6-a89243f83a3d
+# interaction model
+@model function m11_10(T, cid, P)
+    a ~ MvNormal([3, 3], 0.5)
+    b ~ MvNormal([0, 0], 0.2)
+    λ = @. exp(a[cid] + b[cid]*P)
+    for i ∈ eachindex(T)
+        T[i] ~ Poisson(λ[i])
+    end
+end
+
+# ╔═╡ 36a6c6f8-3189-4cbe-a1de-dc93d02ccd51
+m11_10_ch = sample(m11_10(kline.total_tools, kline.contact_id, kline.P), NUTS(), 1000)
+
+# ╔═╡ 0646f466-3247-495a-8a7c-742256f64b11
+m11_10_df = DataFrame(m11_10_ch);
+
+# ╔═╡ 199010f9-bce8-4318-9912-3ed575ef21fe
+md" #### Code 11.46"
+
+# ╔═╡ 448b3506-728b-4631-b6cd-62df0cd39f45
+let
+	f = (r, T) -> poislogpdf(exp(r.a), T)
+	ll_m9 = link(m11_9_df, f, kline.total_tools)
+	ll_m9 = hcat(ll_m9...)
+	f = (r, (T, cid, P)) -> poislogpdf(exp(get(r, "a[$cid]", 0) + get(r, "b[$cid]", 0)*P), T)
+	ll_m10 = link(m11_10_df, f, zip(kline.total_tools, kline.contact_id, kline.P))
+	global ll_m10 = hcat(ll_m10...)
+	compare([ll_m9, ll_m10], :psis, mnames=["m9", "m10"])
+end
+
+# ╔═╡ 88c22cbd-5f7b-4e50-9a0e-0ab22b857559
+md" #### Code 11.47"
+
+# ╔═╡ 2b7adad6-be9f-45f8-9385-e5d31ed69067
+let
+	# get psis K values
+	t = ll_m10'
+	m10_t = collect(reshape(t, size(t)..., 1))
+	PSIS_m10 = psis_loo(m10_t)
+	k = PSIS_m10.pointwise(:pareto_k)
+	mark_size = standardize(ZScoreTransform, k).+5
+	mark_color = ifelse.(kline.contact_id .== 1, :white, :blue)
+	scatter(kline.P, kline.total_tools, xlab="log population (std)", ylab="total tools", ylim=(0, 75), 
+    	ms=mark_size, mc=mark_color, msw=2)
+	ns = 100
+	P_seq = range(-1.4, 3, length=ns)
+	# cid=1 predictions
+	f = (r,p) -> exp(r."a[1]" + r."b[1]"*p)
+	λ = link(m11_10_df, f, P_seq)
+	λ = hcat(λ...)
+	λ1_mean = mean.(eachcol(λ))
+	λ1_ci = PI.(eachcol(λ))
+	λ1_ci = vcat(λ1_ci'...)
+	plot!(P_seq, [λ1_mean λ1_mean], fillrange=λ1_ci, fillalpha=0.2, ls=:dash, c=:black, lw=1.5)
+	f = (r,p) -> exp(r."a[2]" + r."b[2]"*p)
+	# cid=2 predictions
+	λ = link(m11_10_df, f, P_seq)
+	λ = hcat(λ...)
+	λ2_mean = mean.(eachcol(λ))
+	λ2_ci = PI.(eachcol(λ))
+	λ2_ci = vcat(λ2_ci'...)
+	plot!(P_seq, [λ2_mean λ2_mean], fillrange=λ2_ci, fillalpha=0.2, c=:black, lw=1.5)
+	# Code 11.48
+	scatter(kline.population, kline.total_tools, xlab="population", ylab="total tools", ylim=(0, 75), 
+    	ms=mark_size, mc=mark_color, msw=2)
+	P_seq = range(-5, 3, length=ns)
+	# 1.53 is sd of log(population)
+	# 9 is mean of log(population)
+	pop_seq = @. exp(P_seq * 1.53 + 9)
+	plot!(pop_seq, [λ1_mean λ1_mean], fillrange=λ1_ci, fillalpha=0.2, ls=:dash, c=:black, lw=1.5)
+	plot!(pop_seq, [λ2_mean λ2_mean], fillrange=λ2_ci, fillalpha=0.2, c=:black, lw=1.5)
+end
+
+# ╔═╡ fddece02-6e0e-466c-97aa-bb96fa1fe013
+md" #### Code 11.49"
+
+# ╔═╡ aff8e056-ba12-4e13-b6bf-63da9181b8b7
+@model function m11_11(T, P, cid)
+    a ~ MvNormal([1,1], 1)
+    b₁ ~ Exponential(1)
+    b₂ ~ Exponential(1)
+    b = [b₁, b₂]
+    g ~ Exponential(1)
+    λ = @. exp(a[cid]) * P ^ b[cid] / g
+    for i ∈ eachindex(T)
+        T[i] ~ Poisson(λ[i])
+    end
+end
+
+# ╔═╡ 421f0b89-bf68-4546-8184-445b2e2de9fe
+m11_11_ch = sample(m11_11(kline.total_tools, kline.population, kline.contact_id), NUTS(), 1000)
+
+# ╔═╡ 88648d82-1c06-4b8c-bc91-58518b707905
+m11_11_df = DataFrame(m11_11_ch)
+
+# ╔═╡ 3ab8e039-da2e-4cca-9a1c-94d929a7aa78
+PRECIS(m11_11_df)
+
+# ╔═╡ ba34af6e-85ee-4ff1-95c1-f627405262a2
+md" #### Code 11.50"
+
+# ╔═╡ 4f6e6857-f4c7-4c28-94e5-d79390127cad
+begin
+	Random.seed!(1)
+	num_days = 30
+	y = rand(Poisson(1.5), num_days)
+end
+
+# ╔═╡ 6cb0c0a9-de92-44f8-8b76-931b8d7a8058
+md" #### Code 11.51"
+
+# ╔═╡ c87d89c9-f559-4210-a300-cd42ffdc0779
+begin
+	Random.seed!(2)
+	num_weeks = 4
+	y_new = rand(Poisson(0.5*7), num_weeks)
+	y_all = [y; y_new]
+end
+
+# ╔═╡ 85909da0-d2b9-437e-ae47-44940fcd74df
+md" #### Code 11.52"
+
+# ╔═╡ ac56b077-a1c9-4e6d-9c78-64a613df5bb0
+begin
+	exposure = [repeat([1], 30); repeat([7], 4)]
+	monastery = [repeat([0], 30); repeat([1], 4)]
+	expmon = DataFrame(y=y_all, days=exposure, monastery=monastery)
+end
+
+# ╔═╡ 8d0e632f-03ea-439c-9f6e-d57f489fc92c
+@model function m11_12(y, log_days, monastery)
+    a ~ Normal()
+    b ~ Normal()
+    λ = @. exp(log_days + a + b*monastery)
+    @. y ~ Poisson(λ)
+end
+
+# ╔═╡ 0c1ed9fa-80b0-449a-83be-f9e208f5e536
+md" #### Code 11.53"
+
+# ╔═╡ 545a7bd1-e56c-45e9-bdd6-efd3e14632fc
+begin
+	Random.seed!(1)
+	expmon.log_days = log.(expmon.days)
+	m11_12_chain = sample(m11_12(expmon.y, expmon.log_days, expmon.monastery), NUTS(), 1000)
+	m11_12_df = DataFrame(m11_12_chain)
+	PRECIS(m11_12_df)
+end
+
+# ╔═╡ d83b7902-85fd-4424-8ffe-98f9da71d0ae
+md" #### Code 11.54"
+
+# ╔═╡ d4fa0864-c56d-4665-89a6-e9197e037c56
+md"
+
+!!! note
+Values are slightly different from the book. This is due to non-Normal distributions (you can check this yourself with `optimize`)"
+
+# ╔═╡ 65ed2cfe-4404-4756-a9d5-3d55cae1eefd
+let
+	λ_old = exp.(m11_12_df.a)
+	λ_new = @. exp(m11_12_df.a + m11_12_df.b)
+	PRECIS(DataFrame(λ_old=λ_old, λ_new=λ_new))
+end
+
+# ╔═╡ 9d721d0d-abe9-4f42-bc98-6245aeb2b2d0
+md" ## 11.3 Multinomial and categorical models"
+
+# ╔═╡ 028d2911-1c4a-4de1-ae4d-83e8fb153f12
+md" #### Code 11.55"
+
+# ╔═╡ a9c9cc35-05f6-49c8-a3df-2f303cf7885c
+md" #### Code 11.56"
+
+# ╔═╡ bc2d4336-7a19-4179-b791-e0cdb63cee0a
+@model function m11_13(career, income)
+    a ~ MvNormal([0, 0], 1)
+    b ~ TruncatedNormal(0, 0.5, 0, Inf)
+    p = softmax([a[1] + b*income[1], a[2] + b*income[2], 0])
+    career ~ Categorical(p)
+end
+
+# ╔═╡ ac7531ca-02b5-44e9-a418-f8c399e668e8
+md" #### Code 11.57"
+
+# ╔═╡ 7690e5a3-0473-48fa-963c-7b55d00a4105
+let
+	# simulate career choice among 500 individuals
+	N = 500
+	global income = [1,2,5]
+	c_score = 0.5*income
+	p = softmax(c_score)
+	w = Weights(p)
+	
+	# simulate choice
+	Random.seed!(34302)
+	career = [sample(w) for _ in 1:N]
+	Random.seed!(121)
+	m11_13_chain = sample(m11_13(career, income), NUTS(), 5000, n_chains=4)
+	global m11_13_df = DataFrame(m11_13_chain)
+	PRECIS(m11_13_df)
+end
+
+# ╔═╡ 37e13f5d-0d82-4c2d-a1c2-479843eb7886
+md" #### Code 11.58"
+
+# ╔═╡ 3e8dd9ee-867e-43e5-b74c-d4f586bfd41b
+let
+	# logit scores
+	s1 = m11_13_df."a[1]" + m11_13_df.b * income[1]
+	s2_orig = m11_13_df."a[2]" + m11_13_df.b * income[2]
+	s2_new = m11_13_df."a[2]" + m11_13_df.b * income[2] * 2
+	# compute probabilities for original and counterfactual
+	p_orig = softmax.(eachrow(hcat(s1, s2_orig, zeros(length(s1)))))
+	p_orig = hcat(p_orig...)'
+	p_new = softmax.(eachrow(hcat(s1, s2_new, zeros(length(s1)))))
+	p_new = hcat(p_new...)'
+	p_diff = p_new[:, 2] - p_orig[:, 2]
+	PRECIS(DataFrame(p_diff=p_diff))
+end
+
+# ╔═╡ ed01aaf1-1c1e-4441-9999-1a04916df98e
+@model function m11_14(career, family_income)
+    a ~ MvNormal([0, 0], 1.5)
+    b ~ MvNormal([0, 0], 1)
+    
+    for i ∈ eachindex(career)
+        income = family_income[i]
+        s = [a[1] + b[1] * income, a[2] + b[2] * income, 0]
+        p = softmax(s)
+        career[i] ~ Categorical(p)
+    end
+end
+
+# ╔═╡ 13d724a6-6902-4ec1-86e8-3c6a86e3957d
+md" #### Code 11.59"
+
+# ╔═╡ aff70993-542e-4be7-99cb-160059a84e06
+let
+	Random.seed!(1)
+	N = 500
+	family_income = rand(Uniform(), N)
+	b = [-2, 0, 2]
+	career = [
+    begin
+        score = (0.5 * 1:3) + b * inc
+        p = softmax(score)
+        sample(Weights(p))
+    end
+    for inc in family_income
+	]
+	m11_14_chain = sample(m11_14(career, family_income), NUTS(), 1000)
+	m11_14_df = DataFrame(m11_14_chain)
+	PRECIS(m11_14_df)
+end
+
+# ╔═╡ dae83135-14da-4b46-b974-782d4ec4e4d9
+md" #### Code 11.61"
+
+# ╔═╡ 4f2e5271-e301-4f44-8474-ec9b5c97150c
+@model function m_binom(admit, applications)
+    a ~ Normal(0, 1.5)
+    p = logistic(a)
+    @. admit ~ Binomial(applications, p)
+end
+
+# ╔═╡ 2f08dbb9-f31a-4fc2-ab11-fdfb88e5ddb9
+m_binom_chain = sample(m_binom(ucbadmit.admit, ucbadmit.applications), NUTS(), 1000)
+
+# ╔═╡ cc4700af-9c54-4060-a9ce-8c426e25eeb1
+m_binom_df = DataFrame(m_binom_chain);
+
+# ╔═╡ cf9ade41-251c-4320-a606-4e877b996632
+@model function m_pois(admit, reject)
+    a ~ MvNormal([0, 0], 1.5)
+    λ = exp.(a)
+    admit ~ Poisson(λ[1])
+    reject ~ Poisson(λ[2])
+end
+
+# ╔═╡ d6f7eff0-9142-4635-81f3-11ec8c2a500b
+m_pois_chain = sample(m_pois(ucbadmit.admit, ucbadmit.reject), NUTS(), 1000)
+
+# ╔═╡ 06cf33fc-f0f8-4cc7-b811-d035fbf40b20
+m_pois_df = DataFrame(m_pois_chain);
+
+# ╔═╡ d6fa7523-c369-454d-bce9-a12132fe01f1
+md" #### Code 11.62"
+
+# ╔═╡ e2fbc671-9ea3-4ba3-b847-b71ed7a67933
+m_binom_df.a .|> logistic |> mean
+
+# ╔═╡ 17745763-875a-45f3-9b1a-8c4c80d5060c
+md" #### Code 11.63"
+
+# ╔═╡ eca35612-759b-43ef-a94b-69dc4856317f
+a1 = m_pois_df."a[1]" |> mean
+
+# ╔═╡ 040be4fa-9158-45da-a9cd-ac419d59bb56
+a2 = m_pois_df."a[2]" |> mean
+
+# ╔═╡ 4b34baa2-9528-4311-a54d-33f080f64103
+exp(a1)/(exp(a1)+exp(a2))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -125,23 +1047,28 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+FreqTables = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+ParetoSmooth = "a68b5a21-f429-434e-8bfa-46b447300aac"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 StatisticalRethinkingPlots = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
-CSV = "~0.10.2"
-DataFrames = "~1.3.2"
+CSV = "~0.10.4"
+DataFrames = "~1.3.4"
 DrWatson = "~2.9.1"
-GLM = "~1.6.1"
-PlutoUI = "~0.7.35"
-StatisticalRethinking = "~4.5.0"
+FreqTables = "~0.4.5"
+ParetoSmooth = "~0.7.1"
+StatisticalRethinking = "~4.5.1"
 StatisticalRethinkingPlots = "~1.0.1"
-
-[extras]
-CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+StatsBase = "~0.33.16"
+StatsPlots = "~0.14.34"
+Turing = "~0.21.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -150,7 +1077,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.0-DEV"
 manifest_format = "2.0"
-project_hash = "616bae927feb0cb3b224921b38085f004a52d43f"
+project_hash = "20e8d288f7eaaff59942fc3d76b4484062275187"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -169,11 +1096,11 @@ git-tree-sha1 = "47aca4cf0dc430f20f68f6992dc4af0e4dc8ebee"
 uuid = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 version = "4.0.0"
 
-[[deps.AbstractPlutoDingetjes]]
-deps = ["Pkg"]
-git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
-uuid = "6e696c72-6542-2067-7265-42206c756150"
-version = "1.1.4"
+[[deps.AbstractPPL]]
+deps = ["AbstractMCMC", "DensityInterface", "Setfield", "SparseArrays"]
+git-tree-sha1 = "6320752437e9fbf49639a410017d862ad64415a5"
+uuid = "7a57a42e-76ec-4ea3-a279-07e840d6d9cf"
+version = "0.5.2"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "03e0550477d86222521d254b741d470ba17ea0b5"
@@ -185,6 +1112,30 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "af92965fb30777147966f58acb05da51c5616b5f"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "3.3.3"
+
+[[deps.AdvancedHMC]]
+deps = ["AbstractMCMC", "ArgCheck", "DocStringExtensions", "InplaceOps", "LinearAlgebra", "ProgressMeter", "Random", "Requires", "Setfield", "Statistics", "StatsBase", "StatsFuns", "UnPack"]
+git-tree-sha1 = "345effa84030f273ee86fcdd706d8484ce9a1a3c"
+uuid = "0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
+version = "0.3.5"
+
+[[deps.AdvancedMH]]
+deps = ["AbstractMCMC", "Distributions", "Random", "Requires"]
+git-tree-sha1 = "5d9e09a242d4cf222080398468244389c3428ed1"
+uuid = "5b7e9947-ddc0-4b3f-9b55-0d8042f74170"
+version = "0.6.7"
+
+[[deps.AdvancedPS]]
+deps = ["AbstractMCMC", "Distributions", "Libtask", "Random", "StatsFuns"]
+git-tree-sha1 = "78620daebe1b87dfe17cac4bc08cec73b057eb0a"
+uuid = "576499cb-2369-40b2-a588-c64705576edc"
+version = "0.3.7"
+
+[[deps.AdvancedVI]]
+deps = ["Bijectors", "Distributions", "DistributionsAD", "DocStringExtensions", "ForwardDiff", "LinearAlgebra", "ProgressMeter", "Random", "Requires", "StatsBase", "StatsFuns", "Tracker"]
+git-tree-sha1 = "2f0ddff49ae4c812ba7b348b8427636f8bbd6c05"
+uuid = "b5ca4192-6429-45e5-a2d9-87aec30a685c"
+version = "0.1.4"
 
 [[deps.ArgCheck]]
 git-tree-sha1 = "a3a402a35a2f7e0b87828ccabbd5ebfbebe356b4"
@@ -248,6 +1199,12 @@ git-tree-sha1 = "aebf55e6d7795e02ca500a689d326ac979aaf89e"
 uuid = "9718e550-a3fa-408a-8086-8db961cd8217"
 version = "0.1.1"
 
+[[deps.Bijectors]]
+deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "IrrationalConstants", "LinearAlgebra", "LogExpFunctions", "MappedArrays", "Random", "Reexport", "Requires", "Roots", "SparseArrays", "Statistics"]
+git-tree-sha1 = "369af32fcb9be65d496dc43ad0bb713705d4e859"
+uuid = "76274a88-744f-5084-9051-94815aaf08c4"
+version = "0.9.11"
+
 [[deps.BitTwiddlingConvenienceFunctions]]
 deps = ["Static"]
 git-tree-sha1 = "28bbdbf0354959db89358d1d79d421ff31ef0b5e"
@@ -277,6 +1234,18 @@ deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
+
+[[deps.CategoricalArrays]]
+deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
+git-tree-sha1 = "109664d3a6f2202b1225478335ea8fea3cd8706b"
+uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+version = "0.10.5"
+
+[[deps.ChainRules]]
+deps = ["ChainRulesCore", "Compat", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "Statistics"]
+git-tree-sha1 = "f4327ae7d92264a97665637002de789040106d87"
+uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+version = "1.29.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -330,6 +1299,11 @@ version = "0.12.8"
 git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
 uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 version = "1.0.2"
+
+[[deps.CommonSolve]]
+git-tree-sha1 = "68a0743f578349ada8bc911a5cbd5a2ef6ed6d1f"
+uuid = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
+version = "0.2.0"
 
 [[deps.CommonSubexpressions]]
 deps = ["MacroTools", "Test"]
@@ -469,6 +1443,12 @@ git-tree-sha1 = "8a6b49396a4058771c5c072239b2e0a76e2e898c"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
 version = "0.25.58"
 
+[[deps.DistributionsAD]]
+deps = ["Adapt", "ChainRules", "ChainRulesCore", "Compat", "DiffRules", "Distributions", "FillArrays", "LinearAlgebra", "NaNMath", "PDMats", "Random", "Requires", "SpecialFunctions", "StaticArrays", "StatsBase", "StatsFuns", "ZygoteRules"]
+git-tree-sha1 = "b51ed93e06497fc4e7ff78bbca03c4f7951d2ec2"
+uuid = "ced4e74d-a319-5a8a-b0ac-84af2272839c"
+version = "0.6.38"
+
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
 git-tree-sha1 = "b19534d1895d702889b219c382a6e18010797f0b"
@@ -492,6 +1472,12 @@ git-tree-sha1 = "67e9001646db6e45006643bf37716ecd831d37d2"
 uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 version = "2.9.1"
 
+[[deps.DynamicPPL]]
+deps = ["AbstractMCMC", "AbstractPPL", "BangBang", "Bijectors", "ChainRulesCore", "Distributions", "LinearAlgebra", "MacroTools", "Random", "Setfield", "Test", "ZygoteRules"]
+git-tree-sha1 = "5d1704965e4bf0c910693b09ece8163d75e28806"
+uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
+version = "0.19.1"
+
 [[deps.EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "3f3a2501fa7236e9b911e0f7a588c657e822bb6d"
@@ -503,6 +1489,12 @@ deps = ["ArrayInterface"]
 git-tree-sha1 = "d064b0340db45d48893e7604ec95e7a2dc9da904"
 uuid = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
 version = "1.5.0"
+
+[[deps.EllipticalSliceSampling]]
+deps = ["AbstractMCMC", "ArrayInterface", "Distributions", "Random", "Statistics"]
+git-tree-sha1 = "bed775e32c6f38a19c1dbe0298480798e6be455f"
+uuid = "cad2338a-1db2-11e9-3401-43bc07c9ede2"
+version = "0.5.0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -591,11 +1583,22 @@ git-tree-sha1 = "87eb71354d8ec1a96d4a7636bd57a7347dde3ef9"
 uuid = "d7e528f0-a631-5988-bf34-fe36492bcfd7"
 version = "2.10.4+0"
 
+[[deps.FreqTables]]
+deps = ["CategoricalArrays", "Missings", "NamedArrays", "Tables"]
+git-tree-sha1 = "488ad2dab30fd2727ee65451f790c81ed454666d"
+uuid = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
+version = "0.4.5"
+
 [[deps.FriBidi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "aa31987c2ba8704e23c6c8ba8a4f769d5d7e4f91"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.10+0"
+
+[[deps.Functors]]
+git-tree-sha1 = "223fffa49ca0ff9ce4f875be001ffe173b2b7de4"
+uuid = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
+version = "0.2.8"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -606,12 +1609,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcu
 git-tree-sha1 = "51d2dfe8e590fbd74e7a842cf6d13d8a2f45dc01"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.3.6+0"
-
-[[deps.GLM]]
-deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "StatsModels"]
-git-tree-sha1 = "609115155b0dc532fa5130de65ed086efd27bfbd"
-uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-version = "1.6.2"
 
 [[deps.GR]]
 deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "RelocatableFolders", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -684,22 +1681,17 @@ git-tree-sha1 = "303d70c961317c4c20fafaf5dbe0e6d610c38542"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
 version = "2.7.1+0"
 
-[[deps.Hyperscript]]
-deps = ["Test"]
-git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
-uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
-version = "0.0.4"
-
-[[deps.HypertextLiteral]]
-git-tree-sha1 = "2b078b5a615c6c0396c77810d92ee8c6f470d238"
-uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-version = "0.9.3"
-
 [[deps.IOCapture]]
 deps = ["Logging", "Random"]
 git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.2"
+
+[[deps.IRTools]]
+deps = ["InteractiveUtils", "MacroTools", "Test"]
+git-tree-sha1 = "af14a478780ca78d5eb9908b263023096c2b9d64"
+uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
+version = "0.4.6"
 
 [[deps.IfElse]]
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
@@ -721,6 +1713,12 @@ deps = ["Parsers"]
 git-tree-sha1 = "61feba885fac3a407465726d0c330b3055df897f"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
 version = "1.1.2"
+
+[[deps.InplaceOps]]
+deps = ["LinearAlgebra", "Test"]
+git-tree-sha1 = "50b41d59e7164ab6fda65e71049fee9d890731ff"
+uuid = "505f98c9-085e-5b2c-8e89-488be7bf1f34"
+version = "0.3.0"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -811,6 +1809,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
 version = "3.0.0+1"
+
+[[deps.LRUCache]]
+git-tree-sha1 = "d64a0aff6691612ab9fb0117b0995270871c5dfc"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.3.0"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -909,6 +1912,12 @@ git-tree-sha1 = "9c30530bf0effd46e15e0fdcf2b8636e78cbbd73"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
 version = "2.35.0+0"
 
+[[deps.Libtask]]
+deps = ["IRTools", "LRUCache", "LinearAlgebra", "MacroTools", "Statistics"]
+git-tree-sha1 = "ed1b54f6df6fb7af8b315cfdc288ab5572dbd3ba"
+uuid = "6f1fad26-d15e-5dc8-ae53-837a1d7b8c9f"
+version = "0.7.0"
+
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
 git-tree-sha1 = "c9551dd26e31ab17b86cbd00c2ede019c08758eb"
@@ -981,6 +1990,11 @@ git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
 uuid = "d125e4d3-2237-4719-b19c-fa641b8a4667"
 version = "0.1.8"
 
+[[deps.MappedArrays]]
+git-tree-sha1 = "e8b359ef06ec72e8c030463fe02efe5527ee5142"
+uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
+version = "0.4.1"
+
 [[deps.Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
@@ -1037,6 +2051,12 @@ deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
 git-tree-sha1 = "50310f934e55e5ca3912fb941dec199b49ca9b68"
 uuid = "d41bc354-129a-5804-8e4c-c37616107c6c"
 version = "7.8.2"
+
+[[deps.NNlib]]
+deps = ["Adapt", "ChainRulesCore", "Compat", "LinearAlgebra", "Pkg", "Requires", "Statistics"]
+git-tree-sha1 = "f89de462a7bc3243f95834e75751d70b3a33e59d"
+uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
+version = "0.8.5"
 
 [[deps.NaNMath]]
 git-tree-sha1 = "b086b7ea07f8e38cf122f5016af580881ac914fe"
@@ -1196,12 +2216,6 @@ git-tree-sha1 = "d457f881ea56bbfa18222642de51e0abf67b9027"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.29.0"
 
-[[deps.PlutoUI]]
-deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "670e559e5c8e191ded66fa9ea89c97f10376bb4c"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.38"
-
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
 git-tree-sha1 = "a6062fe4063cdafe78f4a0a81cfffb89721b30e7"
@@ -1273,6 +2287,12 @@ git-tree-sha1 = "dc84268fe0e3335a62e315a3a7cf2afa7178a734"
 uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
 version = "0.4.3"
 
+[[deps.RealDot]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "9f0a1b71baaf7650f4fa8a1d168c7fb6ee41f0c9"
+uuid = "c1ae055f-0cd5-4b69-90a6-9a35b1a98df9"
+version = "0.1.0"
+
 [[deps.RecipesBase]]
 git-tree-sha1 = "6bf3f380ff52ce0832ddd3a2a7b9538ed1bcca7d"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
@@ -1283,6 +2303,12 @@ deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
 git-tree-sha1 = "dc1e451e15d90347a7decc4221842a022b011714"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
 version = "0.5.2"
+
+[[deps.RecursiveArrayTools]]
+deps = ["Adapt", "ArrayInterface", "ChainRulesCore", "DocStringExtensions", "FillArrays", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
+git-tree-sha1 = "bfe14f127f3e7def02a6c2b1940b39d0dabaa3ef"
+uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
+version = "2.26.3"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -1313,6 +2339,12 @@ git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
 
+[[deps.Roots]]
+deps = ["CommonSolve", "Printf", "Setfield"]
+git-tree-sha1 = "838b60ee62bebc794864c880a47e331e00c47505"
+uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+version = "1.4.1"
+
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
@@ -1327,6 +2359,12 @@ deps = ["IfElse", "Static", "VectorizationBase"]
 git-tree-sha1 = "ac399b5b163b9140f9c310dfe9e9aaa225617ff6"
 uuid = "476501e8-09a2-5ece-8869-fb82de89a1fa"
 version = "0.6.32"
+
+[[deps.SciMLBase]]
+deps = ["ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "Markdown", "RecipesBase", "RecursiveArrayTools", "StaticArrays", "Statistics", "Tables", "TreeViews"]
+git-tree-sha1 = "194a569a247b8180e7171f7ee59dabfd5a095f9f"
+uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+version = "1.31.3"
 
 [[deps.ScientificTypesBase]]
 git-tree-sha1 = "a8e18eb383b5ecf1b5e6fc237eb39255044fd92b"
@@ -1357,11 +2395,6 @@ version = "0.8.2"
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
-
-[[deps.ShiftedArrays]]
-git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
-uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
-version = "1.0.0"
 
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
@@ -1464,12 +2497,6 @@ git-tree-sha1 = "5950925ff997ed6fb3e985dcce8eb1ba42a0bbe7"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.18"
 
-[[deps.StatsModels]]
-deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
-git-tree-sha1 = "4352d5badd1bc8bf0a8c825e886fa1eda4f0f967"
-uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
-version = "0.6.30"
-
 [[deps.StatsPlots]]
 deps = ["AbstractFFTs", "Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
 git-tree-sha1 = "43a316e07ae612c461fd874740aeef396c60f5f8"
@@ -1478,9 +2505,9 @@ version = "0.14.34"
 
 [[deps.StructArrays]]
 deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
-git-tree-sha1 = "8f705dd141733d79aa2932143af6c6e0b6cea8df"
+git-tree-sha1 = "e75d82493681dfd884a357952bbd7ab0608e1dc3"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-version = "0.6.6"
+version = "0.6.7"
 
 [[deps.StructuralCausalModels]]
 deps = ["CSV", "Combinatorics", "DataFrames", "DataStructures", "Distributions", "DocStringExtensions", "LinearAlgebra", "NamedArrays", "Reexport", "Statistics"]
@@ -1536,6 +2563,12 @@ version = "0.1.5"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[deps.Tracker]]
+deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics"]
+git-tree-sha1 = "0874c1b5de1b5529b776cfeca3ec0acfada97b1b"
+uuid = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
+version = "0.2.20"
+
 [[deps.TranscodingStreams]]
 deps = ["Random", "Test"]
 git-tree-sha1 = "216b95ea110b5972db65aa90f88d8d89dcb8851c"
@@ -1548,11 +2581,23 @@ git-tree-sha1 = "c76399a3bbe6f5a88faa33c8f8a65aa631d95013"
 uuid = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 version = "0.4.73"
 
+[[deps.TreeViews]]
+deps = ["Test"]
+git-tree-sha1 = "8d0d7a3fe2f30d6a7f833a5f19f7c7a5b396eae6"
+uuid = "a2a6695c-b41b-5b7d-aed9-dbfdeacea5d7"
+version = "0.3.0"
+
 [[deps.Tullio]]
 deps = ["ChainRulesCore", "DiffRules", "LinearAlgebra", "Requires"]
 git-tree-sha1 = "859e2e9a7222553a0c052e423557cedb49376da9"
 uuid = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 version = "0.3.4"
+
+[[deps.Turing]]
+deps = ["AbstractMCMC", "AdvancedHMC", "AdvancedMH", "AdvancedPS", "AdvancedVI", "BangBang", "Bijectors", "DataStructures", "Distributions", "DistributionsAD", "DocStringExtensions", "DynamicPPL", "EllipticalSliceSampling", "ForwardDiff", "Libtask", "LinearAlgebra", "MCMCChains", "NamedArrays", "Printf", "Random", "Reexport", "Requires", "SciMLBase", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Tracker", "ZygoteRules"]
+git-tree-sha1 = "ef0fdc72023c4480a9372f32db88cce68b186e8a"
+uuid = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+version = "0.21.1"
 
 [[deps.URIs]]
 git-tree-sha1 = "97bbe755a53fe859669cd907f2d96aee8d2c1355"
@@ -1832,30 +2877,172 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─397f31b2-eba9-11ea-3fd5-1704e3a50a96
-# ╟─2c7baec4-0f38-4050-be86-b54de4112dc7
-# ╠═e6dd9f40-a007-439f-bafd-0127f2d7b742
-# ╠═bd37f4aa-5e4e-4823-b758-16c7ee2b2fa0
-# ╟─1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
-# ╠═624b8daa-dc1f-11ea-114f-19896cd76aa5
-# ╟─8fa79b3e-dc1f-11ea-1437-d7bfe6cdea51
-# ╠═c4321a66-de4f-11ea-3449-774edd51eb10
-# ╟─35330a6a-dc20-11ea-2929-9b904165e207
-# ╠═df73cd1c-dc1f-11ea-0e14-c7e381f49c4a
-# ╟─975e15f4-122c-11eb-2a4d-ed836c7bade0
-# ╟─b1d6b4ac-dc20-11ea-3237-a515964f9176
-# ╠═88e3bb64-dc1e-11ea-1136-bd822afb72e4
-# ╟─dc515b15-a11a-4372-9fad-c00d9c508dd5
-# ╠═3a3e7ff9-a76c-4766-9dc8-4de5a4a14caa
-# ╠═5d3acee5-3515-44e7-80a5-a4927f854554
-# ╟─b8339211-7cf8-4dd0-8009-05d410373922
-# ╠═32f1748c-e8fc-4afc-8d03-d79afa01ad36
-# ╠═c186e7ab-0c18-4a5c-a61f-a061389e21c2
-# ╠═4655ab6c-0951-4a3b-bfc8-e991aaf0eff7
-# ╠═88eaa866-b87e-419b-a910-309c07cbde3c
-# ╠═9641b455-c5dd-4cd1-9d9c-aebe91139f5f
-# ╟─bc3de68d-e669-4233-96df-9ff82865ccfb
-# ╟─14c96b8b-dca7-4d6f-a76a-e9947bf5c3bd
-# ╟─c4403280-dc20-11ea-0550-5f2f606a9fea
+# ╠═6975f6c3-8eec-47d9-ade5-88e8447b2dce
+# ╠═14088e14-1fe6-41bd-a70a-38595fde2d41
+# ╠═10cd1a4b-7190-4a1e-a867-80555d4bf730
+# ╠═22f28b65-a270-4778-8933-57459e1249c7
+# ╟─f3a514c8-bc3e-487f-af11-b43ff41c34e6
+# ╟─e05e454f-c5b8-4f09-b745-a0265b5718a8
+# ╠═a67ed97c-59ed-461b-803b-f2cb42498dda
+# ╟─d6404e85-ceea-47c1-bc0e-c7c3deeb0ad6
+# ╠═dcfef783-e51f-400b-9702-9068b8ef45b7
+# ╟─62cf8524-0b46-434f-b813-f7befa9eb7f9
+# ╠═079e0242-0d68-4e72-be44-9e317733071c
+# ╠═e88ff706-532d-4890-ad6d-928aed3da558
+# ╟─addadf8a-a757-4927-9e78-0b64a9bcf3eb
+# ╠═247d18b1-dd98-49db-9185-2f76dae4b346
+# ╟─c5e308ce-2a23-4773-b8d1-9dfb6a011d16
+# ╠═35afca2b-8537-4ff1-a1c1-3021f3af3d4c
+# ╟─38668cc3-5bcb-42fe-b89f-fed08dfacce5
+# ╠═0195e6da-43f9-4ed3-bcad-7bee87fe23cf
+# ╟─3172be0c-e3f6-43c3-b740-137584b19bcf
+# ╠═1322553d-53ba-4166-a65f-a1350158dd46
+# ╠═ae02befe-b6b1-49d4-8f85-00f59cd57f92
+# ╟─140245a2-38cc-440a-96f2-7e375b60ef7b
+# ╠═93cdbcce-1958-4476-a32a-9b1cf3ab9f17
+# ╟─b5dcad20-acc6-446b-8231-cf9d6eb6bf6d
+# ╠═1430a43d-d75d-4aff-8f43-a3c5e047c6eb
+# ╠═a86c573b-d227-46f7-bd5b-81c44ef2b326
+# ╠═e172123a-8186-4038-b9d6-edd5deffefd9
+# ╟─776b5efd-f42b-49bc-98ed-4893eb216e2c
+# ╠═9780cf8c-ca3f-486e-bae3-ca480dfd8d72
+# ╟─b9d8d506-d88c-48a6-9e39-d33f0984047c
+# ╠═ca8c5830-cd5d-421f-af9e-a0da2656d953
+# ╠═a80e763b-9f3b-44aa-9abc-26362b4618bd
+# ╟─b6a5f2a8-6e45-47ba-be97-961cfeb57699
+# ╠═e0fb292f-8aba-4ca9-ba0c-1791cf063623
+# ╟─c778178e-a6ab-4071-90d7-9cf543ef2606
+# ╠═da6198fa-c7f2-4277-98f7-d6ba2e092815
+# ╟─14bc80d0-3528-4cda-9311-02af2c322fc4
+# ╠═5dd96185-34b6-460e-8f7f-e34d0c5eb469
+# ╟─ea6f1ad4-781a-47a6-9cee-785da25f5967
+# ╠═8adfcdf2-3da5-4d30-9301-b9c2e63d5490
+# ╟─4e297c9d-e181-41ce-b1be-d5a6669bb903
+# ╠═c8bd4ef6-7a94-46c7-be9a-6943043a6670
+# ╟─e80cb9db-b93b-4b43-a55a-ee547fbc9d48
+# ╠═fa2b5e49-933f-4fba-886c-0cf99f81eab5
+# ╟─47a558cd-abbb-4dcb-8130-625d433d94fa
+# ╠═82744b52-b300-4821-b095-19229835c5d4
+# ╟─9a9ca097-db59-4e94-b2d5-47f4dbde48a3
+# ╠═ea03ef5e-6332-41e7-a07b-55109cb97697
+# ╠═7750a022-ef28-4104-84ac-ba43c03efaf5
+# ╟─ca353ff4-fabb-4c72-8ba4-4294def7a751
+# ╠═3f4c5f34-216d-4b8e-84a1-2c6c8b83716d
+# ╠═f7940bb6-00f5-4ea3-87a2-cdaf719f6147
+# ╠═9d3de9ec-3b74-41fc-86cd-4fca5ed0d3fe
+# ╠═a734af10-a0ff-49bf-87ab-a39c12ba68a2
+# ╠═6e5e457f-e829-4bf4-95ee-cc71f5f05818
+# ╠═2b6cf6d6-5d97-46f5-8359-c069342afa82
+# ╟─19a1560d-3524-484d-a4ca-e1f9678f3f4e
+# ╠═1f67c25c-1ef2-4d07-aa04-e5e8e06b6092
+# ╟─c70321cd-ef51-41bd-9744-aeec09bf2efb
+# ╠═297964d6-d5ff-46a1-8b96-c6bba81f6be4
+# ╟─5ce38815-7ef8-44fc-899e-e2158d6ca291
+# ╠═cbd9fc1e-6035-4513-b113-e36dd36c56b9
+# ╠═a952f503-d7d7-4b31-8a5a-510770d15bea
+# ╟─65c3888c-490f-46dd-9a41-c9fa135c5f3c
+# ╠═216bb14d-f167-4b18-87e2-ae635a413622
+# ╠═a021c167-1334-4aaf-89b6-1b363ea90978
+# ╟─087b4dea-68af-4022-a35b-b2e09e68ca59
+# ╠═ae7e3091-3917-4bc7-80d6-2770c72f374f
+# ╟─e2403387-7305-4c58-98f8-c9e60061a23f
+# ╠═51f74f4e-3b24-49ef-8221-0c74de9a8fd4
+# ╟─d2ef4d6c-6c77-4b88-8443-dd3dea5f4fa4
+# ╠═bf0f80c3-9049-4d0f-82cb-c2561fcc2aae
+# ╠═0290f649-11df-4d3e-81af-626d196316f3
+# ╠═8b3dc9ea-fdac-4080-b284-4a8d3cf16f28
+# ╠═f60af3f5-1048-49fb-a3a7-3f0b2b2884f9
+# ╟─67f5cc12-e357-4104-a3c6-7d3e381c281c
+# ╠═540dcd1c-a44a-4c8a-9048-3cb5c382c278
+# ╟─515ddb6a-5917-43c6-8312-96e57753b478
+# ╠═151de157-f083-476b-8fb4-4f4814f0a062
+# ╟─22c6ef5a-6a54-4be6-a3ff-3a13382d5bcf
+# ╠═ef44deb9-b1f0-40a0-82a7-b970ed7fdfc0
+# ╠═3ad96e80-177a-4b74-8d2f-9e1efc60ed4c
+# ╠═7bb690a7-04dc-4f0e-aabb-13190ec2cc6a
+# ╠═b9e52a64-ed27-49f0-b5d4-8f1d5af96457
+# ╠═ab439d9e-d427-4262-bacc-4e88759a04f4
+# ╠═0e79c84d-c016-4ecd-bea1-b4a80f84e007
+# ╟─cd0a1208-2721-4629-9784-1b1e137cd966
+# ╠═f768fbac-9982-44b8-9518-883760201de7
+# ╟─bb371f48-2aaf-4205-a3ae-832da7254c16
+# ╠═989be969-0dd0-4ef9-9203-df59af4b7825
+# ╠═46c1aa71-6177-4d9c-9fab-996cfe4187b9
+# ╠═239721f2-2dcf-478c-9266-ff186389185f
+# ╟─c0e44ae1-e1c9-481e-a748-e94d4fa4932b
+# ╠═3bc11427-36c1-4a75-b8dd-36a61a7e8350
+# ╠═9b4c1ba4-74c3-4ed0-a558-f326940335ff
+# ╠═7785e952-0275-44fd-a91a-fe08ee29368c
+# ╠═baa3ad4e-539a-4f2a-9daa-c0183472ca66
+# ╠═cd0358bb-f42e-4cd5-9dee-d0104cf3e07b
+# ╟─0cafb1cb-956f-4ba2-afb6-3546c8f2d990
+# ╟─511ee325-6aab-4cb3-8e55-33f838007758
+# ╠═766883c2-ff90-4ca3-bab4-278942bdf308
+# ╟─94195529-1d37-42cd-a5ee-9cf777b1f1bb
+# ╠═8b4d82a3-8a9c-462f-a3cb-e5a71f94ec58
+# ╟─b5d03baa-7e2c-403b-8d65-983dad4723f3
+# ╠═a49dc7d3-4743-4464-aabc-7a7fceb74bf6
+# ╠═db5ad34c-65c4-432d-a6e2-c420d43d7faa
+# ╠═8e16a5cb-1cd3-4ad5-8297-af28e503aac8
+# ╠═6d083875-75e2-47b9-b58f-6cb6b5d95172
+# ╠═53acdf8b-a783-4272-bd5e-147a5b0e1ae8
+# ╠═957254e4-c9c0-4954-b6c4-24e6146151ff
+# ╠═6c57ae79-8980-426a-bc27-d18b92e094e2
+# ╠═6e4d7d10-1dae-40f6-9c1b-8ee0924c2f16
+# ╠═8d45b2c3-8305-477d-9f88-9c4152d726df
+# ╠═99cee684-134c-4def-bb8c-c7cb03cd06ab
+# ╟─13c4376e-616f-44dc-8185-87a4f2def727
+# ╠═a5b54f8c-e670-4402-b218-8164170db469
+# ╟─d0af8d51-7fc8-41cd-9a51-20775f11e1e1
+# ╠═7d462c37-f172-4624-8012-02a44bb19a4e
+# ╠═9e910804-5539-424f-a769-d22302020888
+# ╠═f603a8ff-ba98-4bc0-80c6-a89243f83a3d
+# ╠═36a6c6f8-3189-4cbe-a1de-dc93d02ccd51
+# ╠═0646f466-3247-495a-8a7c-742256f64b11
+# ╟─199010f9-bce8-4318-9912-3ed575ef21fe
+# ╠═448b3506-728b-4631-b6cd-62df0cd39f45
+# ╟─88c22cbd-5f7b-4e50-9a0e-0ab22b857559
+# ╠═2b7adad6-be9f-45f8-9385-e5d31ed69067
+# ╠═fddece02-6e0e-466c-97aa-bb96fa1fe013
+# ╠═aff8e056-ba12-4e13-b6bf-63da9181b8b7
+# ╠═421f0b89-bf68-4546-8184-445b2e2de9fe
+# ╠═88648d82-1c06-4b8c-bc91-58518b707905
+# ╠═3ab8e039-da2e-4cca-9a1c-94d929a7aa78
+# ╟─ba34af6e-85ee-4ff1-95c1-f627405262a2
+# ╠═4f6e6857-f4c7-4c28-94e5-d79390127cad
+# ╟─6cb0c0a9-de92-44f8-8b76-931b8d7a8058
+# ╠═c87d89c9-f559-4210-a300-cd42ffdc0779
+# ╟─85909da0-d2b9-437e-ae47-44940fcd74df
+# ╠═ac56b077-a1c9-4e6d-9c78-64a613df5bb0
+# ╠═8d0e632f-03ea-439c-9f6e-d57f489fc92c
+# ╟─0c1ed9fa-80b0-449a-83be-f9e208f5e536
+# ╠═545a7bd1-e56c-45e9-bdd6-efd3e14632fc
+# ╟─d83b7902-85fd-4424-8ffe-98f9da71d0ae
+# ╟─d4fa0864-c56d-4665-89a6-e9197e037c56
+# ╠═65ed2cfe-4404-4756-a9d5-3d55cae1eefd
+# ╟─9d721d0d-abe9-4f42-bc98-6245aeb2b2d0
+# ╟─028d2911-1c4a-4de1-ae4d-83e8fb153f12
+# ╟─a9c9cc35-05f6-49c8-a3df-2f303cf7885c
+# ╠═bc2d4336-7a19-4179-b791-e0cdb63cee0a
+# ╟─ac7531ca-02b5-44e9-a418-f8c399e668e8
+# ╠═7690e5a3-0473-48fa-963c-7b55d00a4105
+# ╟─37e13f5d-0d82-4c2d-a1c2-479843eb7886
+# ╠═3e8dd9ee-867e-43e5-b74c-d4f586bfd41b
+# ╠═ed01aaf1-1c1e-4441-9999-1a04916df98e
+# ╟─13d724a6-6902-4ec1-86e8-3c6a86e3957d
+# ╠═aff70993-542e-4be7-99cb-160059a84e06
+# ╠═dae83135-14da-4b46-b974-782d4ec4e4d9
+# ╠═4f2e5271-e301-4f44-8474-ec9b5c97150c
+# ╠═2f08dbb9-f31a-4fc2-ab11-fdfb88e5ddb9
+# ╠═cc4700af-9c54-4060-a9ce-8c426e25eeb1
+# ╠═cf9ade41-251c-4320-a606-4e877b996632
+# ╠═d6f7eff0-9142-4635-81f3-11ec8c2a500b
+# ╠═06cf33fc-f0f8-4cc7-b811-d035fbf40b20
+# ╠═d6fa7523-c369-454d-bce9-a12132fe01f1
+# ╠═e2fbc671-9ea3-4ba3-b847-b71ed7a67933
+# ╠═17745763-875a-45f3-9b1a-8c4c80d5060c
+# ╠═eca35612-759b-43ef-a94b-69dc4856317f
+# ╠═040be4fa-9158-45da-a9cd-ac419d59bb56
+# ╠═4b34baa2-9528-4311-a54d-33f080f64103
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

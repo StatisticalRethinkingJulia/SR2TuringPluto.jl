@@ -1,6 +1,30 @@
 ### A Pluto.jl notebook ###
 # v0.19.3
 
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ 2b447c25-cc6e-4b40-a18a-fcab8eb64d8e
+using Pkg, DrWatson
+
+# ╔═╡ c9ea9876-b966-41b4-ac02-a6b1040e7119
+begin
+	using Turing
+	using DataFrames
+	using CSV
+	using Random
+	using Distributions
+	using StatisticalRethinking
+	using StatisticalRethinking: link
+	using StatisticalRethinkingPlots
+	using ParetoSmooth
+	using StatsPlots
+	using StatsBase
+	using FreqTables
+	using Logging
+end
+
+# ╔═╡ 147708bd-6ded-4316-aca0-1f6524ba3c53
 html"""
 <style>
 	main {
@@ -12,136 +36,586 @@ html"""
 </style>
 """
 
-using Markdown
-using InteractiveUtils
+# ╔═╡ 2c26b000-36ee-473a-a7c5-d6a746096ec9
+begin
+	default(label=false);
+	Logging.disable_logging(Logging.Warn);
+end
 
-# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
-macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
-        local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
-        el
+# ╔═╡ 7c87ccc8-8b76-45f1-b10f-b04bba307ce9
+md" ## 12.1 Over-dispersed counts"
+
+# ╔═╡ 5be273e4-faae-4f06-934c-a1da019e8b89
+md" #### Code 12.1"
+
+# ╔═╡ 1651ab99-e88a-40b7-9092-daf7f31e5604
+begin
+	# define alias for Beta(α, β), see: https://en.wikipedia.org/wiki/Beta_distribution#Mean_and_sample_size
+	Beta2(μ, ν) = Beta(μ*ν, (1-μ)*ν)
+	BetaBinomial2(n, μ, ν) = BetaBinomial(n, μ*ν, (1-μ)*ν)
+end
+
+# ╔═╡ fdd7dad1-facd-4ce3-9a72-20ce2c4cbe6a
+let
+	p̄ = 0.5
+	θ = 5
+	plot(Beta2(p̄, θ), xlab="probability", ylab="Density")
+end
+
+# ╔═╡ 86d02852-70e2-4fcc-bc8c-8d2b881fa248
+md" #### Code 12.2"
+
+# ╔═╡ f2af75cc-361e-4a45-a1b4-14a4ce404fa3
+begin
+	ucbadmit = CSV.read(sr_datadir("UCBadmit.csv"), DataFrame)
+	ucbadmit.gid = @. ifelse(ucbadmit.gender == "male", 1, 2)
+end;
+
+# ╔═╡ 8d1b576f-e2a4-423d-80cc-0e69f6a376d4
+@model function m12_1(A, N, gid)
+    a ~ MvNormal([0, 0], 1.5)
+    p̄ = @. logistic(a[gid])
+    ϕ ~ Exponential(1)
+    θ = ϕ + 2
+    @. A ~ BetaBinomial2(N, p̄, θ)
+end
+
+# ╔═╡ 9ce82e0e-bdcf-426c-b87e-32346c658b87
+begin
+	Random.seed!(1)
+	m12_1_ch = sample(m12_1(ucbadmit.admit, ucbadmit.applications, ucbadmit.gid), NUTS(), 1000)
+	m12_1_df = DataFrame(m12_1_ch);
+end
+
+# ╔═╡ b339874c-e364-4f8c-bd62-5d66b175f0be
+md" #### Code 12.3"
+
+# ╔═╡ 50661b7a-3484-4c52-b87c-4f44f119e164
+let
+	m12_1_df.θ = m12_1_df.ϕ .+ 2
+	m12_1_df.da = m12_1_df."a[1]" .- m12_1_df."a[2]"
+	PRECIS(m12_1_df)
+end
+
+# ╔═╡ 4335575b-2ce8-41f0-a7ed-295789a5b723
+md" #### Code 12.4"
+
+# ╔═╡ c8959699-8886-423a-b994-3180c639de1b
+let
+	gid = 2
+	p̄ = m12_1_df[:, "a[$gid]"] .|> logistic |> mean
+	θ = mean(m12_1_df.θ)
+	plot(Beta2(p̄, θ), lw=2, c=:black, ylab="Density", 
+	    xlab="probability admit", ylims=(0, 3))
+	
+	for (a, θ) ∈ first(zip(m12_1_df[:, "a[$gid]"], m12_1_df.θ), 50)
+	    plot!(Beta2(logistic(a), θ), c=:black, alpha=0.2)
+	end
+	gender = gid == 2 ? "female" : "male"
+	title!("distribution of $gender admission rates")
+end
+
+# ╔═╡ 7959fa22-560e-44d0-96ee-d2e7bf51cbf9
+md" #### Code 12.5"
+
+# ╔═╡ 7a9ad8dc-019d-4a32-b8b3-ee5a2703e609
+md" #### Code 12.6"
+
+# ╔═╡ 5e3a0ec2-5066-4ab6-881d-af6113d23974
+begin
+	kline = CSV.read(sr_datadir("Kline.csv"), DataFrame)
+	kline.P = standardize(ZScoreTransform, log.(kline.population))
+	kline.contact_id = ifelse.(kline.contact .== "high", 2, 1)
+end;
+
+# ╔═╡ 29167add-b592-4a1e-8742-88fa3264286d
+@model function m12_2(T, P, cid)
+    g ~ Exponential()
+    ϕ ~ Exponential()
+    a ~ MvNormal([1,1], 1)
+    b₁ ~ Exponential()
+    b₂ ~ Exponential()
+    b = [b₁, b₂]
+    λ = @. exp(a[cid])*(P^b[cid]) / g
+    p = 1/(ϕ+1)
+    r = λ/ϕ
+    clamp!(r, 0.01, Inf)
+    p = clamp(p, 0.01, 1)
+    @. T ~ NegativeBinomial(r, p)
+end
+
+# ╔═╡ cc4b5a4e-c2c6-4295-b4ff-8f73e84fcd88
+begin
+	Random.seed!(1)
+	m12_2_ch = sample(m12_2(kline.total_tools, kline.population, kline.contact_id), NUTS(), 1000)
+	m12_2_df = DataFrame(m12_2_ch)
+	PRECIS(m12_2_df)
+end
+
+# ╔═╡ 512a3b1f-2e79-4777-b976-6d310725e9f8
+md" ## 12.2 Zero-inflated outcomes"
+
+# ╔═╡ 91de0472-61b8-47f4-babb-e07539fa3a55
+md" #### Codes 12.7 & 12.8"
+
+# ╔═╡ dc4292b2-5aa8-4413-b4a3-91456f1d1d2a
+md" #### Code 12.9"
+
+# ╔═╡ 3288b258-640b-414f-90d4-0bc1517aa506
+# Based on this discussion
+# https://github.com/StatisticalRethinkingJulia/SR2TuringPluto.jl/issues/1
+
+# ╔═╡ 45e9dc3c-bd28-4eaf-a56a-d12f4804f341
+struct ZIPoisson{T1,T2} <: DiscreteUnivariateDistribution
+    λ::T1
+    w::T2
+end
+
+# ╔═╡ ab414dc7-7f31-4b0a-9d65-1268940fbc50
+function logpdf(d::ZIPoisson, y::Int)
+    if y == 0
+        logsumexp([log(d.w), log(1 - d.w) - d.λ])
+    else
+        log(1 - d.w) + logpdf(Poisson(d.λ), y)
     end
 end
 
-# ╔═╡ e6dd9f40-a007-439f-bafd-0127f2d7b742
-using Pkg, DrWatson, PlutoUI
-
-# ╔═╡ bd37f4aa-5e4e-4823-b758-16c7ee2b2fa0
-begin
-	using CSV, DataFrames
-	using GLM
-	using StatisticalRethinking
-	using StatisticalRethinkingPlots
+# ╔═╡ c27a8622-edca-4f19-91d0-1682ebc9cc7d
+fun = (r, (N, gid)) -> begin
+    p̄ = logistic(get(r, "a[$gid]", 0))
+    rand(BetaBinomial2(N, p̄, r.θ))
 end
 
-# ╔═╡ 397f31b2-eba9-11ea-3fd5-1704e3a50a96
-md"## Chapter_00.jl"
+# ╔═╡ c799de28-efa8-4466-812f-ac3c79b5d835
+let
+	#import Distributions: logpdf, rand
 
-# ╔═╡ 2c7baec4-0f38-4050-be86-b54de4112dc7
-md" ### Code 0.0"
+	Random.seed!(1)
+	adm_rate = ucbadmit.admit ./ ucbadmit.applications
+	pred_adm = link(m12_1_df, fun, zip(ucbadmit.applications, ucbadmit.gid))
+	pred_rates = pred_adm ./ ucbadmit.applications
 
-# ╔═╡ 1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
-md"### Code 0.1"
+	μ_adm = mean.(pred_rates)
+	σ = std.(pred_rates) ./ 2
+	ci_adm = PI.(pred_rates)
 
-# ╔═╡ 624b8daa-dc1f-11ea-114f-19896cd76aa5
-"All models are wrong, but some are useful."
-
-# ╔═╡ 8fa79b3e-dc1f-11ea-1437-d7bfe6cdea51
-md"### Code 0.2"
-
-# ╔═╡ c4321a66-de4f-11ea-3449-774edd51eb10
-@bind N Slider(1:5, default=3)
-
-# ╔═╡ 35330a6a-dc20-11ea-2929-9b904165e207
-md"##### Variable x initially is a StepRange, not a vector. The log.(x) notation `broadcast` the log function to all steprange elements in x and returns a vector."
-
-# ╔═╡ df73cd1c-dc1f-11ea-0e14-c7e381f49c4a
-begin
-	x = 1:N
-	x = x*10
-	x = log.(x)
-	x = sum(x)
-	x = exp(x)
-	x = x*10
-	x = log(x)
-	x = sum(x)
-	x = exp(x)
+	scatter(adm_rate, xlab="case", ylab="A", title="Posterior validation check")
+	scatter!(μ_adm, mc=:white, yerr=σ)
+	scatter!(first.(ci_adm), shape=:cross, c=:black)
+	scatter!(last.(ci_adm), shape=:cross, c=:black)
 end
 
-# ╔═╡ 975e15f4-122c-11eb-2a4d-ed836c7bade0
-md"##### Notice that in Pluto notebooks varables can only be defined once. This is needed in Pluto to make the `reactivity` work (e.g. when updating above slider setting). Bracketing above sequence of assignments with a `begin` and `end` is allowed."
+# ╔═╡ 15d28187-c155-4332-bde4-90c2d40b7a36
+let
+	# define parameters
+	prob_drink = 0.2 # 20% of days
+	rate_work = 1    # average 1 manuscript per day
 
-# ╔═╡ b1d6b4ac-dc20-11ea-3237-a515964f9176
-md"### Code 0.3"
+	# sample one year of production
+	N = 365
 
-# ╔═╡ 88e3bb64-dc1e-11ea-1136-bd822afb72e4
-[log(0.01^200) 200 * log(0.01)]
+	# simulate days monks drink
+	Random.seed!(365)
+	drink = rand(Binomial(1, prob_drink), N)
 
-# ╔═╡ dc515b15-a11a-4372-9fad-c00d9c508dd5
-md"### Code 0.4"
+	# simulate manuscripts completed
+	y = (1 .- drink).*rand(Poisson(rate_work), N);
+	p = histogram(y, xlab="manuscripts completed", ylab="Frequency")
+	zeros_drink = sum(drink)
+	zeros_work = sum(@. (y == 0) & (drink == 0))
+	bar!([0], [zeros_work], bar_width=0.3)
+	p
+end
 
-# ╔═╡ 3a3e7ff9-a76c-4766-9dc8-4de5a4a14caa
+# ╔═╡ 73d535fd-227a-4c4b-a0ca-ed926ecf86c6
+@model function m12_3(y)
+    ap ~ Normal(-1.5, 1)
+    al ~ Normal(1, 0.5)
+    λ = exp(al)
+    p = logistic(ap)
+    y .~ ZIPoisson(λ, p)
+end
+
+# ╔═╡ cb63530d-4041-4a53-92c7-73a5c5705564
 begin
-	df = CSV.read(sr_datadir("Howell1.csv"), DataFrame; delim=';')
-	df = filter(row -> row[:age] >= 18, df);
-end;
+	m12_3_ch = sample(m12_3(y), NUTS(), 1000)
+	m12_3_df = DataFrame(m12_3_ch)
+	precis(m12_3_df)
+end
 
-# ╔═╡ 5d3acee5-3515-44e7-80a5-a4927f854554
-PRECIS(df)
+# ╔═╡ 3b4f512c-7fc3-4eda-90a3-57d7ed313f87
+md" #### Code 12.10"
 
-# ╔═╡ b8339211-7cf8-4dd0-8009-05d410373922
-md"##### Fit a linear regression of distance on speed."
+# ╔═╡ 719b6fe8-03e0-4e1d-8be8-6d642f78e86d
+let
+	m12_3_df.ap .|> logistic |> mean,
+	exp.(m12_3_df.al) |> mean
+end
 
-# ╔═╡ 32f1748c-e8fc-4afc-8d03-d79afa01ad36
-m = lm(@formula(height ~ weight), df)
+# ╔═╡ e3ea5e44-b189-4c2e-b7d0-5bdc26477ef8
+md" ## 12.3 Ordered categorical outcomes"
 
-# ╔═╡ c186e7ab-0c18-4a5c-a61f-a061389e21c2
-md"##### Estimated coefficients from the model."
+# ╔═╡ 8c89b94a-3250-4abf-8eda-35fd2b42f708
+md" #### Code 12.12"
 
-# ╔═╡ 4655ab6c-0951-4a3b-bfc8-e991aaf0eff7
-coef(m)
+# ╔═╡ a6bcc9c6-4be7-4390-9fa3-6a124ed8afc1
+begin
+	trolley = CSV.read(sr_datadir("Trolley.csv"), DataFrame)
+	describe(trolley)
+end
 
-# ╔═╡ 88eaa866-b87e-419b-a910-309c07cbde3c
-md"##### Plot residuals against height."
+# ╔═╡ cbf2db2b-5e72-4ad1-9fc3-0944c17db2df
+md" #### Code 12.13"
 
-# ╔═╡ 9641b455-c5dd-4cd1-9d9c-aebe91139f5f
-scatter( df.height, residuals(m), xlab="Height",
-  ylab="Model residual values", lab="Model residuals", leg=:bottomright)
+# ╔═╡ c1943565-d495-480d-86ce-ea6f4e760b53
+histogram(trolley.response, xlab="response")
 
-# ╔═╡ bc3de68d-e669-4233-96df-9ff82865ccfb
-md"### Code 0.5"
+# ╔═╡ ee421d11-e00c-494c-a70b-f81c77745d21
+md" #### Code 12.14"
 
-# ╔═╡ 14c96b8b-dca7-4d6f-a76a-e9947bf5c3bd
-md" ##### See Code 0.0"
+# ╔═╡ 45fe0912-cbf9-4e82-bf7b-d60cb7aae79b
+let
+	pr_k = counts(trolley.response) / length(trolley.response)
+	global cum_pr_k = cumsum(pr_k)
+	plot(cum_pr_k, m=:o, xlab="response", ylab="cumulative proportion")
+end
 
-# ╔═╡ c4403280-dc20-11ea-0550-5f2f606a9fea
-md"## End of Chapter_00.jl"
+# ╔═╡ 1dbce450-8de8-41a6-a4ef-fd59f3663664
+md" #### Code 12.15"
+
+# ╔═╡ cd0c7f24-ec98-432c-8444-397a9bf09d91
+round.(logit.(cum_pr_k), digits=2)
+
+# ╔═╡ 67b42f0b-f991-43a9-8f9f-3a69ba540994
+md" #### Code 12.16"
+
+# ╔═╡ 068fc2dc-213a-402f-a909-0b3bcdca4dd6
+@model function m12_4(R)
+    # to ensure sorted cutpoints, use deltas
+    Δ_cutpoints ~ filldist(Exponential(), 6)
+    cutpoints = -2 .+ cumsum(Δ_cutpoints)
+    R .~ OrderedLogistic(0, cutpoints)
+end
+
+# ╔═╡ 75aef58b-c087-4267-9c13-7bc1d90d1270
+md" #### Code 12.18"
+
+# ╔═╡ 13ceb9f6-46ac-473d-abe0-9b543572e5f3
+begin
+	Random.seed!(1)
+	m12_4_ch = sample(m12_4(trolley.response), NUTS(), 1000)
+	m12_4_df = DataFrame(m12_4_ch)
+	PRECIS(m12_4_df)
+end
+
+# ╔═╡ 69db6156-6e68-4f4c-8ede-18968858d455
+begin
+	cutpoints1 = -2 .+ cumsum(mean.(eachcol(m12_4_df[!,r"Δ.*"])))
+	round.(logistic.(cutpoints1), digits=3)
+end
+
+# ╔═╡ 4136174a-e7c8-4d6e-a3c8-7ed5013228fb
+md" #### Code 12.19"
+
+# ╔═╡ ba249ca4-a211-42e1-b66a-f2dd81c9b14f
+md" #### Code 12.20"
+
+# ╔═╡ dba0e917-2bd6-4fa0-b6d4-1dad4968195a
+begin
+	pk1 = pdf.(OrderedLogistic(0, cutpoints1), 1:7)
+	round.(pk1, digits=2)
+end
+
+# ╔═╡ d0181605-1105-4fb8-8470-db8cdf3d6853
+md" #### Code 12.21"
+
+# ╔═╡ 3229c5f9-d341-4f5b-a24f-295e43437d5c
+sum(pk1.*(1:7))
+
+# ╔═╡ 696d62d7-0c39-454e-a01d-a66a54748910
+md" #### Code 12.22"
+
+# ╔═╡ 2403ce2f-7f96-4c68-9d31-80079e3daa36
+begin
+	pk = pdf.(OrderedLogistic(0, cutpoints1 .- 0.5), 1:7)
+	round.(pk, digits=2)
+end
+
+# ╔═╡ 2a6d6a27-68b9-4722-8d51-be470942f446
+md" #### Code 12.23"
+
+# ╔═╡ 23ab19cd-6fb4-4de1-b672-daa03a1228d4
+sum(pk.*(1:7))
+
+# ╔═╡ 476d4fbd-3cc5-4e78-91f8-e8022d38ffa0
+md" #### Code 12.24"
+
+# ╔═╡ d35f0ee3-e0b7-417f-8242-6e1a5d4114d6
+@model function m12_5(R, A, I, C)
+    # to ensure sorted cutpoints, use deltas
+    Δ_cutpoints ~ filldist(Exponential(), 6)
+    cutpoints = -3 .+ cumsum(Δ_cutpoints)
+    
+    bA ~ Normal(0, 0.5)
+    bI ~ Normal(0, 0.5)
+    bC ~ Normal(0, 0.5)
+    bIA ~ Normal(0, 0.5)
+    bIC ~ Normal(0, 0.5)
+    BI = @. bI + bIA*A + bIC*C
+    phi = @. bA*A + bC*C + BI*I
+    
+    for i in eachindex(R)
+        R[i] ~ OrderedLogistic(phi[i], cutpoints)
+    end
+end
+
+# ╔═╡ 3edf24f0-be2f-461d-b121-1392618a9c67
+begin
+	Random.seed!(2)
+	m12_5_ch = sample(m12_5(trolley.response, trolley.action, trolley.intention, trolley.contact), NUTS(), 1000)
+	m12_5_df = DataFrame(m12_5_ch)
+	PRECIS(m12_5_df)
+end
+
+# ╔═╡ ed58c640-6f2f-4a56-9803-8bc646a21d8f
+let
+	cutpoints = -2 .+ cumsum(mean.(eachcol(m12_5_df[!,r"Δ.*"])))
+	round.(cutpoints; digits=3)
+end
+
+# ╔═╡ 45a8ddb4-bc79-4cfe-a3cb-07f57f441399
+md" #### Code 12.25"
+
+# ╔═╡ 8449ecae-5fd0-4c30-ba7c-582157e8d9ff
+coeftab_plot(m12_5_df, pars=[:bIC, :bIA, :bC, :bI, :bA])
+
+# ╔═╡ b268b198-44af-44da-a895-e2c245117bb5
+md" #### Code 12.26"
+
+# ╔═╡ c2a2c394-474a-4916-8e7d-5b81da7cffbe
+# (not needed, in fact)
+
+
+md" #### Code 12.27 & 12.28"
+
+# ╔═╡ 3c0cdbef-6976-4b8a-8602-12706070827d
+let
+	p = plot(xlab="intention", ylab="probability", xlim=(0, 1), ylim=(0, 1))
+	kA = 0      # value for action
+	kC = 0      # value for contact
+	kI = 0:1    # values for intention to calculate over
+	
+	rI_to_phi = (r, i) -> begin
+	    BI = r.bI + r.bIA*kA + r.bIC*kC
+	    r.bA*kA + r.bC*kC + BI*i
+	end
+	
+	phi = link(m12_5_df, rI_to_phi, kI);
+	p = plot(xlab="intention", ylab="probability", xlim=(0, 1), ylim=(0, 1), title="action=$kA, contact=$kC")
+	for ri in 1:50
+	    r = m12_5_df[ri,:]
+	    cutpoints = -3 .+ cumsum(r[r"Δ.*"])
+	    pk1 = cumsum(pdf.(OrderedLogistic(phi[1][ri], cutpoints), 1:6))
+	    pk2 = cumsum(pdf.(OrderedLogistic(phi[2][ri], cutpoints), 1:6))
+	    for i ∈ 1:6
+	        plot!(kI, [pk1[i], pk2[i]], c=:gray, alpha=0.2)
+	    end
+	end
+	p
+end
+
+# ╔═╡ 173c19d7-f51b-4260-bf8e-922e66a02721
+md" #### Code 12.29"
+
+# ╔═╡ bf96a44b-6441-4045-ae92-6613fbbbc3bb
+let
+	kA = 0
+	kC = 1
+	kI = 0:1
+	
+	rI_to_dist = (r, i) -> begin
+	    BI = r.bI + r.bIA*kA + r.bIC*kC
+	    phi = r.bA*kA + r.bC*kC + BI*i
+	    cutpoints = -3 .+ cumsum(r[r"Δ.*"])
+	    OrderedLogistic(phi, cutpoints)
+	end
+	
+	Random.seed!(1)
+	s = simulate(m12_5_df, rI_to_dist, kI)
+	histogram(map(first, s), bar_width=0.5, label="I=0")
+	histogram!(map(last, s), bar_width=0.2, label="I=1")
+end
+
+# ╔═╡ c931b144-8b63-472a-8d4c-82be650f4593
+md" ## 12.4 Ordered categorical predictors"
+
+# ╔═╡ 49bdc70e-a2d4-4238-98ac-d29b37577d80
+md" #### Code 12.30"
+
+# ╔═╡ b7ab3333-355f-42f9-b3f6-b859b3e6922d
+#d = DataFrame(CSV.File("data/Trolley.csv"))
+levels(trolley.edu)
+
+# ╔═╡ 188ce9c3-9199-4768-9ad2-ed9201e563f2
+md" #### Code 12.31"
+
+# ╔═╡ 52233289-914f-4ca6-a943-9489c0158f70
+edu_l = Dict{String, Int}(
+    "Bachelor's Degree" => 6,
+    "Elementary School" => 1,
+    "Graduate Degree" => 8,
+    "High School Graduate" => 4,
+    "Master's Degree" => 7,
+    "Middle School" => 2,
+    "Some College" => 5,
+    "Some High School" => 3,
+)
+
+# ╔═╡ f13534c2-2dd8-40b2-b669-7a24b5c8bb91
+trolley.edu_new = map(s -> edu_l[s], trolley.edu);
+
+# ╔═╡ eb1f70a1-42ec-4db0-b826-56bc5d4ce73b
+md" #### Code 12.32"
+
+# ╔═╡ 69afe200-63be-4a25-8b51-3a5ad992642a
+begin
+	Random.seed!(1805)
+	delta = rand(Dirichlet(7, 2), 10)
+	
+	# Code 12.33
+	
+	h = 3
+	p = plot(xlab="index", ylab="probability")
+	for (idx, col) ∈ enumerate(eachcol(delta))
+	    plot!(col, c=:black, alpha=0.7, lw=idx == h ? 3 : 1, m= idx == h ? :v : :o)
+	end
+	p
+end
+
+# ╔═╡ 6f3b01f6-b8bf-4a0e-9cc2-87c93071c9a3
+md" #### Code 12.34"
+
+# ╔═╡ 9535972c-0905-4c3a-b5b6-5656677f5d9c
+# Could take 20-30 minutes...
+
+@model function m12_6(R, action, intention, contact, E)
+    delta ~ Dirichlet(7, 2)
+    pushfirst!(delta, 0.0)
+    
+    bA ~ Normal()
+    bI ~ Normal()
+    bC ~ Normal()
+    bE ~ Normal()
+
+    # sum all education's deltas
+    sE = sum.(map(i -> delta[1:i], E))
+    phi = @. bE*sE + bA*action + bI*intention + bC*contact
+
+    # use same cutpoints as before
+    Δ_cutpoints ~ filldist(Exponential(), 6)
+    cutpoints = -3 .+ cumsum(Δ_cutpoints)
+    
+    for i ∈ eachindex(R)
+        R[i] ~ OrderedLogistic(phi[i], cutpoints)
+    end
+end
+
+# ╔═╡ 7b1d63fc-bfbf-4d3e-a069-c07c7a558ee2
+md" #### Code 12.35"
+
+# ╔═╡ 859dee04-009b-4758-94ff-024a9f599509
+begin
+	m12_6t = m12_6(trolley.response, trolley.action, trolley.intention, trolley.contact, trolley.edu_new)
+	m12_6_ch = sample(m12_6t, NUTS(), 1000);
+	m12_6_df = DataFrame(m12_6_ch)
+	PRECIS(m12_6_df)
+end
+
+# ╔═╡ 05c99479-f4c1-4f5f-9d92-da6b487ed00c
+md" #### Code 12.36"
+
+# ╔═╡ a1a5b1fe-1b09-4dad-8ddd-c09bbb36699f
+let
+	delta_labels = ["Elem","MidSch","SHS","HSG","SCol","Bach","Mast","Grad"]
+	df = m12_6_df[!,r"delta.*"]
+	
+	corrplot(Matrix(df); seriestype=:scatter, bins=30, grid=false, ms=0.1, ma=0.8, 
+	    size=(1000,800), label=delta_labels)
+end
+
+# ╔═╡ 53a9552c-f8b8-4761-8258-0062cc2ac68c
+md" #### Code 12.37"
+
+# ╔═╡ 1ac5a9e2-7e61-4f40-a8e2-c597a44bf090
+trolley.edu_norm = standardize(UnitRangeTransform, Float64.(trolley.edu_new))
+
+# ╔═╡ 6f52d2f2-008e-4991-82aa-c211cae792cd
+@model function m12_7(R, action, intention, contact, edu_norm)
+    bA ~ Normal()
+    bI ~ Normal()
+    bC ~ Normal()
+    bE ~ Normal()
+
+    phi = @. bE*edu_norm + bA*action + bI*intention + bC*contact
+
+    # use same cutpoints as before
+    Δ_cutpoints ~ filldist(Exponential(), 6)
+    cutpoints = -3 .+ cumsum(Δ_cutpoints)
+    
+    for i ∈ eachindex(R)
+        R[i] ~ OrderedLogistic(phi[i], cutpoints)
+    end
+end
+
+# ╔═╡ dffc67be-7ab2-49ba-a584-7877faed20d6
+begin
+	model = m12_7(trolley.response, trolley.action, trolley.intention, trolley.contact, trolley.edu_norm)
+	m12_7_ch = sample(model, NUTS(), 1000)
+	m12_7_df = DataFrame(m12_7_ch)
+	PRECIS(m12_7_df)
+end
+
+# ╔═╡ ce0ee122-a7ed-417d-abaa-ae25aeeaabb4
+import BASE: rand
+
+# ╔═╡ 9f5a39bc-9e1c-4f08-ba50-0cf87122358b
+rand(d::ZIPoisson, N::Int) = map(_->rand(d), 1:N)
+
+# ╔═╡ 0ebe4814-ce59-4354-87de-e80e540e355c
+function rand(d::ZIPoisson)
+    rand() <= d.w ? 0 : rand(Poisson(d.λ))
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+FreqTables = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+ParetoSmooth = "a68b5a21-f429-434e-8bfa-46b447300aac"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
 StatisticalRethinkingPlots = "e1a513d0-d9d9-49ff-a6dd-9d2e9db473da"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
-CSV = "~0.10.2"
-DataFrames = "~1.3.2"
+CSV = "~0.10.4"
+DataFrames = "~1.3.4"
+Distributions = "~0.25.58"
 DrWatson = "~2.9.1"
-GLM = "~1.6.1"
-PlutoUI = "~0.7.35"
-StatisticalRethinking = "~4.5.0"
+FreqTables = "~0.4.5"
+ParetoSmooth = "~0.7.1"
+StatisticalRethinking = "~4.5.1"
 StatisticalRethinkingPlots = "~1.0.1"
-
-[extras]
-CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+StatsBase = "~0.33.16"
+StatsPlots = "~0.14.34"
+Turing = "~0.21.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -150,7 +624,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.0-DEV"
 manifest_format = "2.0"
-project_hash = "616bae927feb0cb3b224921b38085f004a52d43f"
+project_hash = "8321073146e96848df50346fb37ae0ad0c998e55"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -169,11 +643,11 @@ git-tree-sha1 = "47aca4cf0dc430f20f68f6992dc4af0e4dc8ebee"
 uuid = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 version = "4.0.0"
 
-[[deps.AbstractPlutoDingetjes]]
-deps = ["Pkg"]
-git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
-uuid = "6e696c72-6542-2067-7265-42206c756150"
-version = "1.1.4"
+[[deps.AbstractPPL]]
+deps = ["AbstractMCMC", "DensityInterface", "Setfield", "SparseArrays"]
+git-tree-sha1 = "6320752437e9fbf49639a410017d862ad64415a5"
+uuid = "7a57a42e-76ec-4ea3-a279-07e840d6d9cf"
+version = "0.5.2"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "03e0550477d86222521d254b741d470ba17ea0b5"
@@ -185,6 +659,30 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "af92965fb30777147966f58acb05da51c5616b5f"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "3.3.3"
+
+[[deps.AdvancedHMC]]
+deps = ["AbstractMCMC", "ArgCheck", "DocStringExtensions", "InplaceOps", "LinearAlgebra", "ProgressMeter", "Random", "Requires", "Setfield", "Statistics", "StatsBase", "StatsFuns", "UnPack"]
+git-tree-sha1 = "345effa84030f273ee86fcdd706d8484ce9a1a3c"
+uuid = "0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
+version = "0.3.5"
+
+[[deps.AdvancedMH]]
+deps = ["AbstractMCMC", "Distributions", "Random", "Requires"]
+git-tree-sha1 = "5d9e09a242d4cf222080398468244389c3428ed1"
+uuid = "5b7e9947-ddc0-4b3f-9b55-0d8042f74170"
+version = "0.6.7"
+
+[[deps.AdvancedPS]]
+deps = ["AbstractMCMC", "Distributions", "Libtask", "Random", "StatsFuns"]
+git-tree-sha1 = "78620daebe1b87dfe17cac4bc08cec73b057eb0a"
+uuid = "576499cb-2369-40b2-a588-c64705576edc"
+version = "0.3.7"
+
+[[deps.AdvancedVI]]
+deps = ["Bijectors", "Distributions", "DistributionsAD", "DocStringExtensions", "ForwardDiff", "LinearAlgebra", "ProgressMeter", "Random", "Requires", "StatsBase", "StatsFuns", "Tracker"]
+git-tree-sha1 = "2f0ddff49ae4c812ba7b348b8427636f8bbd6c05"
+uuid = "b5ca4192-6429-45e5-a2d9-87aec30a685c"
+version = "0.1.4"
 
 [[deps.ArgCheck]]
 git-tree-sha1 = "a3a402a35a2f7e0b87828ccabbd5ebfbebe356b4"
@@ -248,6 +746,12 @@ git-tree-sha1 = "aebf55e6d7795e02ca500a689d326ac979aaf89e"
 uuid = "9718e550-a3fa-408a-8086-8db961cd8217"
 version = "0.1.1"
 
+[[deps.Bijectors]]
+deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "IrrationalConstants", "LinearAlgebra", "LogExpFunctions", "MappedArrays", "Random", "Reexport", "Requires", "Roots", "SparseArrays", "Statistics"]
+git-tree-sha1 = "369af32fcb9be65d496dc43ad0bb713705d4e859"
+uuid = "76274a88-744f-5084-9051-94815aaf08c4"
+version = "0.9.11"
+
 [[deps.BitTwiddlingConvenienceFunctions]]
 deps = ["Static"]
 git-tree-sha1 = "28bbdbf0354959db89358d1d79d421ff31ef0b5e"
@@ -277,6 +781,18 @@ deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
+
+[[deps.CategoricalArrays]]
+deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
+git-tree-sha1 = "109664d3a6f2202b1225478335ea8fea3cd8706b"
+uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+version = "0.10.5"
+
+[[deps.ChainRules]]
+deps = ["ChainRulesCore", "Compat", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "Statistics"]
+git-tree-sha1 = "f4327ae7d92264a97665637002de789040106d87"
+uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+version = "1.29.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -330,6 +846,11 @@ version = "0.12.8"
 git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
 uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 version = "1.0.2"
+
+[[deps.CommonSolve]]
+git-tree-sha1 = "68a0743f578349ada8bc911a5cbd5a2ef6ed6d1f"
+uuid = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
+version = "0.2.0"
 
 [[deps.CommonSubexpressions]]
 deps = ["MacroTools", "Test"]
@@ -469,6 +990,12 @@ git-tree-sha1 = "8a6b49396a4058771c5c072239b2e0a76e2e898c"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
 version = "0.25.58"
 
+[[deps.DistributionsAD]]
+deps = ["Adapt", "ChainRules", "ChainRulesCore", "Compat", "DiffRules", "Distributions", "FillArrays", "LinearAlgebra", "NaNMath", "PDMats", "Random", "Requires", "SpecialFunctions", "StaticArrays", "StatsBase", "StatsFuns", "ZygoteRules"]
+git-tree-sha1 = "b51ed93e06497fc4e7ff78bbca03c4f7951d2ec2"
+uuid = "ced4e74d-a319-5a8a-b0ac-84af2272839c"
+version = "0.6.38"
+
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
 git-tree-sha1 = "b19534d1895d702889b219c382a6e18010797f0b"
@@ -492,6 +1019,12 @@ git-tree-sha1 = "67e9001646db6e45006643bf37716ecd831d37d2"
 uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 version = "2.9.1"
 
+[[deps.DynamicPPL]]
+deps = ["AbstractMCMC", "AbstractPPL", "BangBang", "Bijectors", "ChainRulesCore", "Distributions", "LinearAlgebra", "MacroTools", "Random", "Setfield", "Test", "ZygoteRules"]
+git-tree-sha1 = "5d1704965e4bf0c910693b09ece8163d75e28806"
+uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
+version = "0.19.1"
+
 [[deps.EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "3f3a2501fa7236e9b911e0f7a588c657e822bb6d"
@@ -503,6 +1036,12 @@ deps = ["ArrayInterface"]
 git-tree-sha1 = "d064b0340db45d48893e7604ec95e7a2dc9da904"
 uuid = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
 version = "1.5.0"
+
+[[deps.EllipticalSliceSampling]]
+deps = ["AbstractMCMC", "ArrayInterface", "Distributions", "Random", "Statistics"]
+git-tree-sha1 = "bed775e32c6f38a19c1dbe0298480798e6be455f"
+uuid = "cad2338a-1db2-11e9-3401-43bc07c9ede2"
+version = "0.5.0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -591,11 +1130,22 @@ git-tree-sha1 = "87eb71354d8ec1a96d4a7636bd57a7347dde3ef9"
 uuid = "d7e528f0-a631-5988-bf34-fe36492bcfd7"
 version = "2.10.4+0"
 
+[[deps.FreqTables]]
+deps = ["CategoricalArrays", "Missings", "NamedArrays", "Tables"]
+git-tree-sha1 = "488ad2dab30fd2727ee65451f790c81ed454666d"
+uuid = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
+version = "0.4.5"
+
 [[deps.FriBidi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "aa31987c2ba8704e23c6c8ba8a4f769d5d7e4f91"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.10+0"
+
+[[deps.Functors]]
+git-tree-sha1 = "223fffa49ca0ff9ce4f875be001ffe173b2b7de4"
+uuid = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
+version = "0.2.8"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -606,12 +1156,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcu
 git-tree-sha1 = "51d2dfe8e590fbd74e7a842cf6d13d8a2f45dc01"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.3.6+0"
-
-[[deps.GLM]]
-deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "StatsModels"]
-git-tree-sha1 = "609115155b0dc532fa5130de65ed086efd27bfbd"
-uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-version = "1.6.2"
 
 [[deps.GR]]
 deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "RelocatableFolders", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -684,22 +1228,17 @@ git-tree-sha1 = "303d70c961317c4c20fafaf5dbe0e6d610c38542"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
 version = "2.7.1+0"
 
-[[deps.Hyperscript]]
-deps = ["Test"]
-git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
-uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
-version = "0.0.4"
-
-[[deps.HypertextLiteral]]
-git-tree-sha1 = "2b078b5a615c6c0396c77810d92ee8c6f470d238"
-uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-version = "0.9.3"
-
 [[deps.IOCapture]]
 deps = ["Logging", "Random"]
 git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.2"
+
+[[deps.IRTools]]
+deps = ["InteractiveUtils", "MacroTools", "Test"]
+git-tree-sha1 = "af14a478780ca78d5eb9908b263023096c2b9d64"
+uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
+version = "0.4.6"
 
 [[deps.IfElse]]
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
@@ -721,6 +1260,12 @@ deps = ["Parsers"]
 git-tree-sha1 = "61feba885fac3a407465726d0c330b3055df897f"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
 version = "1.1.2"
+
+[[deps.InplaceOps]]
+deps = ["LinearAlgebra", "Test"]
+git-tree-sha1 = "50b41d59e7164ab6fda65e71049fee9d890731ff"
+uuid = "505f98c9-085e-5b2c-8e89-488be7bf1f34"
+version = "0.3.0"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -811,6 +1356,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
 version = "3.0.0+1"
+
+[[deps.LRUCache]]
+git-tree-sha1 = "d64a0aff6691612ab9fb0117b0995270871c5dfc"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.3.0"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -909,6 +1459,12 @@ git-tree-sha1 = "9c30530bf0effd46e15e0fdcf2b8636e78cbbd73"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
 version = "2.35.0+0"
 
+[[deps.Libtask]]
+deps = ["IRTools", "LRUCache", "LinearAlgebra", "MacroTools", "Statistics"]
+git-tree-sha1 = "ed1b54f6df6fb7af8b315cfdc288ab5572dbd3ba"
+uuid = "6f1fad26-d15e-5dc8-ae53-837a1d7b8c9f"
+version = "0.7.0"
+
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
 git-tree-sha1 = "c9551dd26e31ab17b86cbd00c2ede019c08758eb"
@@ -981,6 +1537,11 @@ git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
 uuid = "d125e4d3-2237-4719-b19c-fa641b8a4667"
 version = "0.1.8"
 
+[[deps.MappedArrays]]
+git-tree-sha1 = "e8b359ef06ec72e8c030463fe02efe5527ee5142"
+uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
+version = "0.4.1"
+
 [[deps.Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
@@ -1037,6 +1598,12 @@ deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
 git-tree-sha1 = "50310f934e55e5ca3912fb941dec199b49ca9b68"
 uuid = "d41bc354-129a-5804-8e4c-c37616107c6c"
 version = "7.8.2"
+
+[[deps.NNlib]]
+deps = ["Adapt", "ChainRulesCore", "Compat", "LinearAlgebra", "Pkg", "Requires", "Statistics"]
+git-tree-sha1 = "f89de462a7bc3243f95834e75751d70b3a33e59d"
+uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
+version = "0.8.5"
 
 [[deps.NaNMath]]
 git-tree-sha1 = "b086b7ea07f8e38cf122f5016af580881ac914fe"
@@ -1196,12 +1763,6 @@ git-tree-sha1 = "d457f881ea56bbfa18222642de51e0abf67b9027"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.29.0"
 
-[[deps.PlutoUI]]
-deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "670e559e5c8e191ded66fa9ea89c97f10376bb4c"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.38"
-
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
 git-tree-sha1 = "a6062fe4063cdafe78f4a0a81cfffb89721b30e7"
@@ -1273,6 +1834,12 @@ git-tree-sha1 = "dc84268fe0e3335a62e315a3a7cf2afa7178a734"
 uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
 version = "0.4.3"
 
+[[deps.RealDot]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "9f0a1b71baaf7650f4fa8a1d168c7fb6ee41f0c9"
+uuid = "c1ae055f-0cd5-4b69-90a6-9a35b1a98df9"
+version = "0.1.0"
+
 [[deps.RecipesBase]]
 git-tree-sha1 = "6bf3f380ff52ce0832ddd3a2a7b9538ed1bcca7d"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
@@ -1283,6 +1850,12 @@ deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
 git-tree-sha1 = "dc1e451e15d90347a7decc4221842a022b011714"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
 version = "0.5.2"
+
+[[deps.RecursiveArrayTools]]
+deps = ["Adapt", "ArrayInterface", "ChainRulesCore", "DocStringExtensions", "FillArrays", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
+git-tree-sha1 = "bfe14f127f3e7def02a6c2b1940b39d0dabaa3ef"
+uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
+version = "2.26.3"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -1313,6 +1886,12 @@ git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
 
+[[deps.Roots]]
+deps = ["CommonSolve", "Printf", "Setfield"]
+git-tree-sha1 = "838b60ee62bebc794864c880a47e331e00c47505"
+uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+version = "1.4.1"
+
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
@@ -1327,6 +1906,12 @@ deps = ["IfElse", "Static", "VectorizationBase"]
 git-tree-sha1 = "ac399b5b163b9140f9c310dfe9e9aaa225617ff6"
 uuid = "476501e8-09a2-5ece-8869-fb82de89a1fa"
 version = "0.6.32"
+
+[[deps.SciMLBase]]
+deps = ["ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "Markdown", "RecipesBase", "RecursiveArrayTools", "StaticArrays", "Statistics", "Tables", "TreeViews"]
+git-tree-sha1 = "194a569a247b8180e7171f7ee59dabfd5a095f9f"
+uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+version = "1.31.3"
 
 [[deps.ScientificTypesBase]]
 git-tree-sha1 = "a8e18eb383b5ecf1b5e6fc237eb39255044fd92b"
@@ -1357,11 +1942,6 @@ version = "0.8.2"
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
-
-[[deps.ShiftedArrays]]
-git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
-uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
-version = "1.0.0"
 
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
@@ -1464,12 +2044,6 @@ git-tree-sha1 = "5950925ff997ed6fb3e985dcce8eb1ba42a0bbe7"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.18"
 
-[[deps.StatsModels]]
-deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
-git-tree-sha1 = "4352d5badd1bc8bf0a8c825e886fa1eda4f0f967"
-uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
-version = "0.6.30"
-
 [[deps.StatsPlots]]
 deps = ["AbstractFFTs", "Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
 git-tree-sha1 = "43a316e07ae612c461fd874740aeef396c60f5f8"
@@ -1478,9 +2052,9 @@ version = "0.14.34"
 
 [[deps.StructArrays]]
 deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
-git-tree-sha1 = "8f705dd141733d79aa2932143af6c6e0b6cea8df"
+git-tree-sha1 = "e75d82493681dfd884a357952bbd7ab0608e1dc3"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-version = "0.6.6"
+version = "0.6.7"
 
 [[deps.StructuralCausalModels]]
 deps = ["CSV", "Combinatorics", "DataFrames", "DataStructures", "Distributions", "DocStringExtensions", "LinearAlgebra", "NamedArrays", "Reexport", "Statistics"]
@@ -1536,6 +2110,12 @@ version = "0.1.5"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[deps.Tracker]]
+deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics"]
+git-tree-sha1 = "0874c1b5de1b5529b776cfeca3ec0acfada97b1b"
+uuid = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
+version = "0.2.20"
+
 [[deps.TranscodingStreams]]
 deps = ["Random", "Test"]
 git-tree-sha1 = "216b95ea110b5972db65aa90f88d8d89dcb8851c"
@@ -1548,11 +2128,23 @@ git-tree-sha1 = "c76399a3bbe6f5a88faa33c8f8a65aa631d95013"
 uuid = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 version = "0.4.73"
 
+[[deps.TreeViews]]
+deps = ["Test"]
+git-tree-sha1 = "8d0d7a3fe2f30d6a7f833a5f19f7c7a5b396eae6"
+uuid = "a2a6695c-b41b-5b7d-aed9-dbfdeacea5d7"
+version = "0.3.0"
+
 [[deps.Tullio]]
 deps = ["ChainRulesCore", "DiffRules", "LinearAlgebra", "Requires"]
 git-tree-sha1 = "859e2e9a7222553a0c052e423557cedb49376da9"
 uuid = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 version = "0.3.4"
+
+[[deps.Turing]]
+deps = ["AbstractMCMC", "AdvancedHMC", "AdvancedMH", "AdvancedPS", "AdvancedVI", "BangBang", "Bijectors", "DataStructures", "Distributions", "DistributionsAD", "DocStringExtensions", "DynamicPPL", "EllipticalSliceSampling", "ForwardDiff", "Libtask", "LinearAlgebra", "MCMCChains", "NamedArrays", "Printf", "Random", "Reexport", "Requires", "SciMLBase", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Tracker", "ZygoteRules"]
+git-tree-sha1 = "ef0fdc72023c4480a9372f32db88cce68b186e8a"
+uuid = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+version = "0.21.1"
 
 [[deps.URIs]]
 git-tree-sha1 = "97bbe755a53fe859669cd907f2d96aee8d2c1355"
@@ -1832,30 +2424,94 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─397f31b2-eba9-11ea-3fd5-1704e3a50a96
-# ╟─2c7baec4-0f38-4050-be86-b54de4112dc7
-# ╠═e6dd9f40-a007-439f-bafd-0127f2d7b742
-# ╠═bd37f4aa-5e4e-4823-b758-16c7ee2b2fa0
-# ╟─1b540d64-dc1f-11ea-321a-f1e0d2bab3e8
-# ╠═624b8daa-dc1f-11ea-114f-19896cd76aa5
-# ╟─8fa79b3e-dc1f-11ea-1437-d7bfe6cdea51
-# ╠═c4321a66-de4f-11ea-3449-774edd51eb10
-# ╟─35330a6a-dc20-11ea-2929-9b904165e207
-# ╠═df73cd1c-dc1f-11ea-0e14-c7e381f49c4a
-# ╟─975e15f4-122c-11eb-2a4d-ed836c7bade0
-# ╟─b1d6b4ac-dc20-11ea-3237-a515964f9176
-# ╠═88e3bb64-dc1e-11ea-1136-bd822afb72e4
-# ╟─dc515b15-a11a-4372-9fad-c00d9c508dd5
-# ╠═3a3e7ff9-a76c-4766-9dc8-4de5a4a14caa
-# ╠═5d3acee5-3515-44e7-80a5-a4927f854554
-# ╟─b8339211-7cf8-4dd0-8009-05d410373922
-# ╠═32f1748c-e8fc-4afc-8d03-d79afa01ad36
-# ╠═c186e7ab-0c18-4a5c-a61f-a061389e21c2
-# ╠═4655ab6c-0951-4a3b-bfc8-e991aaf0eff7
-# ╠═88eaa866-b87e-419b-a910-309c07cbde3c
-# ╠═9641b455-c5dd-4cd1-9d9c-aebe91139f5f
-# ╟─bc3de68d-e669-4233-96df-9ff82865ccfb
-# ╟─14c96b8b-dca7-4d6f-a76a-e9947bf5c3bd
-# ╟─c4403280-dc20-11ea-0550-5f2f606a9fea
+# ╠═147708bd-6ded-4316-aca0-1f6524ba3c53
+# ╠═2b447c25-cc6e-4b40-a18a-fcab8eb64d8e
+# ╠═c9ea9876-b966-41b4-ac02-a6b1040e7119
+# ╠═2c26b000-36ee-473a-a7c5-d6a746096ec9
+# ╟─7c87ccc8-8b76-45f1-b10f-b04bba307ce9
+# ╟─5be273e4-faae-4f06-934c-a1da019e8b89
+# ╠═1651ab99-e88a-40b7-9092-daf7f31e5604
+# ╠═fdd7dad1-facd-4ce3-9a72-20ce2c4cbe6a
+# ╟─86d02852-70e2-4fcc-bc8c-8d2b881fa248
+# ╠═f2af75cc-361e-4a45-a1b4-14a4ce404fa3
+# ╠═8d1b576f-e2a4-423d-80cc-0e69f6a376d4
+# ╠═9ce82e0e-bdcf-426c-b87e-32346c658b87
+# ╟─b339874c-e364-4f8c-bd62-5d66b175f0be
+# ╠═50661b7a-3484-4c52-b87c-4f44f119e164
+# ╟─4335575b-2ce8-41f0-a7ed-295789a5b723
+# ╠═c8959699-8886-423a-b994-3180c639de1b
+# ╟─7959fa22-560e-44d0-96ee-d2e7bf51cbf9
+# ╠═ce0ee122-a7ed-417d-abaa-ae25aeeaabb4
+# ╠═c27a8622-edca-4f19-91d0-1682ebc9cc7d
+# ╠═c799de28-efa8-4466-812f-ac3c79b5d835
+# ╟─7a9ad8dc-019d-4a32-b8b3-ee5a2703e609
+# ╠═5e3a0ec2-5066-4ab6-881d-af6113d23974
+# ╠═29167add-b592-4a1e-8742-88fa3264286d
+# ╠═cc4b5a4e-c2c6-4295-b4ff-8f73e84fcd88
+# ╟─512a3b1f-2e79-4777-b976-6d310725e9f8
+# ╟─91de0472-61b8-47f4-babb-e07539fa3a55
+# ╠═15d28187-c155-4332-bde4-90c2d40b7a36
+# ╟─dc4292b2-5aa8-4413-b4a3-91456f1d1d2a
+# ╠═3288b258-640b-414f-90d4-0bc1517aa506
+# ╠═45e9dc3c-bd28-4eaf-a56a-d12f4804f341
+# ╠═ab414dc7-7f31-4b0a-9d65-1268940fbc50
+# ╠═0ebe4814-ce59-4354-87de-e80e540e355c
+# ╠═9f5a39bc-9e1c-4f08-ba50-0cf87122358b
+# ╠═73d535fd-227a-4c4b-a0ca-ed926ecf86c6
+# ╠═cb63530d-4041-4a53-92c7-73a5c5705564
+# ╟─3b4f512c-7fc3-4eda-90a3-57d7ed313f87
+# ╠═719b6fe8-03e0-4e1d-8be8-6d642f78e86d
+# ╟─e3ea5e44-b189-4c2e-b7d0-5bdc26477ef8
+# ╟─8c89b94a-3250-4abf-8eda-35fd2b42f708
+# ╠═a6bcc9c6-4be7-4390-9fa3-6a124ed8afc1
+# ╟─cbf2db2b-5e72-4ad1-9fc3-0944c17db2df
+# ╠═c1943565-d495-480d-86ce-ea6f4e760b53
+# ╟─ee421d11-e00c-494c-a70b-f81c77745d21
+# ╠═45fe0912-cbf9-4e82-bf7b-d60cb7aae79b
+# ╠═1dbce450-8de8-41a6-a4ef-fd59f3663664
+# ╠═cd0c7f24-ec98-432c-8444-397a9bf09d91
+# ╟─67b42f0b-f991-43a9-8f9f-3a69ba540994
+# ╠═068fc2dc-213a-402f-a909-0b3bcdca4dd6
+# ╟─75aef58b-c087-4267-9c13-7bc1d90d1270
+# ╠═13ceb9f6-46ac-473d-abe0-9b543572e5f3
+# ╠═69db6156-6e68-4f4c-8ede-18968858d455
+# ╟─4136174a-e7c8-4d6e-a3c8-7ed5013228fb
+# ╟─ba249ca4-a211-42e1-b66a-f2dd81c9b14f
+# ╠═dba0e917-2bd6-4fa0-b6d4-1dad4968195a
+# ╟─d0181605-1105-4fb8-8470-db8cdf3d6853
+# ╠═3229c5f9-d341-4f5b-a24f-295e43437d5c
+# ╟─696d62d7-0c39-454e-a01d-a66a54748910
+# ╠═2403ce2f-7f96-4c68-9d31-80079e3daa36
+# ╟─2a6d6a27-68b9-4722-8d51-be470942f446
+# ╠═23ab19cd-6fb4-4de1-b672-daa03a1228d4
+# ╟─476d4fbd-3cc5-4e78-91f8-e8022d38ffa0
+# ╠═d35f0ee3-e0b7-417f-8242-6e1a5d4114d6
+# ╠═3edf24f0-be2f-461d-b121-1392618a9c67
+# ╠═ed58c640-6f2f-4a56-9803-8bc646a21d8f
+# ╠═45a8ddb4-bc79-4cfe-a3cb-07f57f441399
+# ╠═8449ecae-5fd0-4c30-ba7c-582157e8d9ff
+# ╠═b268b198-44af-44da-a895-e2c245117bb5
+# ╟─c2a2c394-474a-4916-8e7d-5b81da7cffbe
+# ╠═3c0cdbef-6976-4b8a-8602-12706070827d
+# ╟─173c19d7-f51b-4260-bf8e-922e66a02721
+# ╠═bf96a44b-6441-4045-ae92-6613fbbbc3bb
+# ╟─c931b144-8b63-472a-8d4c-82be650f4593
+# ╟─49bdc70e-a2d4-4238-98ac-d29b37577d80
+# ╠═b7ab3333-355f-42f9-b3f6-b859b3e6922d
+# ╟─188ce9c3-9199-4768-9ad2-ed9201e563f2
+# ╠═52233289-914f-4ca6-a943-9489c0158f70
+# ╠═f13534c2-2dd8-40b2-b669-7a24b5c8bb91
+# ╟─eb1f70a1-42ec-4db0-b826-56bc5d4ce73b
+# ╠═69afe200-63be-4a25-8b51-3a5ad992642a
+# ╟─6f3b01f6-b8bf-4a0e-9cc2-87c93071c9a3
+# ╠═9535972c-0905-4c3a-b5b6-5656677f5d9c
+# ╟─7b1d63fc-bfbf-4d3e-a069-c07c7a558ee2
+# ╠═859dee04-009b-4758-94ff-024a9f599509
+# ╟─05c99479-f4c1-4f5f-9d92-da6b487ed00c
+# ╠═a1a5b1fe-1b09-4dad-8ddd-c09bbb36699f
+# ╟─53a9552c-f8b8-4761-8258-0062cc2ac68c
+# ╠═1ac5a9e2-7e61-4f40-a8e2-c597a44bf090
+# ╠═6f52d2f2-008e-4991-82aa-c211cae792cd
+# ╠═dffc67be-7ab2-49ba-a584-7877faed20d6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
