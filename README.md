@@ -1,11 +1,13 @@
 ## Purpose of SR2TuringPluto.jl
 
 
-As stated many times by the author in his [online lectures](https://www.youtube.com/watch?v=ENxTrFf9a7c&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in StatisticalRethinking. 
+As stated many times by the author in his [online lectures](https://www.youtube.com/playlist?list=PLDcUM9US4XdMROZ57-OIRtIK0aOynbgZN), StatisticalRethinking is a hands-on course. This project is intended to assist with the hands-on aspect of learning the key ideas in Statistical Rethinking. 
 
-SR2TuringPluto is a Julia project that uses Pluto notebooks for this purpose. Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath.
+SR2TuringPluto is a Julia project that uses Pluto notebooks for this purpose. Max Lapan has a [version using Jupyter](https://github.com/Shmuma/rethinking-2ed-julia). Many of the Pluto notebooks have been derived from Max Lapan's work!
 
 This Julia project uses Turing as the underlying mcmc implementation.  A companion project ( [SR2StanPluto.jl](https://github.com/StatisticalRethinkingJulia/SR2StanPluto.jl) ) uses Stan.
+
+Each notebook demonstrates Julia versions of `code snippets` and `mcmc models` contained in the R package "rethinking" associated with the book [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath. 
 
 ## Installation
 
@@ -26,7 +28,7 @@ $ git checkout tags/<tag_name> # or simply:
 $ git checkout v4.5.0
 ```
 
-The next step assumes your Julia setup includes at least `Pkg`, `DrWatson`, `Pluto` and `PlutoUI`.
+The next step assumes your `base` Julia setup includes at least `Pkg` and `Pluto`.
 
 2. Start a Pluto notebook server in the Julia REPL:
 ```
@@ -40,17 +42,13 @@ julia> Pluto.run()
 
 ## Usage
 
-Note: *SR2TuringPluto v4 requires StatisticalRethinking.jl v4.*
+Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/Chapter_00.jl`.
 
-Select a notebook in the `open a file` entry box, e.g. type `./` and step to `./notebooks/TuringGuide.jl`.
-
-SR2TuringPluto.jl is a DrWatson project, with some added/re-purposed subdirectories,
-
-The `data` directory, in DrWatson accessible through `datadir()`, can be used for locally generated data, exercises, etc. All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`.
+All "rethinking" data files are stored and maintained in StatisticalRethinking.jl and can be accessed via `sr_datadir(...)`.
 
 This leads to a typical set of opening lines in each notebook:
 ```
-using Pkg, DrWatson
+using Pkg
 
 # Note: Below sequence is important. First activate the project
 # followed by `using` or `import` statements. Pretty much all
@@ -92,12 +90,10 @@ As before, the `t` at the end of the model number indicates Turing.
 
 SR2TuringPluto.jl is compatible with the 2nd edition of the book.
 
-StructuralCausalModels.jl and ParetoSmoothedImportanceSampling.jl are included as experimental dependencies in the StatisticalRethinking.jl v3 package. Definitely work in progress!
+StructuralCausalModels.jl and ParetoSmoothedImportanceSampling.jl are included as experimental dependencies in the StatisticalRethinking.jl package. Definitely work in progress!
 
-Max Lapan added a package Dagitty.jl which coversoptions similar as available in StructuralCausalModels.jl. There is also a new package, ParetoSmooth.jl which overlaps with ParetoSmoothedImportanceSampling.jl.
+Max Lapan added a package Dagitty.jl which covers options similar as available in StructuralCausalModels.jl. There is also a new package, ParetoSmooth.jl which overlaps with ParetoSmoothedImportanceSampling.jl.
 As terminology differs from the terminology used in the Statistical Rethinking book, I have not used this package in the notebooks (yet?).
-
-**Note: A new version (v5.0.0) is under development. This is a breaking version. Probably safe to stick with tagged version 4.0.3 until then.**
 
 Any feedback is appreciated. Please open an issue.
 
@@ -105,19 +101,17 @@ Any feedback is appreciated. Please open an issue.
 
 Of course, without the excellent textbook by Richard McElreath, this package would not have been possible. The author has also been supportive of this work and gave permission to use the datasets.
 
-This repository is derived from work by Max Lapan, Karajan, previous and current Stan versions of StatisticalRethinking.jl. It has been improved through comments and suggestions of many other contributors.
+This repository is derived from work by Max Lapan, Karajan, previous and current Stan versions of StatisticalRethinking.jl. It has been improved through comments and suggestions by many other contributors.
 
 ## Versions
 
 ### Version 5.0.0 (Under development, will take time)
 
-1. Complete overhaul.likely using Makie.jl, Graphs.jl and more.
-2. Larger notebooks.
-3. Dropped additional figures in early chapters.
+1. Complete overhaul. Likely using Makie.jl, Graphs.jl and more.
 
 ### Version 4.5.0
 
-1. Adapted chapters 5 to 14 to an initial Pluto format.
+1. Adapted Max Lapan's chapters 5 to 14 to an (initial) Pluto format.
 
 ### Version 4.0.5
 
