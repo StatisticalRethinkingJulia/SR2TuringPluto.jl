@@ -71,7 +71,7 @@ begin
 end
 
 # ╔═╡ 975e15f4-122c-11eb-2a4d-ed836c7bade0
-md"##### Notice that in Pluto notebooks varables can only be defined once. This is needed in Pluto to make the `reactivity` work (e.g. when updating above slider setting). Bracketing above sequence of assignments with a `begin` and `end` is allowed."
+md"##### Notice that in Pluto notebooks variables can only be defined once. This is needed in Pluto to make the `reactivity` work (e.g. when updating above slider setting). Bracketing above sequence of assignments with a `begin` and `end` is allowed."
 
 # ╔═╡ b1d6b4ac-dc20-11ea-3237-a515964f9176
 md"### Code 0.3"
