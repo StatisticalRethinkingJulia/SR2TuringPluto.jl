@@ -76,7 +76,7 @@ md"### Code 4.39"
 
 # ╔═╡ 3b0d7fe2-e606-440f-95be-9a27d32a168f
 let
-	p = hline([0, 272]; ylims=(-100, 400), xlabel="weight", ylabel="hegiht")
+	p = hline([0, 272]; ylims=(-100, 400), xlabel="weight", ylabel="height")
 	title!(L"\beta \sim \mathcal{N}(\mu=0,\sigma=10)")
 
 	x_mean = mean(howell1_2.weight)
