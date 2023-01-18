@@ -86,22 +86,6 @@ sin.(s)
 # ╔═╡ a702d978-462c-4879-859d-5a92ba4b6c83
 IndexStyle(SquaresVector)
 
-# ╔═╡ 00000000-0000-0000-0000-000000000001
-PLUTO_PROJECT_TOML_CONTENTS = """
-[deps]
-"""
-
-# ╔═╡ 00000000-0000-0000-0000-000000000002
-PLUTO_MANIFEST_TOML_CONTENTS = """
-# This file is machine-generated - editing it directly is not advised
-
-julia_version = "1.9.0-DEV"
-manifest_format = "2.0"
-project_hash = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-
-[deps]
-"""
-
 # ╔═╡ Cell order:
 # ╠═4fc964c9-4690-412f-86ca-0ad975e5dc44
 # ╠═2a1988c7-e51f-4a8f-b8c0-f71a744b3c68
@@ -119,5 +103,3 @@ project_hash = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 # ╠═eb629fdf-7810-4ce4-9133-6825f669ac2b
 # ╠═e50a56db-3eaa-4323-8ae6-b36b716c96e6
 # ╠═a702d978-462c-4879-859d-5a92ba4b6c83
-# ╟─00000000-0000-0000-0000-000000000001
-# ╟─00000000-0000-0000-0000-000000000002
