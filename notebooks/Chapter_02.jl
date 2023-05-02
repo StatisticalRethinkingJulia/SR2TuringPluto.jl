@@ -51,8 +51,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = ones(size)
-	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelyhood .* prior
+	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelihood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
@@ -70,8 +70,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = convert(Vector{AbstractFloat}, p_grid .>= 0.5)
-	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelyhood .* prior
+	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelihood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
@@ -89,8 +89,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = exp.(-5*abs.(p_grid .- 0.5))
-	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelyhood .* prior
+	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelihood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
