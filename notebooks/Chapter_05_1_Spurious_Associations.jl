@@ -25,6 +25,28 @@ begin
 	using StatisticalRethinkingPlots
 end
 
+# ╔═╡ c03d1162-0241-41b5-b167-644fe6af0181
+html"""
+<style>
+	main {
+		margin: 0 auto;
+		max-width: 2000px;
+    	padding-left: max(160px, 5%);
+    	padding-right: max(160px, 10%);
+	}
+</style>
+"""
+
+# ╔═╡ 10feb62a-1e2b-496a-a7f3-0f98eef26b32
+md"
+
+!!! note
+
+Dagitty.jl needs to be replaced by CausalInference.jl. Dagitty is not part of SR2TuringPluto.jl."
+
+# ╔═╡ 20d1245e-357d-4163-ab8e-869f6b0a53a8
+#Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
+
 # ╔═╡ f10da537-82aa-4826-b7fd-3f8f86e11ec7
 md"### Set defaults for plot and logging."
 
@@ -496,11 +518,11 @@ Distributions = "~0.25.107"
 DrWatson = "~2.13.0"
 LaTeXStrings = "~1.3.1"
 Optim = "~1.8.0"
-StatisticalRethinking = "~4.7.4"
+StatisticalRethinking = "~4.8.0"
 StatisticalRethinkingPlots = "~1.1.0"
 StatsBase = "~0.34.2"
 StatsPlots = "~0.15.6"
-Turing = "~0.30.2"
+Turing = "~0.30.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -509,7 +531,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "5044588bca7a7c53a94ef7f830c72afa08f3489f"
+project_hash = "dc16dfcc7c9ac71cc4bfbef80cd3ac1ba8a4895d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "41c37aa88889c171f1300ceac1313c06e891d245"
@@ -2388,9 +2410,9 @@ version = "1.4.2"
 
 [[deps.StatisticalRethinking]]
 deps = ["CSV", "DataFrames", "Dates", "Distributions", "DocStringExtensions", "Documenter", "Formatting", "KernelDensity", "LinearAlgebra", "MCMCChains", "MonteCarloMeasurements", "NamedArrays", "NamedTupleTools", "Optim", "OrderedCollections", "Parameters", "ParetoSmoothedImportanceSampling", "PrettyTables", "Random", "Reexport", "Requires", "Statistics", "StatsBase", "StatsFuns", "StructuralCausalModels", "Tables", "Test", "Unicode"]
-git-tree-sha1 = "cf7fd30387559f5bacd4abfb6781e01543402bce"
+git-tree-sha1 = "b98cadd8b9ab584f1eae11760f7d73880a299f40"
 uuid = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
-version = "4.7.4"
+version = "4.8.0"
 
 [[deps.StatisticalRethinkingPlots]]
 deps = ["Distributions", "DocStringExtensions", "KernelDensity", "LaTeXStrings", "Parameters", "Plots", "Reexport", "Requires", "StatisticalRethinking", "StatsPlots"]
@@ -2566,9 +2588,9 @@ version = "1.4.0"
 
 [[deps.Turing]]
 deps = ["ADTypes", "AbstractMCMC", "AdvancedHMC", "AdvancedMH", "AdvancedPS", "AdvancedVI", "BangBang", "Bijectors", "DataStructures", "Distributions", "DistributionsAD", "DocStringExtensions", "DynamicPPL", "EllipticalSliceSampling", "ForwardDiff", "Libtask", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "MCMCChains", "NamedArrays", "Printf", "Random", "Reexport", "Requires", "SciMLBase", "Setfield", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "e236871c3efed84b17187ea517183b408eaaf807"
+git-tree-sha1 = "423987de297d186871c11fc18b5f0b3b337a8e57"
 uuid = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
-version = "0.30.2"
+version = "0.30.3"
 
     [deps.Turing.extensions]
     TuringDynamicHMCExt = "DynamicHMC"
@@ -2961,7 +2983,10 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╠═c03d1162-0241-41b5-b167-644fe6af0181
 # ╠═9f79ad1a-9bdf-4fe9-b4e4-94fd01b420d2
+# ╟─10feb62a-1e2b-496a-a7f3-0f98eef26b32
+# ╠═20d1245e-357d-4163-ab8e-869f6b0a53a8
 # ╠═7f95b8ef-71ee-44c1-adb4-9bfffcca8246
 # ╟─f10da537-82aa-4826-b7fd-3f8f86e11ec7
 # ╠═001d0e14-cc62-415a-8a07-90aa69d426c6

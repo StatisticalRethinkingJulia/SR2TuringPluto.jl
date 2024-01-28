@@ -181,6 +181,11 @@ function logpdf(d::ZIPoisson, y::Int)
     end
 end
 
+# ╔═╡ 0ebe4814-ce59-4354-87de-e80e540e355c
+function rand(d::ZIPoisson)
+    rand() <= d.w ? 0 : rand(Poisson(d.λ))
+end
+
 # ╔═╡ c27a8622-edca-4f19-91d0-1682ebc9cc7d
 fun = (r, (N, gid)) -> begin
     p̄ = logistic(get(r, "a[$gid]", 0))
@@ -577,14 +582,6 @@ begin
 	m12_7_ch = sample(model, NUTS(), 1000)
 	m12_7_df = DataFrame(m12_7_ch)
 	describe(m12_7_df)
-end
-
-# ╔═╡ ce0ee122-a7ed-417d-abaa-ae25aeeaabb4
-import BASE: rand
-
-# ╔═╡ 0ebe4814-ce59-4354-87de-e80e540e355c
-function rand(d::ZIPoisson)
-    rand() <= d.w ? 0 : rand(Poisson(d.λ))
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -3073,7 +3070,6 @@ version = "1.4.1+1"
 # ╟─4335575b-2ce8-41f0-a7ed-295789a5b723
 # ╠═c8959699-8886-423a-b994-3180c639de1b
 # ╟─7959fa22-560e-44d0-96ee-d2e7bf51cbf9
-# ╠═ce0ee122-a7ed-417d-abaa-ae25aeeaabb4
 # ╠═c27a8622-edca-4f19-91d0-1682ebc9cc7d
 # ╠═c799de28-efa8-4466-812f-ac3c79b5d835
 # ╟─7a9ad8dc-019d-4a32-b8b3-ee5a2703e609

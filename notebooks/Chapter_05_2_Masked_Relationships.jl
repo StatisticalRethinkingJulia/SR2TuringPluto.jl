@@ -25,6 +25,18 @@ begin
     using StatisticalRethinkingPlots
 end
 
+# ╔═╡ c8a9f44c-f8d5-40a5-a110-c70f2e3dcc14
+html"""
+<style>
+	main {
+		margin: 0 auto;
+		max-width: 2000px;
+    	padding-left: max(160px, 5%);
+    	padding-right: max(160px, 10%);
+	}
+</style>
+"""
+
 # ╔═╡ 39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64
 md"#### Set defaults for plotting and logging."
 
@@ -2851,6 +2863,7 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╠═c8a9f44c-f8d5-40a5-a110-c70f2e3dcc14
 # ╠═80deafdd-ce8d-4b7d-9651-7ba281b38873
 # ╠═12d8d9bd-c72e-43e3-a183-6611619e774b
 # ╟─39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64

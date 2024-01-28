@@ -18,6 +18,18 @@ begin
 	using StatisticalRethinkingPlots
 end
 
+# ╔═╡ 6a78dd3a-9770-40d0-b344-e7678801499c
+html"""
+<style>
+	main {
+		margin: 0 auto;
+		max-width: 2000px;
+    	padding-left: max(160px, 10%);
+    	padding-right: max(160px, 10%);
+	}
+</style>
+"""
+
 # ╔═╡ c1cec086-0ca1-449a-b9d6-e1366d09f811
 begin
 	Logging.disable_logging(Logging.Warn)
@@ -52,8 +64,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = ones(size)
-	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelihood .* prior
+	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelyhood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
@@ -71,8 +83,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = convert(Vector{AbstractFloat}, p_grid .>= 0.5)
-	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelihood .* prior
+	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelyhood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
@@ -90,8 +102,8 @@ let
 	size = 20
 	p_grid = range(0, 1; length=size)
 	prior = exp.(-5*abs.(p_grid .- 0.5))
-	likelihood = [pdf(Binomial(9, p), 6) for p in p_grid]
-	unstd_posterior = likelihood .* prior
+	likelyhood = [pdf(Binomial(9, p), 6) for p in p_grid]
+	unstd_posterior = likelyhood .* prior
 	posterior = unstd_posterior / sum(unstd_posterior)
 
 	plot(p_grid, posterior; 
@@ -2638,6 +2650,7 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╠═6a78dd3a-9770-40d0-b344-e7678801499c
 # ╠═9e6cead1-18cc-4ff1-bb4a-66e3ca8f37da
 # ╠═39bd8de1-6664-4ffe-abcc-10b9f4788f36
 # ╠═c1cec086-0ca1-449a-b9d6-e1366d09f811

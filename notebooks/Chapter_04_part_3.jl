@@ -24,6 +24,18 @@ begin
 	using BSplines
 end
 
+# ╔═╡ 9cda4135-14bf-4a75-bce1-e0317c682d40
+html"""
+<style>
+	main {
+		margin: 0 auto;
+		max-width: 2000px;
+    	padding-left: max(160px, 5%);
+    	padding-right: max(160px, 10%);
+	}
+</style>
+"""
+
 # ╔═╡ 74a4750e-98a8-48af-a789-2109e2c5e01f
 md"#### Setting default attributes for plots."
 
@@ -2662,6 +2674,7 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╠═9cda4135-14bf-4a75-bce1-e0317c682d40
 # ╠═8483abbb-011f-4e36-976b-d04967d86af0
 # ╠═772c0ef3-aeb2-4c8f-aac9-fbd189770956
 # ╟─74a4750e-98a8-48af-a789-2109e2c5e01f

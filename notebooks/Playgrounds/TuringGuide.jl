@@ -63,6 +63,18 @@ html"""
 # ╔═╡ cb180e21-3778-40f1-93d8-af442d1be559
 md" ##### Commonly used packages in SR2TuringPluto"
 
+# ╔═╡ 1bc33245-85cf-4ec9-be87-9cde44527cbe
+md"
+
+!!! note
+
+In most cases I like to enable below line. But if ParetoSmooth is needed, it will hold back many newer package versions. Thus ParetoSmooth.jl is not included in SR2TuringPluto.jl.
+
+"
+
+# ╔═╡ 2d6ec605-7efa-48a9-8e69-4e83294c716e
+#Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
+
 # ╔═╡ a2d950f8-d780-4abe-af37-b189bd4a5e88
 md"##### Setting default attributes for logging and plots."
 
@@ -117,7 +129,7 @@ The sequence of the statements matter in Turing models!"
 # ╔═╡ b3adef33-c111-4d20-b277-a5346eae9f23
 begin
 	m4_1t = ppl4_1(howell1.weight, howell1.height)
-	post4_1t = sample(m4_1t, NUTS(), , 1000)
+	post4_1t = sample(m4_1t, NUTS(), 1000)
 	post4_1t_df = DataFrame(post4_1t)
 	post4_1t_df
 end
@@ -2913,6 +2925,8 @@ version = "1.4.1+1"
 # ╠═0f75e85c-4506-483f-b0f8-a31ee698bf04
 # ╟─cb180e21-3778-40f1-93d8-af442d1be559
 # ╠═2d3d462e-d6bf-4ebd-ab34-db38f4261a11
+# ╟─1bc33245-85cf-4ec9-be87-9cde44527cbe
+# ╠═2d6ec605-7efa-48a9-8e69-4e83294c716e
 # ╠═18b5c138-9324-4c5a-86ca-be1e825ed11e
 # ╟─a2d950f8-d780-4abe-af37-b189bd4a5e88
 # ╠═bbb4a889-77e2-449b-9258-883e7434e641
