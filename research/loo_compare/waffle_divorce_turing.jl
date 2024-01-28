@@ -30,7 +30,7 @@ end
     end
 end
 
-chn5_1t = sample(m5_1t(df.A, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
+chn5_1t = sample(m5_1t(df.A, df.D), NUTS(1000, .9), , 1000)
 
 @model function m5_2t(M, D)
     a ~ Normal(0, 0.2)
@@ -42,7 +42,7 @@ chn5_1t = sample(m5_1t(df.A, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
     end
 end
 
-chn5_2t = sample(m5_2t(df.M, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
+chn5_2t = sample(m5_2t(df.M, df.D), NUTS(1000, .9), , 1000)
 
 @model function m5_3t(A, M, D)
     a ~ Normal(0, 0.2)
@@ -55,7 +55,7 @@ chn5_2t = sample(m5_2t(df.M, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
     end
 end
 
-chn5_3t = sample(m5_3t(df.A, df.M, df.D), NUTS(1000, .9), MCMCThreads(), 1000, 4)
+chn5_3t = sample(m5_3t(df.A, df.M, df.D), NUTS(1000, .9), , 1000)
 
 pw_lls5_1t = pointwise_log_likelihoods(m5_1t(df.A, df.D), chn5_1t)
 pw_lls5_2t = pointwise_log_likelihoods(m5_2t(df.M, df.D), chn5_2t)

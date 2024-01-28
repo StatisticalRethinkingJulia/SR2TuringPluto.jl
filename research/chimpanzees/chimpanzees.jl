@@ -34,7 +34,7 @@ m_10_03t_result = "
  bpC -0.11   0.26      -0.53       0.29  3184    1
 ";
 
-chains = sample(m10_3t, NUTS(1000, .65), MCMCThreads(), 1000, 4)
+chains = sample(m10_3t, NUTS(1000, .65), , 1000)
 
 # method for MCMCChains
 function pointwise_loglikes(chain::Chains, data, ll_fun)

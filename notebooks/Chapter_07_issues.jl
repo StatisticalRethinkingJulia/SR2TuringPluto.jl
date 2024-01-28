@@ -57,9 +57,9 @@ end
 # ╔═╡ 3eeeceba-9016-4aae-a9e5-8505bb898078
 begin
 	m7_1_ch = sample(model_m7_1(d.mass_std, d.brain_std), NUTS(),
-		MCMCThreads(), 1000, 4)
+		, 1000)
 	m7_1 = DataFrame(m7_1_ch)
-	PRECIS(m7_1)
+	describe(m7_1)
 end
 
 # ╔═╡ 7c55e830-8f3e-4840-84da-1226bb1972a8

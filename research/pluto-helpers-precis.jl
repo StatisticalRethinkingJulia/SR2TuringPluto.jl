@@ -36,7 +36,7 @@ begin
 end
 
 # ╔═╡ 36733c28-2da0-11eb-3b0b-d5c9b85e16ba
-PRECIS(quap2_0t_df)
+describe(quap2_0t_df)
 
 # ╔═╡ 3ce617ae-f934-11ea-0e4a-ff1ec9ee2610
 md"## End pluto-helpers-precis.jl"
