@@ -16,6 +16,7 @@ begin
 	using LaTeXStrings
 	using StatisticalRethinking
 	using StatisticalRethinkingPlots
+	using MonteCarloMeasurements
 end
 
 # ╔═╡ 6a78dd3a-9770-40d0-b344-e7678801499c
@@ -165,21 +166,14 @@ end
     W ~ Binomial(W + L, p)
 end
 
-# ╔═╡ 46d4ba4d-1183-4069-be38-0667922d19d4
-begin
-	chain = sample(m2_0(6, 3), NUTS(0.65), 1000)
-	CHNS(chain)
-end
-
 # ╔═╡ e15efdfa-e64f-4f5b-a94c-6c5e135a9ec2
 let
-	df = DataFrame(chain)
-	μ = mean(df.p)
-	σ = std(df.p)
+	map2_0 = optimize(m2_0(W, L), MAP())
+	μ = coef(map2_0)[:p]
+	σ = sqrt(vcov(map2_0)[:p, :p])
 	b2 = Normal(μ, σ)
 	plot!(x, pdf.(b2, x); style=:dash,
 		label="Normal($(round(μ; digits=2)), $(round(σ; digits=2)))")
-	density!(df.p; label="m2_0 posterior")
 end
 
 # ╔═╡ 8c7de4e1-b5b1-44c4-9718-b8044a6397ef
@@ -207,6 +201,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+MonteCarloMeasurements = "0987c9cc-fe09-11e8-30f0-b96dd679fdca"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 StatisticalRethinking = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
@@ -216,6 +211,7 @@ Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 [compat]
 Distributions = "~0.25.107"
 LaTeXStrings = "~1.3.1"
+MonteCarloMeasurements = "~1.1.6"
 Optim = "~1.8.0"
 StatisticalRethinking = "~4.7.4"
 StatisticalRethinkingPlots = "~1.1.0"
