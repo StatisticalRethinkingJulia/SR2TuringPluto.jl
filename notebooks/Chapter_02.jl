@@ -166,22 +166,14 @@ end
     W ~ Binomial(W + L, p)
 end
 
-# ╔═╡ 46d4ba4d-1183-4069-be38-0667922d19d4
-begin
-	chain = sample(m2_0(6, 3), NUTS(0.65), 1000)
-	CHNS(chain)
-end
-
 # ╔═╡ e15efdfa-e64f-4f5b-a94c-6c5e135a9ec2
 let
-	df = DataFrame(chain)
-	p = quap(df).coef.p
-	μ = pmean(p)
-	σ = pstd(p)
+	map2_0 = optimize(m2_0(W, L), MAP())
+	μ = coef(map2_0)[:p]
+	σ = sqrt(vcov(map2_0)[:p, :p])
 	b2 = Normal(μ, σ)
 	plot!(x, pdf.(b2, x); style=:dash,
 		label="Normal($(round(μ; digits=2)), $(round(σ; digits=2)))")
-	density!(df.p; label="m2_0 posterior")
 end
 
 # ╔═╡ 8c7de4e1-b5b1-44c4-9718-b8044a6397ef
