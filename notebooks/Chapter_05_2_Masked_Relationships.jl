@@ -4,7 +4,7 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 80deafdd-ce8d-4b7d-9651-7ba281b38873
+# ╔═╡ d71e5b63-44e0-446d-b41c-df1f80e8d0a1
 using Pkg, DrWatson
 
 # ╔═╡ 12d8d9bd-c72e-43e3-a183-6611619e774b
@@ -36,6 +36,17 @@ html"""
 	}
 </style>
 """
+
+# ╔═╡ 6117c8d7-8892-4721-83d0-37f14fb1c08f
+md"
+
+!!! note
+
+Below line is disabled because Dagitty.jl is not in SR2TuringPluto. Dagitty.jl needs to be repaced by CausalInference.jl.
+"
+
+# ╔═╡ b559509b-20f3-4b5f-b27e-24f1d8123ae8
+#Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
 
 # ╔═╡ 39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64
 md"#### Set defaults for plotting and logging."
@@ -397,12 +408,12 @@ DataFrames = "~1.6.1"
 Distributions = "~0.25.107"
 DrWatson = "~2.13.0"
 LaTeXStrings = "~1.3.1"
-Optim = "~1.8.0"
-StatisticalRethinking = "~4.7.4"
+Optim = "~1.9.0"
+StatisticalRethinking = "~4.8.0"
 StatisticalRethinkingPlots = "~1.1.0"
 StatsBase = "~0.34.2"
 StatsPlots = "~0.15.6"
-Turing = "~0.30.2"
+Turing = "~0.30.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -411,7 +422,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "5044588bca7a7c53a94ef7f830c72afa08f3489f"
+project_hash = "5eb1b029967213b485f3baff8279d3d40ddbe363"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "41c37aa88889c171f1300ceac1313c06e891d245"
@@ -698,9 +709,9 @@ version = "0.5.1"
 
 [[deps.ChainRules]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "Distributed", "GPUArraysCore", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "SparseInverseSubset", "Statistics", "StructArrays", "SuiteSparse"]
-git-tree-sha1 = "4cfc4916725289132746f730755262e1919cff38"
+git-tree-sha1 = "b308c249f38637cc5022c079fe5e19701a160395"
 uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "1.59.1"
+version = "1.60.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
@@ -990,9 +1001,9 @@ version = "0.6.8"
 
 [[deps.DynamicPPL]]
 deps = ["AbstractMCMC", "AbstractPPL", "BangBang", "Bijectors", "Compat", "ConstructionBase", "Distributions", "DocStringExtensions", "LinearAlgebra", "LogDensityProblems", "MacroTools", "OrderedCollections", "Random", "Requires", "Setfield", "Test"]
-git-tree-sha1 = "26c17df3ef86eec24851f00bfec25c734d6f0ad9"
+git-tree-sha1 = "e1435190e3bc4870dcd1beac77624caa85016600"
 uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
-version = "0.24.4"
+version = "0.24.5"
 
     [deps.DynamicPPL.extensions]
     DynamicPPLChainRulesCoreExt = ["ChainRulesCore"]
@@ -1672,9 +1683,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
-git-tree-sha1 = "e2ae8cf5ac6daf5a3959f7f6ded9c2028b61d09d"
+git-tree-sha1 = "8b40681684df46785a0012d352982e22ac3be59e"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.25.1"
+version = "1.25.2"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
@@ -1835,9 +1846,9 @@ version = "0.5.5+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "MathOptInterface", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "f55af9918e2a67dcadf5ec758a5ff25746c3819f"
+git-tree-sha1 = "931b2ecf1b43de06dddc342c6af03f2b11434958"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.8.0"
+version = "1.9.0"
 
 [[deps.Optimisers]]
 deps = ["ChainRulesCore", "Functors", "LinearAlgebra", "Random", "Statistics"]
@@ -2290,9 +2301,9 @@ version = "1.4.2"
 
 [[deps.StatisticalRethinking]]
 deps = ["CSV", "DataFrames", "Dates", "Distributions", "DocStringExtensions", "Documenter", "Formatting", "KernelDensity", "LinearAlgebra", "MCMCChains", "MonteCarloMeasurements", "NamedArrays", "NamedTupleTools", "Optim", "OrderedCollections", "Parameters", "ParetoSmoothedImportanceSampling", "PrettyTables", "Random", "Reexport", "Requires", "Statistics", "StatsBase", "StatsFuns", "StructuralCausalModels", "Tables", "Test", "Unicode"]
-git-tree-sha1 = "cf7fd30387559f5bacd4abfb6781e01543402bce"
+git-tree-sha1 = "b98cadd8b9ab584f1eae11760f7d73880a299f40"
 uuid = "2d09df54-9d0f-5258-8220-54c2a3d4fbee"
-version = "4.7.4"
+version = "4.8.0"
 
 [[deps.StatisticalRethinkingPlots]]
 deps = ["Distributions", "DocStringExtensions", "KernelDensity", "LaTeXStrings", "Parameters", "Plots", "Reexport", "Requires", "StatisticalRethinking", "StatsPlots"]
@@ -2468,9 +2479,9 @@ version = "1.4.0"
 
 [[deps.Turing]]
 deps = ["ADTypes", "AbstractMCMC", "AdvancedHMC", "AdvancedMH", "AdvancedPS", "AdvancedVI", "BangBang", "Bijectors", "DataStructures", "Distributions", "DistributionsAD", "DocStringExtensions", "DynamicPPL", "EllipticalSliceSampling", "ForwardDiff", "Libtask", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "MCMCChains", "NamedArrays", "Printf", "Random", "Reexport", "Requires", "SciMLBase", "Setfield", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "e236871c3efed84b17187ea517183b408eaaf807"
+git-tree-sha1 = "423987de297d186871c11fc18b5f0b3b337a8e57"
 uuid = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
-version = "0.30.2"
+version = "0.30.3"
 
     [deps.Turing.extensions]
     TuringDynamicHMCExt = "DynamicHMC"
@@ -2864,7 +2875,9 @@ version = "1.4.1+1"
 
 # ╔═╡ Cell order:
 # ╠═c8a9f44c-f8d5-40a5-a110-c70f2e3dcc14
-# ╠═80deafdd-ce8d-4b7d-9651-7ba281b38873
+# ╠═d71e5b63-44e0-446d-b41c-df1f80e8d0a1
+# ╟─6117c8d7-8892-4721-83d0-37f14fb1c08f
+# ╠═b559509b-20f3-4b5f-b27e-24f1d8123ae8
 # ╠═12d8d9bd-c72e-43e3-a183-6611619e774b
 # ╟─39cb3b35-d8c1-4dd7-a4f1-83fc2fe20a64
 # ╠═9b65e1ff-e7eb-4800-9862-718c167a8e32
