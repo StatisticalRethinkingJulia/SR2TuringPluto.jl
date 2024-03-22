@@ -8,7 +8,7 @@ using InteractiveUtils
 using Pkg, DrWatson
 
 # ╔═╡ b5243551-16c7-49b6-8ba7-c9be3c4c1401
-Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
+#Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
 
 # ╔═╡ ee02bdae-99a6-417b-8dad-e9647ce30ede
 begin
