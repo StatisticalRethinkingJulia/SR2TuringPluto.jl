@@ -18,7 +18,7 @@ end
 using Pkg
 
 # ╔═╡ f5359bf0-28ff-4ff5-8e70-a2bcc687dfc0
-Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
+#Pkg.activate(expanduser("~/.julia/dev/SR2TuringPluto"))
 
 # ╔═╡ bd37f4aa-5e4e-4823-b758-16c7ee2b2fa0
 begin
