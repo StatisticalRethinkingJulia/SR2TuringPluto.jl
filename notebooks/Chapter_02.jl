@@ -170,12 +170,62 @@ end
 
 # ╔═╡ e15efdfa-e64f-4f5b-a94c-6c5e135a9ec2
 let
+	W = 6
+	L = 3
+	x = collect(range(0, 1; length=101))
+	b1 = Beta(W+1, L+1)
+	plot(x, pdf.(b1, x); label = "β")
+	
 	map2_0 = optimize(m2_0(W, L), MAP())
 	μ = coef(map2_0)[:p]
 	σ = sqrt(vcov(map2_0)[:p, :p])
 	b2 = Normal(μ, σ)
 	plot!(x, pdf.(b2, x); style=:dash,
 		label="Normal($(round(μ; digits=2)), $(round(σ; digits=2)))")
+end
+
+# ╔═╡ 56f8237f-69d2-4725-bb48-8c62e70085dc
+let
+	W = 6
+	L = 3
+	x = collect(range(0, 1; length=101))
+	b1 = Beta(W+1, L+1)
+	plot(x, pdf.(b1, x); label = "β")
+
+	chains = sample(m2_0(W, L), NUTS(), 1000)
+	global df = DataFrame(chains)
+
+	global map2_0 = optimize(m2_0(W, L), MAP())
+	μ = coef(map2_0)[:p]
+	σ = sqrt(vcov(map2_0)[:p, :p])
+	b = Normal(μ, σ)
+	σ1 = std(df.p; mean=μ)
+	b1 = Normal(μ, σ1)
+	plot!(x, pdf.(b, x); style=:dash,
+		label="Normal($(round(μ; digits=2)), $(round(σ; digits=2)))")
+	plot!(x, pdf.(b1, x); style=:dash,
+		label="Normal($(round(μ; digits=2)), $(round(σ1; digits=2)))")
+end
+
+# ╔═╡ 141da211-65cf-4bc2-9684-f469b13eff6b
+vcov(map2_0)
+
+# ╔═╡ 3bddae59-4998-4b87-ae43-8343f6a9350f
+vcov(map2_0)[:p, :p]
+
+# ╔═╡ 3c64eda4-fcbe-46ee-aafc-0d0b89e5f8fb
+√vcov(map2_0)
+
+# ╔═╡ e0440e29-ab5d-43b9-8151-2b824645b90b
+let
+	μ = coef(map2_0)[:p]
+	std(df.p; mean=μ)
+end
+
+# ╔═╡ 8b367ce6-fe0a-4e47-ac25-d2a20ea06e48
+let
+	chains = sample(m2_0(W, L), NUTS(), 1000)
+	DataFrame(chains)
 end
 
 # ╔═╡ 8c7de4e1-b5b1-44c4-9718-b8044a6397ef
@@ -221,6 +271,12 @@ end
 # ╠═443044d5-02a3-4bfc-955b-54b0c12c63e2
 # ╟─3276b558-7dc7-4869-a083-472716a8a2ab
 # ╠═e15efdfa-e64f-4f5b-a94c-6c5e135a9ec2
+# ╠═56f8237f-69d2-4725-bb48-8c62e70085dc
+# ╠═141da211-65cf-4bc2-9684-f469b13eff6b
+# ╠═3bddae59-4998-4b87-ae43-8343f6a9350f
+# ╠═3c64eda4-fcbe-46ee-aafc-0d0b89e5f8fb
+# ╠═e0440e29-ab5d-43b9-8151-2b824645b90b
+# ╠═8b367ce6-fe0a-4e47-ac25-d2a20ea06e48
 # ╟─20e03a5e-3321-4019-97a5-44a0fd77a831
 # ╠═4a47f055-842c-451c-bc75-072708588f9a
 # ╟─8c7de4e1-b5b1-44c4-9718-b8044a6397ef
